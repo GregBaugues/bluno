@@ -1,34 +1,20 @@
 // Character image data and functionality
 
-// Placeholder for character images - will be populated when images are provided
-// Limited to only Bluey, Bingo, and Bandit
-const characterImages = {
-  'Bluey': null,
-  'Bingo': null,
-  'Bandit': null
+// Direct image imports - this will ensure Parcel processes them correctly
+import blueyImage from '../bluey.png';
+import bingoImage from '../public/images/bingo.png';
+import banditImage from '../public/images/bandit.png';
+import juliaImage from '../julia.png';
+
+// Map character names to their imported images
+const characterImageSources = {
+  'Bluey': blueyImage,
+  'Bingo': bingoImage,
+  'Bandit': banditImage,
+  'Julia': juliaImage
 };
 
-// Default colors for character circles when images aren't available
-// Limited to only Bluey, Bingo, and Bandit
-const characterColors = {
-  'Bluey': '#1E90FF',    // Blue
-  'Bingo': '#FF6B6B',    // Red/orange
-  'Bandit': '#4169E1'    // Royal blue
-};
-
-// Function to load character images - now just logs a message
-function loadCharacterImages() {
-  console.log('Using colored initials for character display');
-  
-  // No longer attempting to load actual images, just use null for all
-  Object.keys(characterImages).forEach(character => {
-    characterImages[character] = null;
-  });
-  
-  return Promise.resolve(); // Return a resolved promise for async compatibility
-}
-
-// Function to get character display (colored circle with initial)
+// Function to get character display - image only, no fallbacks
 function getCharacterDisplay(characterName) {
   // Create a container div for the character display
   const container = document.createElement('div');
@@ -37,48 +23,28 @@ function getCharacterDisplay(characterName) {
   container.style.height = '100%';
   container.style.position = 'relative';
   
-  // Get the character initial
-  const initial = characterName.charAt(0);
+  // Create image element with direct source
+  const imgElem = document.createElement('img');
+  imgElem.className = 'character-img';
+  imgElem.src = characterImageSources[characterName];
+  imgElem.alt = characterName;
+  imgElem.style.width = '100%';
+  imgElem.style.height = '100%';
+  imgElem.style.objectFit = 'cover';
+  imgElem.style.objectPosition = 'center';
+  imgElem.style.borderRadius = '50%';
+  imgElem.style.border = '3px solid white';
+  imgElem.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
   
-  // Determine the background color
-  let bgColor = '#4682B4'; // Default color
-  if (characterName === 'Bluey') {
-    bgColor = '#1E90FF';
-  } 
-  else if (characterName === 'Bingo') {
-    bgColor = '#FF6B6B';
-  }
-  else if (characterName === 'Bandit') {
-    bgColor = '#4169E1';
-  }
-  else if (characterName in characterColors) {
-    bgColor = characterColors[characterName];
-  }
-  
-  // Create the circular background with initial
-  const initialDiv = document.createElement('div');
-  initialDiv.className = 'character-initial';
-  initialDiv.textContent = initial;
-  initialDiv.style.backgroundColor = bgColor;
-  initialDiv.style.width = '100%';
-  initialDiv.style.height = '100%';
-  initialDiv.style.borderRadius = '50%';
-  initialDiv.style.display = 'flex';
-  initialDiv.style.justifyContent = 'center';
-  initialDiv.style.alignItems = 'center';
-  initialDiv.style.color = 'white';
-  initialDiv.style.fontSize = '60px';
-  initialDiv.style.fontWeight = 'bold';
-  
-  container.appendChild(initialDiv);
+  container.appendChild(imgElem);
   
   // Return the HTML string
   return container.outerHTML;
 }
 
+// No loading function needed, we're using direct image paths
+
 export {
-  characterImages,
-  characterColors,
-  loadCharacterImages,
+  characterImageSources,
   getCharacterDisplay
 };

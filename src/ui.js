@@ -1,6 +1,6 @@
 import { gameState, playCard, chooseColor, startGame, drawCard, initializeEmptyGame } from './game.js';
 import { colors } from './deck.js';
-import { getCharacterDisplay, loadCharacterImages } from './images.js';
+import { getCharacterDisplay, characterImageSources } from './images.js';
 
 // Helper function to apply common styles to elements
 function applyStyles(element, styles) {
@@ -12,23 +12,21 @@ function applyStyles(element, styles) {
 
 // Initialize the game board
 function renderGame() {
-  // Load character images (when they become available)
-  loadCharacterImages();
+  console.log('Starting renderGame');
   
-  // Render opponents area
+  // Render all game elements
   renderOpponents();
-  
-  // Render deck and discard pile
   renderDeckAndDiscardPile();
-  
-  // Render player's hand
   renderPlayerHand();
-  
-  // Set up color choice UI
   setupColorChoiceUI();
-  
-  // Update turn indicator
   updateTurnIndicator();
+  
+  // Render Julia if the function exists
+  if (typeof renderJulia === 'function') {
+    renderJulia();
+  }
+  
+  console.log('Initial renderGame complete');
 }
 
 // Update the turn indicator to show whose turn it is visually
@@ -98,36 +96,90 @@ function createCardsContainer(player) {
   cardsContainer.style.width = '110%';
   cardsContainer.style.maxWidth = '350px';
   cardsContainer.style.flexWrap = 'wrap';
-  cardsContainer.style.alignItems = 'center';
-  cardsContainer.style.marginLeft = '-5%';
   
-  // Calculate card overlap factor based on number of cards
-  const cardOverlapFactor = Math.min(1, 7 / Math.max(1, player.hand.length));
-  const cardOverlap = -20 * cardOverlapFactor;
+  // Create a visual representation of cards
+  const numCards = player.hand.length;
   
-  // Create visual representation of all cards
-  for (let j = 0; j < player.hand.length; j++) {
+  // Limit the number of displayed cards
+  const maxVisibleCards = 7;
+  const cardsToShow = Math.min(numCards, maxVisibleCards);
+  
+  // Create and add cards
+  for (let i = 0; i < cardsToShow; i++) {
     const card = document.createElement('div');
     card.className = 'opponent-card';
     
-    // Calculate card size based on number of cards
-    const cardSize = Math.max(26, 35 - Math.min(10, Math.max(0, player.hand.length - 5)));
-    
-    // Style the card
-    card.style.width = `${cardSize}px`;
-    card.style.height = `${cardSize * 1.4}px`;
-    card.style.backgroundColor = '#4682b4';
-    card.style.border = '2px solid white';
-    card.style.borderRadius = '5px';
-    card.style.margin = `0 ${cardOverlap}px`;
-    card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-    card.style.zIndex = j;
-    card.style.position = 'relative';
+    // Use different styling when there's only one card left
+    if (numCards === 1) {
+      // Style for UNO card
+      card.style.width = '40px';
+      card.style.height = '56px';
+      card.style.backgroundColor = '#ff3b3b';
+      card.style.margin = '0 4px';
+      card.style.borderRadius = '8px';
+      card.style.border = '2px solid white';
+      card.style.boxShadow = '0 2px 8px rgba(255, 0, 0, 0.5)';
+      
+      if (player.hasCalledUno) {
+        // Add UNO text on the card
+        const unoText = document.createElement('div');
+        unoText.textContent = 'UNO';
+        unoText.style.color = 'white';
+        unoText.style.fontWeight = 'bold';
+        unoText.style.fontSize = '12px';
+        unoText.style.transform = 'rotate(-45deg)';
+        unoText.style.position = 'absolute';
+        unoText.style.top = '50%';
+        unoText.style.left = '50%';
+        unoText.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
+        card.appendChild(unoText);
+      }
+    } else {
+      // Standard card styling
+      card.style.width = '28px';
+      card.style.height = '38px';
+      card.style.backgroundColor = '#ff5757';
+      card.style.margin = '0 -5px'; // Overlap cards
+      card.style.borderRadius = '5px';
+      card.style.border = '2px solid white';
+      card.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+    }
     
     cardsContainer.appendChild(card);
   }
   
+  // If there are more cards than we're showing, add indicator
+  if (numCards > maxVisibleCards) {
+    const moreCards = document.createElement('div');
+    moreCards.className = 'more-cards';
+    moreCards.textContent = `+${numCards - maxVisibleCards}`;
+    moreCards.style.marginLeft = '5px';
+    moreCards.style.fontWeight = 'bold';
+    moreCards.style.opacity = '0.7';
+    cardsContainer.appendChild(moreCards);
+  }
+  
   return cardsContainer;
+}
+
+// Create name badge for characters
+function createNameBadge(name, isLarge = false) {
+  const badge = document.createElement('div');
+  badge.className = 'name-badge';
+  badge.textContent = name;
+  
+  // Base styling
+  badge.style.backgroundColor = 'white';
+  badge.style.color = '#333';
+  badge.style.borderRadius = '15px';
+  badge.style.padding = isLarge ? '8px 15px' : '4px 10px';
+  badge.style.fontWeight = 'bold';
+  badge.style.fontSize = isLarge ? '22px' : '16px';
+  badge.style.marginTop = '8px';
+  badge.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+  badge.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
+  
+  return badge;
 }
 
 // Render the opponents (Bluey characters)
@@ -135,61 +187,87 @@ function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
-  // Set up the layout
+  // Set up the layout - always show 3 opponent slots
   opponentsArea.style.display = 'flex'; 
-  opponentsArea.style.justifyContent = 'center';
-  opponentsArea.style.gap = '15px';
+  opponentsArea.style.justifyContent = 'space-evenly';
+  opponentsArea.style.width = '100%';
+  opponentsArea.style.maxWidth = '900px';
+  opponentsArea.style.margin = '0 auto';
   
-  // Skip the first player (human player)
-  for (let i = 1; i < gameState.players.length; i++) {
-    const player = gameState.players[i];
-    const opponent = document.createElement('div');
-    opponent.className = 'opponent';
+  // Define fixed positions for each character
+  const positions = [
+    { left: '25%', top: '0' },   // Bluey (always first)
+    { left: '50%', top: '0' },   // Bingo (middle)
+    { left: '75%', top: '0' }    // Bandit (right)
+  ];
+  
+  // Create placeholders for all 3 potential opponent slots
+  for (let i = 0; i < 3; i++) {
+    const opponentSlot = document.createElement('div');
+    opponentSlot.className = 'opponent-slot';
+    opponentSlot.style.minWidth = '200px';
+    opponentSlot.style.minHeight = '200px';
+    opponentSlot.style.display = 'flex';
+    opponentSlot.style.flexDirection = 'column';
+    opponentSlot.style.alignItems = 'center';
+    opponentSlot.style.justifyContent = 'center';
     
-    // Add highlight for current player
-    if (gameState.currentPlayerIndex === i) {
-      opponent.classList.add('current-player');
+    // Check if this position has a player in the current game
+    const playerIndex = i + 1; // +1 because human is index 0
+    
+    if (playerIndex < gameState.players.length) {
+      // This is an active player
+      const player = gameState.players[playerIndex];
+      const opponent = document.createElement('div');
+      opponent.className = 'opponent';
+      
+      // Add highlight for current player
+      if (gameState.currentPlayerIndex === playerIndex) {
+        opponent.classList.add('current-player');
+      }
+      
+      // Create UNO indicator if needed
+      if (player.hand.length === 1 && player.hasCalledUno) {
+        const unoIndicator = document.createElement('div');
+        unoIndicator.className = 'uno-indicator';
+        unoIndicator.textContent = 'UNO!';
+        opponent.appendChild(unoIndicator);
+      }
+      
+      // Handle different character types
+      if (player.name === 'Bluey') {
+        // For Bluey, only add the name (no image)
+        opponent.appendChild(createNameBadge(player.name, false));
+      } else {
+        // For other characters, create and add the image with badge
+        const characterImage = document.createElement('div');
+        characterImage.className = 'character-image';
+        characterImage.style.width = '100px';
+        characterImage.style.height = '100px';
+        characterImage.style.position = 'relative';
+        
+        // Add the character display inside this container
+        characterImage.innerHTML = getCharacterDisplay(player.name);
+        
+        // Add the card badge
+        const cardBadge = createCardBadge(player.hand.length);
+        characterImage.appendChild(cardBadge);
+        
+        opponent.appendChild(characterImage);
+        
+        // Add character name
+        opponent.appendChild(createNameBadge(player.name, false));
+      }
+      
+      // Add cards container to show visual representation of cards
+      opponent.appendChild(createCardsContainer(player));
+      
+      // Add the opponent to the slot
+      opponentSlot.appendChild(opponent);
     }
     
-    // Create UNO indicator if needed
-    if (player.hand.length === 1 && player.hasCalledUno) {
-      const unoIndicator = document.createElement('div');
-      unoIndicator.className = 'uno-indicator';
-      unoIndicator.textContent = 'UNO!';
-      opponent.appendChild(unoIndicator);
-    }
-    
-    // Handle different character types
-    if (player.name === 'Bluey') {
-      // For Bluey, only add the name (no image)
-      opponent.appendChild(createNameBadge(player.name, false));
-    } else {
-      // For other characters, create and add the image with badge
-      const characterImage = document.createElement('div');
-      characterImage.className = 'character-image';
-      characterImage.style.width = '100px';
-      characterImage.style.height = '100px';
-      characterImage.style.position = 'relative';
-      
-      // Add the character display inside this container
-      const display = createCharacterDisplay(player.name, 100, true);
-      characterImage.appendChild(display);
-      
-      // Add the card badge
-      const cardBadge = createCardBadge(player.hand.length);
-      characterImage.appendChild(cardBadge);
-      
-      opponent.appendChild(characterImage);
-      
-      // Add character name
-      opponent.appendChild(createNameBadge(player.name, false));
-    }
-    
-    // Add cards container to show visual representation of cards
-    opponent.appendChild(createCardsContainer(player));
-    
-    // Add the opponent to the area
-    opponentsArea.appendChild(opponent);
+    // Add the slot to the area regardless of whether it contains a player
+    opponentsArea.appendChild(opponentSlot);
   }
 }
 
@@ -203,72 +281,81 @@ function renderDeckAndDiscardPile() {
   
   // Create better deck back design
   const deckBack = document.createElement('div');
-  deckBack.className = 'deck-back';
+  deckBack.className = 'card-back';
+  deckBack.style.width = '120px';
+  deckBack.style.height = '168px';
+  deckBack.style.borderRadius = '10px';
+  deckBack.style.backgroundColor = '#ff5757';
+  deckBack.style.border = '3px solid white';
+  deckBack.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+  deckBack.style.position = 'relative';
+  deckBack.style.display = 'flex';
+  deckBack.style.justifyContent = 'center';
+  deckBack.style.alignItems = 'center';
   
-  // Add UNO logo
+  // Add UNO logo to deck back
   const unoLogo = document.createElement('div');
-  unoLogo.className = 'uno-logo';
   unoLogo.textContent = 'UNO';
+  unoLogo.style.color = 'white';
+  unoLogo.style.fontSize = '32px';
+  unoLogo.style.fontWeight = 'bold';
+  unoLogo.style.transform = 'rotate(-45deg)';
+  unoLogo.style.textShadow = '0 2px 5px rgba(0, 0, 0, 0.5)';
+  unoLogo.style.letterSpacing = '2px';
   deckBack.appendChild(unoLogo);
   
-  // Add card count or start text
+  // Add card count to deck
   const deckCount = document.createElement('div');
   deckCount.className = 'deck-count';
-  
-  if (!gameState.isGameStarted) {
-    // If game hasn't started, show "Tap to Start" instead of card count
-    deckCount.textContent = "Start!";
-    deckCount.style.fontSize = "24px";
-    deckCount.style.padding = "5px 12px";
-    deckCount.style.backgroundColor = "#ff3b3b";
-    deckCount.style.color = "white";
-    deckCount.style.fontWeight = "bold";
-    deckCount.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-    deckCount.style.cursor = "pointer";
-    
-    // Make the entire deck more noticeable
-    deckElement.style.cursor = "pointer";
-    deckElement.style.animation = "pulse 1.5s infinite";
-    
-    // Add a start game class to the deck
-    deckElement.classList.add('start-deck');
-  } else {
-    // Normal card count during game
-    deckCount.textContent = `${gameState.deck.length}`;
-  }
-  
+  deckCount.textContent = gameState.deck.length.toString();
+  deckCount.style.position = 'absolute';
+  deckCount.style.top = '-10px';
+  deckCount.style.right = '-10px';
+  deckCount.style.backgroundColor = 'white';
+  deckCount.style.color = '#333';
+  deckCount.style.borderRadius = '50%';
+  deckCount.style.width = '30px';
+  deckCount.style.height = '30px';
+  deckCount.style.display = 'flex';
+  deckCount.style.justifyContent = 'center';
+  deckCount.style.alignItems = 'center';
+  deckCount.style.fontWeight = 'bold';
+  deckCount.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+  deckCount.style.border = '2px solid #ff5757';
   deckBack.appendChild(deckCount);
+  
   deckElement.appendChild(deckBack);
   
-  // Make the deck interactive
-  deckElement.addEventListener('click', () => {
-    if (!gameState.isGameStarted) {
-      // Start the game when tapping on the deck before game begins
-      startGame();
-      console.log("Game started!");
-    } else if (gameState.currentPlayerIndex === 0 && !gameState.waitingForColorChoice) {
-      // Draw card during the game when it's player's turn
-      drawCard();
-    }
-  });
-  
-  // Only highlight the deck if it's the player's turn and they need to draw
-  if (gameState.isGameStarted && gameState.currentPlayerIndex === 0 && !gameState.waitingForColorChoice) {
-    // Check if the player has any legal cards to play
-    const hasLegalPlay = playerHasLegalMove();
-    
-    // Special highlight for required draws (Draw 2 or Draw 4)
-    // Remove any existing draw indicators and reminders regardless of condition
-    const existingIndicators = document.querySelectorAll('.draw-indicator');
-    existingIndicators.forEach(indicator => {
-      if (indicator.parentElement) {
-        indicator.parentElement.removeChild(indicator);
+  // Add click handler for drawing cards
+  deckElement.onclick = () => {
+    if (gameState.currentPlayerIndex === 0) { // Only if it's the human player's turn
+      if (gameState.requiredDraws > 0) {
+        // If player needs to draw cards due to Draw 2 or Draw 4
+        drawCard(gameState);
+        
+        // Remove 'required-draw' and 'active-deck' classes when no more draws required
+        if (gameState.requiredDraws === 0) {
+          deckElement.classList.remove('required-draw');
+          deckElement.classList.remove('active-deck');
+          
+          // Remove any draw indicators
+          const drawIndicators = document.querySelectorAll('.draw-indicator, .deck-reminder');
+          drawIndicators.forEach(indicator => {
+            indicator.parentElement.removeChild(indicator);
+          });
+        }
+      } else if (!gameState.waitingForColorChoice) {
+        // Regular draw
+        drawCard(gameState);
       }
-    });
-    
-    // Remove any existing deck reminders
-    const existingReminders = document.querySelectorAll('.deck-reminder');
-    existingReminders.forEach(reminder => {
+    }
+  };
+  
+  // Add required draw indicators and styling if needed
+  if (gameState.requiredDraws > 0) {
+    // Remove any existing indicators first
+    const existingIndicators = document.querySelectorAll('.draw-indicator, .deck-reminder');
+    existingIndicators.forEach(reminder => {
       if (reminder.parentElement) {
         reminder.parentElement.removeChild(reminder);
       }
@@ -370,20 +457,7 @@ function renderDeckAndDiscardPile() {
       deckCounter.style.border = '2px solid #ff3b3b';
       deckCounter.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
       deckElement.appendChild(deckCounter);
-    } 
-    // Regular deck highlighting - only if player has no legal moves
-    else if (!hasLegalPlay) {
-      deckElement.classList.add('active-deck');
-      deckElement.classList.remove('required-draw');
-    } 
-    else {
-      // Player has legal moves, don't highlight deck
-      deckElement.classList.remove('active-deck');
-      deckElement.classList.remove('required-draw');
     }
-  } else {
-    deckElement.classList.remove('active-deck');
-    deckElement.classList.remove('required-draw');
   }
   
   // Render discard pile
@@ -391,511 +465,424 @@ function renderDeckAndDiscardPile() {
   
   if (gameState.discardPile.length > 0) {
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
-    const cardElement = createCardElement(topCard, -1, false); // Not playable
+    const cardElement = createCardElement(topCard);
     
-    // Make the discard pile card bigger to match the deck size
-    cardElement.style.width = '140px';
-    cardElement.style.height = '210px';
-    cardElement.style.margin = '0';
-    cardElement.style.fontSize = '30px';
-    cardElement.style.borderRadius = '15px';
-    cardElement.style.border = '5px solid white';
-    
-    // Adjust the card corners and other elements for the larger card
-    const corners = cardElement.querySelectorAll('.card-corner');
-    corners.forEach(corner => {
-      corner.style.fontSize = '32px';
-      corner.style.width = '50px';
-      corner.style.height = '50px';
-    });
-    
-    // Adjust the card emoji size
-    const emoji = cardElement.querySelector('.card-emoji');
-    if (emoji) {
-      emoji.style.fontSize = '75px';
-      emoji.style.transform = 'rotate(0deg)'; // Ensure emoji is straight
-    }
-    
-    // Adjust the oval background
-    const oval = cardElement.querySelector('.card-oval');
-    if (oval) {
-      oval.style.width = '85%';
-      oval.style.height = '70%';
-      oval.style.transform = 'translate(-50%, -50%) rotate(0deg)'; // Ensure oval is straight
-    }
+    // Add a subtle glow effect to the top discard card
+    cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
     
     discardPileElement.appendChild(cardElement);
+    
+    // Show the current color if it's a wild card
+    if ((topCard.value === 'Wild' || topCard.value === 'Wild Draw 4') && gameState.currentColor) {
+      updateColorIndicator(gameState.currentColor);
+    } else {
+      updateColorIndicator(topCard.color);
+    }
+  } else {
+    // Show empty placeholder for discard pile
+    const emptyPile = document.createElement('div');
+    emptyPile.className = 'empty-discard';
+    emptyPile.style.width = '120px';
+    emptyPile.style.height = '168px';
+    emptyPile.style.borderRadius = '10px';
+    emptyPile.style.border = '3px dashed rgba(255, 255, 255, 0.5)';
+    emptyPile.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+    discardPileElement.appendChild(emptyPile);
+    
+    // Hide color indicator when no cards are in play
+    updateColorIndicator(null);
+  }
+}
+
+// Update the color indicator on the side of the screen
+function updateColorIndicator(color) {
+  const indicator = document.getElementById('color-indicator');
+  if (!indicator) return;
+  
+  if (!color) {
+    // Hide indicator if no color
+    indicator.style.display = 'none';
+    return;
   }
   
-  // Update the side color indicator
-  const colorIndicator = document.getElementById('color-indicator');
+  // Show and update indicator
+  indicator.style.display = 'block';
   
-  // Remove all color classes first
-  colorIndicator.className = ''; // Reset classes
+  // Map color names to actual CSS colors
+  const colorMap = {
+    'red': '#ff3b3b',
+    'blue': '#4a7af5',
+    'green': '#47c83e',
+    'yellow': '#ffee3e'
+  };
   
-  if (gameState.currentColor) {
-    // Add the appropriate color class
-    colorIndicator.classList.add(gameState.currentColor);
-  }
-}
-
-// Create a container for player cards
-function createPlayerCardsContainer() {
-  const container = document.createElement('div');
+  const cssColor = colorMap[color.toLowerCase()] || '#ffffff';
   
-  applyStyles(container, {
-    display: 'flex',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: '5px',
-    padding: '10px 5px',
-    width: '100%'
-  });
-  
-  return container;
-}
-
-// Create player cards title
-function createPlayerCardsTitle() {
-  const title = document.createElement('div');
-  title.textContent = 'Your Cards';
-  
-  applyStyles(title, {
-    width: '100%',
-    textAlign: 'center',
-    fontSize: '20px',
-    fontWeight: 'bold',
-    marginBottom: '8px',
-    color: '#333'
-  });
-  
-  return title;
-}
-
-// Create UNO indicator for player
-function createPlayerUnoIndicator() {
-  const indicator = document.createElement('div');
-  indicator.className = 'uno-indicator';
-  indicator.textContent = 'UNO!';
-  
-  applyStyles(indicator, {
-    position: 'absolute',
-    top: '0',
-    left: '50%',
-    transform: 'translateX(-50%)'
-  });
-  
-  return indicator;
-}
-
-// Customize a card element for player's hand
-function customizePlayerCard(cardElement) {
-  // Make cards smaller with slight spacing
-  applyStyles(cardElement, {
-    width: '88px',
-    height: '132px',
-    margin: '0 -2px 0 0'
-  });
-  
-  // Reduce emoji size
-  const emoji = cardElement.querySelector('.card-emoji');
-  if (emoji) {
-    emoji.style.fontSize = '35px';
-  }
-  
-  // Make corner numbers smaller
-  const corners = cardElement.querySelectorAll('.card-corner');
-  corners.forEach(corner => {
-    applyStyles(corner, {
-      fontSize: '15px',
-      width: '20px',
-      height: '20px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: '0',
-      margin: '0'
-    });
-  });
-  
-  return cardElement;
+  // Style the indicator
+  indicator.style.backgroundColor = cssColor;
+  indicator.style.width = '30px';
+  indicator.style.height = '150px';
+  indicator.style.borderRadius = '15px';
+  indicator.style.boxShadow = `0 0 20px ${cssColor}88`;
+  indicator.style.border = '3px solid white';
 }
 
 // Render the player's hand
 function renderPlayerHand() {
   const playerHandElement = document.getElementById('player-hand');
   playerHandElement.innerHTML = '';
-  playerHandElement.scrollLeft = 0; // Reset scroll position
   
-  const player = gameState.players[0]; // Human player
+  // Create title for player's hand
+  const titleElement = document.createElement('div');
+  titleElement.className = 'hand-title';
+  titleElement.textContent = 'Your Cards';
+  titleElement.style.textAlign = 'center';
+  titleElement.style.fontSize = '24px';
+  titleElement.style.fontWeight = 'bold';
+  titleElement.style.marginBottom = '15px';
+  titleElement.style.color = 'rgba(0, 0, 0, 0.7)';
+  playerHandElement.appendChild(titleElement);
   
-  // Create container for better card arrangement
-  const cardsContainer = createPlayerCardsContainer();
+  // Get player's hand
+  const playerHand = gameState.players[0].hand;
   
-  // Add title for player's cards
-  cardsContainer.appendChild(createPlayerCardsTitle());
+  // Create container for cards
+  const cardsContainer = document.createElement('div');
+  cardsContainer.className = 'player-cards';
+  cardsContainer.style.display = 'flex';
+  cardsContainer.style.justifyContent = 'center';
+  cardsContainer.style.flexWrap = 'wrap';
+  cardsContainer.style.gap = '10px';
+  playerHandElement.appendChild(cardsContainer);
   
-  // Handle Uno indicator
-  if (player.hand.length === 1 && player.hasCalledUno) {
-    playerHandElement.appendChild(createPlayerUnoIndicator());
-  }
-  
-  // Create and add card elements
-  player.hand.forEach((card, index) => {
-    // Create the base card
-    const cardElement = createCardElement(card, index, false);
+  // Generate card elements
+  playerHand.forEach((card, index) => {
+    const cardElement = createCardElement(card);
     
-    // Customize it for player's hand
-    customizePlayerCard(cardElement);
+    // Add active class if it's the player's turn and the card is playable
+    if (gameState.currentPlayerIndex === 0 && !gameState.waitingForColorChoice && isCardPlayable(card)) {
+      cardElement.classList.add('playable-card');
+      
+      // Add click handler for playable cards
+      cardElement.onclick = () => {
+        // Play the card
+        playCard(gameState, 0, index);
+      };
+    }
     
-    // Add to container
     cardsContainer.appendChild(cardElement);
   });
   
-  // Add the cards container to the hand element
-  playerHandElement.appendChild(cardsContainer);
+  // Display UNO button if player has 2 cards left
+  if (playerHand.length === 2 && gameState.currentPlayerIndex === 0 && !gameState.players[0].hasCalledUno) {
+    const unoButtonContainer = document.createElement('div');
+    unoButtonContainer.style.display = 'flex';
+    unoButtonContainer.style.justifyContent = 'center';
+    unoButtonContainer.style.marginTop = '20px';
+    
+    const unoButton = document.createElement('button');
+    unoButton.textContent = 'Say UNO!';
+    unoButton.className = 'uno-button';
+    unoButton.style.padding = '10px 25px';
+    unoButton.style.fontSize = '20px';
+    unoButton.style.fontWeight = 'bold';
+    unoButton.style.backgroundColor = '#ff3b3b';
+    unoButton.style.color = 'white';
+    unoButton.style.border = 'none';
+    unoButton.style.borderRadius = '15px';
+    unoButton.style.cursor = 'pointer';
+    unoButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+    unoButton.style.transform = 'scale(1)';
+    unoButton.style.transition = 'transform 0.2s';
+    
+    // Add hover effect
+    unoButton.onmouseenter = () => {
+      unoButton.style.transform = 'scale(1.05)';
+    };
+    
+    unoButton.onmouseleave = () => {
+      unoButton.style.transform = 'scale(1)';
+    };
+    
+    // Add click handler
+    unoButton.onclick = () => {
+      // Set UNO flag for player
+      gameState.players[0].hasCalledUno = true;
+      // Update display
+      updateGameDisplay(gameState);
+      
+      // Add animation and sound
+      const unoAnimation = document.createElement('div');
+      unoAnimation.className = 'uno-animation';
+      unoAnimation.textContent = 'UNO!';
+      unoAnimation.style.position = 'fixed';
+      unoAnimation.style.top = '50%';
+      unoAnimation.style.left = '50%';
+      unoAnimation.style.transform = 'translate(-50%, -50%)';
+      unoAnimation.style.fontSize = '100px';
+      unoAnimation.style.fontWeight = 'bold';
+      unoAnimation.style.color = '#ff3b3b';
+      unoAnimation.style.textShadow = '0 0 20px white';
+      unoAnimation.style.zIndex = '9999';
+      document.body.appendChild(unoAnimation);
+      
+      // Play UNO sound
+      // soundSystem.playUnoSound();
+      
+      // Animate and remove
+      unoAnimation.animate(
+        [
+          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0 },
+          { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1 },
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+          { transform: 'translate(-50%, -50%) scale(1.5)', opacity: 0 }
+        ],
+        {
+          duration: 1500,
+          easing: 'ease-in-out'
+        }
+      ).onfinish = () => {
+        document.body.removeChild(unoAnimation);
+      };
+    };
+    
+    unoButtonContainer.appendChild(unoButton);
+    playerHandElement.appendChild(unoButtonContainer);
+  }
 }
 
-// Moved the applyStyles function to be at the top of the file
-
-// Helper function to create card corners
-function createCardCorner(card, position) {
-  const corner = document.createElement('div');
-  corner.className = `card-corner ${position}`;
+// Setup color choice UI
+function setupColorChoiceUI() {
+  const colorChoiceElement = document.getElementById('color-choice');
+  const colorButtonsElement = document.getElementById('color-buttons');
   
-  // Set position styles
-  const styles = {
-    position: 'absolute',
-    ...(position === 'top-left' 
-        ? { top: '2px', left: '2px' } 
-        : { bottom: '2px', right: '2px' })
+  if (!colorChoiceElement || !colorButtonsElement) return;
+  
+  // Clear existing buttons
+  colorButtonsElement.innerHTML = '';
+  
+  // Hide or show color choice based on game state
+  if (gameState.waitingForColorChoice) {
+    colorChoiceElement.style.display = 'flex';
+    colorChoiceElement.style.flexDirection = 'column';
+    colorChoiceElement.style.alignItems = 'center';
+    colorChoiceElement.style.justifyContent = 'center';
+    colorChoiceElement.style.position = 'fixed';
+    colorChoiceElement.style.top = '50%';
+    colorChoiceElement.style.left = '50%';
+    colorChoiceElement.style.transform = 'translate(-50%, -50%)';
+    colorChoiceElement.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+    colorChoiceElement.style.padding = '30px';
+    colorChoiceElement.style.borderRadius = '20px';
+    colorChoiceElement.style.boxShadow = '0 0 0 2000px rgba(0, 0, 0, 0.5), 0 5px 25px rgba(0, 0, 0, 0.5)';
+    colorChoiceElement.style.zIndex = '1000';
+    
+    // Generate color buttons
+    const colorOptions = ['red', 'blue', 'green', 'yellow'];
+    
+    // Create container for buttons
+    colorButtonsElement.style.display = 'flex';
+    colorButtonsElement.style.justifyContent = 'center';
+    colorButtonsElement.style.gap = '15px';
+    colorButtonsElement.style.marginTop = '15px';
+    
+    // Map of colors to emoji
+    const colorEmojis = {
+      'red': '❤️',
+      'blue': '💙',
+      'green': '💚',
+      'yellow': '💛'
+    };
+    
+    // Create buttons for each color
+    colorOptions.forEach(color => {
+      const button = document.createElement('button');
+      button.className = 'color-button';
+      button.dataset.color = color;
+      
+      // Style the button
+      button.style.width = '80px';
+      button.style.height = '80px';
+      button.style.borderRadius = '50%';
+      button.style.border = 'none';
+      button.style.cursor = 'pointer';
+      button.style.fontSize = '40px';
+      button.style.display = 'flex';
+      button.style.justifyContent = 'center';
+      button.style.alignItems = 'center';
+      button.style.transition = 'transform 0.2s';
+      
+      // Set color-specific styles
+      const colorMap = {
+        'red': '#ff3b3b',
+        'blue': '#4a7af5',
+        'green': '#47c83e',
+        'yellow': '#ffee3e'
+      };
+      
+      button.style.backgroundColor = colorMap[color];
+      button.style.boxShadow = `0 4px 10px ${colorMap[color]}88`;
+      button.innerHTML = colorEmojis[color];
+      
+      // Add hover effect
+      button.onmouseenter = () => {
+        button.style.transform = 'scale(1.1)';
+      };
+      
+      button.onmouseleave = () => {
+        button.style.transform = 'scale(1)';
+      };
+      
+      // Add click handler
+      button.onclick = () => {
+        chooseColor(gameState, color);
+        colorChoiceElement.style.display = 'none';
+      };
+      
+      colorButtonsElement.appendChild(button);
+    });
+  } else {
+    colorChoiceElement.style.display = 'none';
+  }
+}
+
+// Helper to determine if a card is playable based on the current game state
+function isCardPlayable(card) {
+  // If required draws are pending, no cards are playable
+  if (gameState.requiredDraws > 0) {
+    return false;
+  }
+  
+  // If waiting for color choice, no cards are playable
+  if (gameState.waitingForColorChoice) {
+    return false;
+  }
+  
+  // Check if discard pile is empty
+  if (!gameState.discardPile || gameState.discardPile.length === 0) {
+    // If no cards in discard pile, any card is playable
+    return true;
+  }
+  
+  const topCard = gameState.discardPile[gameState.discardPile.length - 1];
+  
+  // Wild cards are always playable
+  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
+    return true;
+  }
+  
+  // If top card is wild, match against current color
+  if (topCard && (topCard.value === 'Wild' || topCard.value === 'Wild Draw 4') && gameState.currentColor) {
+    return card.color === gameState.currentColor;
+  }
+  
+  // Otherwise, match color or value
+  return !topCard || card.color === topCard.color || card.value === topCard.value;
+}
+
+// Create a card element for display
+function createCardElement(card) {
+  const cardElement = document.createElement('div');
+  cardElement.className = 'card';
+  
+  // Base card styling
+  cardElement.style.width = '80px';
+  cardElement.style.height = '112px';
+  cardElement.style.borderRadius = '10px';
+  cardElement.style.border = '3px solid white';
+  cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+  cardElement.style.position = 'relative';
+  cardElement.style.display = 'flex';
+  cardElement.style.flexDirection = 'column';
+  cardElement.style.justifyContent = 'center';
+  cardElement.style.alignItems = 'center';
+  cardElement.style.transition = 'transform 0.2s';
+  
+  // Color-specific styling
+  const colorMap = {
+    'red': '#ff3b3b',
+    'blue': '#4a7af5',
+    'green': '#47c83e',
+    'yellow': '#ffee3e'
   };
   
-  applyStyles(corner, styles);
-  
-  // Determine what text to show in the corner
-  let cornerText;
-  if (card.value === 'Skip') {
-    cornerText = '⊘';
-  } else if (card.value === 'Reverse') {
-    cornerText = '⟷';
-  } else if (card.value === 'Draw 2') {
-    cornerText = '+2';
-  } else if (card.value === 'Wild') {
-    cornerText = '';
-  } else if (card.value === 'Wild Draw 4') {
-    cornerText = '+4';
-  } else {
-    cornerText = card.value;
-  }
-  
-  corner.textContent = cornerText;
-  
-  // For Wild cards, create a rainbow circle icon in the corners
   if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
-    const rainbowCircle = document.createElement('div');
-    rainbowCircle.className = 'rainbow-circle';
-    applyStyles(rainbowCircle, {
-      width: '12px',
-      height: '12px'
-    });
-    
-    corner.appendChild(rainbowCircle);
-  }
-  
-  return corner;
-}
-
-// Helper function to create card oval and emoji
-function createCardCenter(card) {
-  // Create the oval background
-  const ovalBackground = document.createElement('div');
-  ovalBackground.className = 'card-oval';
-  
-  applyStyles(ovalBackground, {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%) rotate(0deg)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '80%',
-    height: '65%'
-  });
-  
-  // Create emoji element
-  const emojiElement = document.createElement('div');
-  emojiElement.className = 'card-emoji';
-  emojiElement.textContent = card.emoji;
-  
-  applyStyles(emojiElement, {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-    transform: 'rotate(0deg)'
-  });
-  
-  // Add special class for Wild Draw 4
-  if (card.color === 'wild' && card.value === 'Wild Draw 4') {
-    emojiElement.classList.add('wild-draw-4');
-  }
-  
-  ovalBackground.appendChild(emojiElement);
-  return { ovalBackground, emojiElement };
-}
-
-// Create a card element
-function createCardElement(card, index, isPlayable) {
-  const cardElement = document.createElement('div');
-  
-  if (card.color === 'wild') {
-    cardElement.className = `card wild`;
+    // Special styling for wild cards
+    cardElement.style.background = 'linear-gradient(135deg, #ff3b3b 0%, #4a7af5 50%, #47c83e 75%, #ffee3e 100%)';
   } else {
-    cardElement.className = `card ${card.color}`;
+    cardElement.style.backgroundColor = colorMap[card.color.toLowerCase()];
   }
   
-  if (isPlayable) {
-    cardElement.classList.add('playable');
-  }
+  // Add value and emoji to card
+  const cardContent = document.createElement('div');
+  cardContent.className = 'card-content';
+  cardContent.style.fontSize = '40px';
+  cardContent.style.display = 'flex';
+  cardContent.style.flexDirection = 'column';
+  cardContent.style.alignItems = 'center';
+  cardContent.style.justifyContent = 'center';
+  cardContent.style.height = '100%';
+  cardContent.style.width = '100%';
   
-  // Add card value as data attribute for styling specific cards
-  cardElement.setAttribute('data-value', card.value);
+  // Add card value to top-left and bottom-right corners
+  const topValue = document.createElement('div');
+  topValue.className = 'card-corner top-left';
+  topValue.textContent = card.value;
+  topValue.style.position = 'absolute';
+  topValue.style.top = '5px';
+  topValue.style.left = '5px';
+  topValue.style.fontSize = '16px';
+  topValue.style.fontWeight = 'bold';
+  topValue.style.color = 'white';
   
-  // Create the UNO card design with oval in the middle
-  const cardInner = document.createElement('div');
-  cardInner.className = 'card-inner';
+  const bottomValue = document.createElement('div');
+  bottomValue.className = 'card-corner bottom-right';
+  bottomValue.textContent = card.value;
+  bottomValue.style.position = 'absolute';
+  bottomValue.style.bottom = '5px';
+  bottomValue.style.right = '5px';
+  bottomValue.style.fontSize = '16px';
+  bottomValue.style.fontWeight = 'bold';
+  bottomValue.style.color = 'white';
+  bottomValue.style.transform = 'rotate(180deg)';
   
-  // Create card corners
-  const topLeft = createCardCorner(card, 'top-left');
-  const bottomRight = createCardCorner(card, 'bottom-right');
+  cardElement.appendChild(topValue);
+  cardElement.appendChild(bottomValue);
   
-  // Create card center with emoji
-  const { ovalBackground, emojiElement } = createCardCenter(card);
+  // Add emoji for card value
+  const emoji = document.createElement('div');
+  emoji.textContent = card.emoji;
+  emoji.style.fontSize = '40px';
+  emoji.style.textAlign = 'center';
   
-  // Assemble the card
-  cardInner.appendChild(ovalBackground);
-  cardElement.appendChild(cardInner);
-  cardElement.appendChild(topLeft);
-  cardElement.appendChild(bottomRight);
+  cardContent.appendChild(emoji);
+  cardElement.appendChild(cardContent);
   
-  // Add touch event for playing cards (if it's in player's hand)
-  if (index >= 0) {
-    cardElement.addEventListener('click', () => {
-      if (gameState.currentPlayerIndex === 0 && !gameState.waitingForColorChoice) {
-        const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-        if (canPlayCard(card, topDiscard, gameState.currentColor)) {
-          playCard(index);
-        } else {
-          // Visual feedback that card can't be played
-          cardElement.classList.add('shake');
-          setTimeout(() => {
-            cardElement.classList.remove('shake');
-          }, 500);
-        }
-      }
-    });
-  }
+  // Add hover effect for playable cards (handled in renderPlayerHand)
+  cardElement.onmouseenter = () => {
+    if (cardElement.classList.contains('playable-card')) {
+      cardElement.style.transform = 'translateY(-10px)';
+      cardElement.style.boxShadow = '0 12px 20px rgba(0, 0, 0, 0.2)';
+    }
+  };
+  
+  cardElement.onmouseleave = () => {
+    cardElement.style.transform = 'translateY(0)';
+    cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+  };
   
   return cardElement;
 }
 
-// Setup the color choice UI
-function setupColorChoiceUI() {
-  // First, make sure the color choice element exists, create it if it doesn't
-  let colorChoiceElement = document.getElementById('color-choice');
-  if (!colorChoiceElement) {
-    colorChoiceElement = document.createElement('div');
-    colorChoiceElement.id = 'color-choice';
-    colorChoiceElement.style.position = 'fixed';
-    colorChoiceElement.style.top = '0';
-    colorChoiceElement.style.left = '0';
-    colorChoiceElement.style.width = '100%';
-    colorChoiceElement.style.height = '100%';
-    colorChoiceElement.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    colorChoiceElement.style.display = 'none';
-    colorChoiceElement.style.zIndex = '1000';
-    colorChoiceElement.style.justifyContent = 'center';
-    colorChoiceElement.style.alignItems = 'center';
-    colorChoiceElement.style.flexDirection = 'column';
-    
-    // Create the buttons container
-    const colorButtonsContainer = document.createElement('div');
-    colorButtonsContainer.id = 'color-buttons';
-    colorButtonsContainer.style.display = 'flex';
-    colorButtonsContainer.style.justifyContent = 'center';
-    colorButtonsContainer.style.alignItems = 'center';
-    colorButtonsContainer.style.marginTop = '20px';
-    
-    // Add a title
-    const titleElement = document.createElement('h2');
-    titleElement.textContent = 'Choose a Color!';
-    titleElement.style.color = 'white';
-    titleElement.style.fontSize = '30px';
-    titleElement.style.marginBottom = '20px';
-    titleElement.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
-    titleElement.style.textAlign = 'center';
-    
-    // Add elements to the color choice container
-    colorChoiceElement.appendChild(titleElement);
-    colorChoiceElement.appendChild(colorButtonsContainer);
-    
-    // Add to the document
-    document.body.appendChild(colorChoiceElement);
-  }
-  
-  const colorButtonsContainer = document.getElementById('color-buttons');
-  
-  // Clear existing buttons
-  colorButtonsContainer.innerHTML = '';
-  
-  // Create color buttons
-  colors.forEach(color => {
-    const colorButton = document.createElement('button');
-    colorButton.style.width = '80px';
-    colorButton.style.height = '80px';
-    colorButton.style.backgroundColor = color;
-    colorButton.style.margin = '0 15px';
-    colorButton.style.borderRadius = '10px';
-    colorButton.style.border = '4px solid white';
-    colorButton.style.cursor = 'pointer';
-    colorButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-    colorButton.style.transition = 'transform 0.2s ease';
-    
-    // Add hover effect
-    colorButton.addEventListener('mouseover', () => {
-      colorButton.style.transform = 'scale(1.1)';
-    });
-    
-    colorButton.addEventListener('mouseout', () => {
-      colorButton.style.transform = 'scale(1)';
-    });
-    
-    // Add color name to button
-    const colorName = document.createElement('div');
-    colorName.textContent = color.toUpperCase();
-    colorName.style.position = 'absolute';
-    colorName.style.bottom = '-30px';
-    colorName.style.left = '50%';
-    colorName.style.transform = 'translateX(-50%)';
-    colorName.style.color = 'white';
-    colorName.style.fontWeight = 'bold';
-    colorName.style.textShadow = '0 1px 3px rgba(0, 0, 0, 0.8)';
-    colorButton.style.position = 'relative';
-    colorButton.appendChild(colorName);
-    
-    colorButton.addEventListener('click', () => {
-      chooseColor(color);
-      colorChoiceElement.style.display = 'none';
-    });
-    
-    colorButtonsContainer.appendChild(colorButton);
-  });
-}
-
-// Show color choice dialog
-function showColorChoiceUI() {
-  const colorChoiceElement = document.getElementById('color-choice');
-  if (!colorChoiceElement) {
-    setupColorChoiceUI();
-  }
-  colorChoiceElement.style.display = 'flex';
-  
-  // Ensure the dialog is visible and centered
-  colorChoiceElement.scrollIntoView({
-    behavior: 'smooth',
-    block: 'center'
-  });
-}
-
-// Check if a card can be played (for UI validation)
-function canPlayCard(card, topDiscard, currentColor) {
-  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
-    return true;
-  }
-  
-  if (card.color === currentColor) {
-    return true;
-  }
-  
-  if (card.value === topDiscard.value) {
-    return true;
-  }
-  
-  return false;
-}
-
-// Check if player has any legal moves
-function playerHasLegalMove() {
-  if (!gameState.isGameStarted || gameState.waitingForColorChoice) {
-    return false;
-  }
-  
-  const player = gameState.players[0]; // Human player
-  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-  
-  // Check each card in hand to see if any can be played
-  for (let i = 0; i < player.hand.length; i++) {
-    if (canPlayCard(player.hand[i], topDiscard, gameState.currentColor)) {
-      return true; // Found at least one playable card
-    }
-  }
-  
-  return false; // No playable cards
-}
-
-// Update game display
-function updateGameDisplay(state, drawnCard = null) {
-  // Show the color choice UI if needed
-  if (state.waitingForColorChoice && state.currentPlayerIndex === 0) {
-    showColorChoiceUI();
-  }
-  
-  // No need to update draw button state as we're using direct deck tapping
-  
-  // Render all game elements
+// Function to update the game display based on the current state
+function updateGameDisplay(gameState) {
+  // Update all UI components
   renderOpponents();
   renderDeckAndDiscardPile();
   renderPlayerHand();
+  setupColorChoiceUI();
   updateTurnIndicator();
-  
-  // Never auto-play cards for human player, even if they can be played
-  // This section intentionally left empty to prevent auto-playing drawn cards
 }
-
-// Add animation when a card is played
-function animateCardPlay(cardIndex, isPlayerCard) {
-  // To be implemented for a more interactive experience
-}
-
-// Initialize game when the page loads
-window.addEventListener('DOMContentLoaded', () => {
-  // Hide any buttons that might be leftover from previous implementation
-  const sayUnoButton = document.getElementById('say-uno');
-  const toggleSoundButton = document.getElementById('toggle-sound');
-  const drawCardButton = document.getElementById('draw-card');
-  
-  if (sayUnoButton) sayUnoButton.style.display = 'none';
-  if (toggleSoundButton) toggleSoundButton.style.display = 'none';
-  if (drawCardButton) drawCardButton.style.display = 'none';
-  
-  // Initialize empty starter display
-  initializeEmptyGame();
-  renderGame();
-  
-  // Render Julia character
-  renderJulia();
-  
-  // Add welcome screen
-  showWelcomeScreen();
-  
-  // Add class to body when in standalone mode (added to homescreen)
-  if (window.navigator.standalone) {
-    document.body.classList.add('standalone');
-  }
-});
 
 // Create a standard character display with size customization
 function createCharacterDisplay(characterName, size = 100, includeDecorations = true) {
@@ -903,81 +890,42 @@ function createCharacterDisplay(characterName, size = 100, includeDecorations = 
   container.style.width = `${size}px`;
   container.style.height = `${size}px`;
   container.style.borderRadius = '50%';
-  
-  // Determine the background color based on character
-  let bgColor;
-  let decoration = null;
-  
-  if (characterName === 'Julia') {
-    bgColor = '#FFCC66'; // Golden yellow for Julia
-  } else if (characterName === 'Bluey') {
-    bgColor = '#1E90FF';
-  } else if (characterName === 'Bingo') {
-    bgColor = '#FF6B6B';
-    if (includeDecorations) decoration = '❤️';
-  } else if (characterName === 'Bandit') {
-    bgColor = '#4169E1';
-    if (includeDecorations) decoration = '😎';
-  } else {
-    bgColor = '#4682B4'; // Default color
-  }
-  
-  container.style.backgroundColor = bgColor;
-  container.style.display = 'flex';
-  container.style.justifyContent = 'center';
-  container.style.alignItems = 'center';
   container.style.position = 'relative';
+  container.style.overflow = 'hidden';
   container.style.border = '3px solid white';
   container.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
   
+  // Create image element using the direct path
+  const imgElem = document.createElement('img');
+  imgElem.src = characterImageSources[characterName];
+  imgElem.alt = characterName;
+  imgElem.style.width = '100%';
+  imgElem.style.height = '100%';
+  imgElem.style.objectFit = 'cover';
+  imgElem.style.objectPosition = 'center';
+  container.appendChild(imgElem);
+  
   // Add decoration if needed
-  if (decoration) {
-    const decorationElem = document.createElement('div');
-    decorationElem.style.position = 'absolute';
-    decorationElem.style.top = '50%';
-    decorationElem.style.left = '50%';
-    decorationElem.style.transform = 'translate(-50%, -50%)';
-    decorationElem.style.fontSize = `${size * 0.8}px`;
-    decorationElem.style.opacity = '0.3';
-    decorationElem.textContent = decoration;
-    container.appendChild(decorationElem);
+  if (includeDecorations) {
+    let decoration = null;
+    if (characterName === 'Bingo') decoration = '❤️';
+    else if (characterName === 'Bandit') decoration = '😎';
+    
+    if (decoration) {
+      const decorationElem = document.createElement('div');
+      decorationElem.style.position = 'absolute';
+      decorationElem.style.top = '50%';
+      decorationElem.style.left = '50%';
+      decorationElem.style.transform = 'translate(-50%, -50%)';
+      decorationElem.style.fontSize = `${size * 0.8}px`;
+      decorationElem.style.opacity = '0.3';
+      decorationElem.style.pointerEvents = 'none';
+      decorationElem.textContent = decoration;
+      container.appendChild(decorationElem);
+    }
   }
   
-  // Add the initial
-  const initial = document.createElement('div');
-  initial.textContent = characterName.charAt(0);
-  initial.style.color = 'white';
-  initial.style.fontSize = `${size * 0.5}px`;
-  initial.style.fontWeight = 'bold';
-  initial.style.position = 'relative';
-  initial.style.zIndex = '1';
-  
-  container.appendChild(initial);
   return container;
-}
-
-// Create a name badge for character
-function createNameBadge(characterName, isStandalone = false) {
-  const nameElem = document.createElement('span');
-  nameElem.textContent = characterName;
-  nameElem.style.fontSize = '20px';
-  nameElem.style.fontWeight = 'bold';
-  nameElem.style.color = 'black';
-  
-  if (isStandalone) {
-    // Standalone style (used for Julia)
-    nameElem.style.backgroundColor = 'white';
-    nameElem.style.padding = '5px 12px';
-    nameElem.style.borderRadius = '12px';
-    nameElem.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-    nameElem.style.marginTop = '10px';
-    nameElem.style.display = 'inline-block';
-  } else {
-    // Regular style (used within opponent div)
-    nameElem.className = 'character-name';
-  }
-  
-  return nameElem;
 }
 
 // Render Julia on the left side of the screen
@@ -1030,7 +978,7 @@ function showWelcomeScreen() {
   playerSelection.style.textAlign = 'center';
   
   const playerCountLabel = document.createElement('div');
-  playerCountLabel.textContent = 'How many opponents?';
+  playerCountLabel.textContent = 'Choose number of players:';
   playerCountLabel.style.fontSize = '22px';
   playerCountLabel.style.color = 'white';
   playerCountLabel.style.marginBottom = '15px';
@@ -1040,37 +988,38 @@ function showWelcomeScreen() {
   playerButtons.style.justifyContent = 'center';
   playerButtons.style.gap = '15px';
   
-  // Add buttons for 1-3 players
-  let selectedPlayers = 1; // Default to 1 opponent (Bluey)
-  
-  for (let i = 1; i <= 3; i++) {
-    const button = document.createElement('div');
+  // Create buttons for 2-4 players
+  for (let i = 2; i <= 4; i++) {
+    const button = document.createElement('button');
     button.textContent = i;
-    button.style.width = '50px';
-    button.style.height = '50px';
+    button.style.width = '60px';
+    button.style.height = '60px';
     button.style.borderRadius = '50%';
-    button.style.backgroundColor = i === 1 ? '#4CAF50' : 'rgba(255, 255, 255, 0.7)'; // Default select 1 player
-    button.style.color = i === 1 ? 'white' : 'black';
-    button.style.display = 'flex';
-    button.style.justifyContent = 'center';
-    button.style.alignItems = 'center';
-    button.style.fontSize = '24px';
+    button.style.border = 'none';
+    button.style.backgroundColor = 'white';
+    button.style.color = '#ff5757';
+    button.style.fontSize = '28px';
     button.style.fontWeight = 'bold';
     button.style.cursor = 'pointer';
-    button.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
-    button.style.transition = 'all 0.3s ease';
+    button.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.3)';
+    button.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
     
-    // Add click handler
-    button.addEventListener('click', () => {
-      // Update selected player count
-      selectedPlayers = i;
-      
-      // Update button styles
-      playerButtons.childNodes.forEach((btn, idx) => {
-        btn.style.backgroundColor = idx + 1 === i ? '#4CAF50' : 'rgba(255, 255, 255, 0.7)';
-        btn.style.color = idx + 1 === i ? 'white' : 'black';
-      });
-    });
+    // Add hover effect
+    button.onmouseenter = () => {
+      button.style.transform = 'scale(1.1)';
+      button.style.backgroundColor = '#ffcc66';
+    };
+    
+    button.onmouseleave = () => {
+      button.style.transform = 'scale(1)';
+      button.style.backgroundColor = 'white';
+    };
+    
+    // Start game with selected number of players
+    button.onclick = () => {
+      document.body.removeChild(welcomeScreen);
+      startGame(i);
+    };
     
     playerButtons.appendChild(button);
   }
@@ -1078,130 +1027,100 @@ function showWelcomeScreen() {
   playerSelection.appendChild(playerCountLabel);
   playerSelection.appendChild(playerButtons);
   
-  // UNO deck to click instead of a button
-  const startDeck = document.createElement('div');
-  startDeck.style.width = '140px';
-  startDeck.style.height = '210px';
-  startDeck.style.backgroundColor = '#ff66a5'; // Pink
-  startDeck.style.backgroundImage = 'repeating-linear-gradient(-45deg, #ff66a5, #ff66a5 15px, #e5407e 15px, #e5407e 30px)';
-  startDeck.style.borderRadius = '15px';
-  startDeck.style.position = 'relative';
-  startDeck.style.boxShadow = '0 5px 10px rgba(0, 0, 0, 0.3)';
-  startDeck.style.border = '5px solid white';
-  startDeck.style.margin = '20px auto';
-  startDeck.style.cursor = 'pointer';
-  
-  // Add UNO logo to the deck
-  const unoLogo = document.createElement('div');
-  unoLogo.textContent = 'UNO';
-  unoLogo.style.position = 'absolute';
-  unoLogo.style.top = '50%';
-  unoLogo.style.left = '50%';
-  unoLogo.style.transform = 'translate(-50%, -50%) rotate(-30deg)';
-  unoLogo.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
-  unoLogo.style.fontSize = '40px';
-  unoLogo.style.fontWeight = 'bold';
-  unoLogo.style.color = 'white';
-  unoLogo.style.backgroundColor = 'red';
-  unoLogo.style.padding = '5px 15px';
-  unoLogo.style.borderRadius = '20px';
-  unoLogo.style.border = '3px solid white';
-  unoLogo.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-  
-  // Add text below deck
-  const tapText = document.createElement('div');
-  tapText.textContent = 'Tap to Play!';
-  tapText.style.fontSize = '30px';
-  tapText.style.fontWeight = 'bold';
-  tapText.style.color = 'white';
-  tapText.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
-  tapText.style.marginTop = '20px';
-  
-  // Add click event
-  startDeck.addEventListener('click', () => {
-    document.body.removeChild(welcomeScreen);
-    // Start game with the selected number of players (adding 1 for the human player)
-    startGame(selectedPlayers + 1);
-  });
-  
-  startDeck.appendChild(unoLogo);
-  
-  // Add pulse animation style
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes pulse-welcome {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-  `;
-  document.head.appendChild(style);
-  
-  // Add UNO cards visual around the content
-  for (let i = 0; i < 8; i++) {
-    const card = document.createElement('div');
-    card.className = 'welcome-card';
-    card.style.position = 'absolute';
-    card.style.width = '100px';
-    card.style.height = '150px';
-    card.style.borderRadius = '10px';
-    card.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
-    
-    // Set random rotation and save it as a CSS variable for the animation
-    const rotation = Math.random() * 60 - 30;
-    card.style.setProperty('--rotation', `${rotation}deg`);
-    card.style.setProperty('--index', i);
-    card.style.transform = `rotate(${rotation}deg)`;
-    
-    // Random position around the edges
-    const side = Math.floor(Math.random() * 4);
-    if (side === 0) { // top
-      card.style.top = '5%';
-      card.style.left = `${Math.random() * 70 + 15}%`;
-    } else if (side === 1) { // right
-      card.style.top = `${Math.random() * 70 + 15}%`;
-      card.style.right = '5%';
-    } else if (side === 2) { // bottom
-      card.style.bottom = '5%';
-      card.style.left = `${Math.random() * 70 + 15}%`;
-    } else { // left
-      card.style.top = `${Math.random() * 70 + 15}%`;
-      card.style.left = '5%';
-    }
-    
-    // Random color
-    const colors = ['#ff3b3b', '#0066cc', '#3cb043', '#ffcc00'];
-    card.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-    
-    // Add emoji to the card
-    const emoji = document.createElement('div');
-    emoji.style.fontSize = '40px';
-    emoji.style.position = 'absolute';
-    emoji.style.top = '50%';
-    emoji.style.left = '50%';
-    emoji.style.transform = 'translate(-50%, -50%)';
-    
-    // Pick a random emoji from our UNO card set
-    const emojis = ['😬', '😁', '😍', '😇', '😎', '🙂', '😊', '😘', '😠', '👍', '💩'];
-    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    
-    card.appendChild(emoji);
-    welcomeScreen.appendChild(card);
-  }
-  
-  // Assemble and add to page
+  // Build content
   content.appendChild(title);
   content.appendChild(description);
   content.appendChild(playerSelection);
-  content.appendChild(startDeck);
-  content.appendChild(tapText);
   welcomeScreen.appendChild(content);
+  
+  // Style welcome screen
+  welcomeScreen.style.position = 'fixed';
+  welcomeScreen.style.top = '0';
+  welcomeScreen.style.left = '0';
+  welcomeScreen.style.width = '100%';
+  welcomeScreen.style.height = '100%';
+  welcomeScreen.style.backgroundColor = '#ff5757';
+  welcomeScreen.style.display = 'flex';
+  welcomeScreen.style.justifyContent = 'center';
+  welcomeScreen.style.alignItems = 'center';
+  welcomeScreen.style.zIndex = '9999';
+  welcomeScreen.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
+  
+  // Add decorative Uno cards floating in background
+  for (let i = 0; i < 20; i++) {
+    const card = document.createElement('div');
+    const size = Math.random() * 50 + 20; // Random size between 20-70px
+    const xPos = Math.random() * 100; // Random horizontal position
+    const yPos = Math.random() * 100; // Random vertical position
+    const rotation = Math.random() * 360; // Random rotation
+    const delay = Math.random() * 10; // Random animation delay
+    
+    card.style.position = 'absolute';
+    card.style.width = `${size}px`;
+    card.style.height = `${size * 1.4}px`;
+    card.style.borderRadius = '5px';
+    card.style.left = `${xPos}%`;
+    card.style.top = `${yPos}%`;
+    card.style.transform = `rotate(${rotation}deg)`;
+    
+    // Random color
+    const colors = ['#4a7af5', '#47c83e', '#ffee3e', '#ff3b3b'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    card.style.backgroundColor = randomColor;
+    card.style.border = '2px solid white';
+    card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+    
+    // Add floating animation
+    card.style.animation = `float ${Math.random() * 10 + 10}s ease-in-out infinite`;
+    card.style.animationDelay = `${delay}s`;
+    
+    welcomeScreen.appendChild(card);
+  }
+  
+  // Add to body
   document.body.appendChild(welcomeScreen);
+  
+  // Add global styles for animations
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(${Math.random() * 360}deg); }
+      50% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(${Math.random() * 360}deg); }
+      100% { transform: translate(0, 0) rotate(${Math.random() * 360}deg); }
+    }
+  `;
+  document.head.appendChild(styleElement);
 }
+
+// Initialize the game when the page loads
+window.addEventListener('DOMContentLoaded', () => {
+  // Hide any buttons that might be leftover from previous implementation
+  const sayUnoButton = document.getElementById('say-uno');
+  const toggleSoundButton = document.getElementById('toggle-sound');
+  const drawCardButton = document.getElementById('draw-card');
+  
+  if (sayUnoButton) sayUnoButton.style.display = 'none';
+  if (toggleSoundButton) toggleSoundButton.style.display = 'none';
+  if (drawCardButton) drawCardButton.style.display = 'none';
+  
+  // Initialize empty starter display
+  initializeEmptyGame();
+  renderGame();
+  
+  // Render Julia character
+  renderJulia();
+  
+  // Add welcome screen
+  showWelcomeScreen();
+  
+  // Add class to body when in standalone mode (added to homescreen)
+  if (window.navigator.standalone) {
+    document.body.classList.add('standalone');
+  }
+});
 
 export {
   renderGame,
   updateGameDisplay,
-  showColorChoiceUI,
-  renderJulia
+  showWelcomeScreen
 };
