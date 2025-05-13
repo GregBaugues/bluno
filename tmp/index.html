@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluey Uno Game</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .opponents-area {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 0;
+        }
+        .player-area {
+            margin-top: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card-hand {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .player-name {
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 24px;
+        }
+        .bluey-character {
+            position: absolute;
+            right: 20px;
+            bottom: 140px;
+            text-align: center;
+        }
+        .bluey-character img {
+            width: 120px;
+            height: auto;
+        }
+        .julia-character {
+            position: absolute;
+            left: 40px;
+            top: 200px;
+            text-align: center;
+        }
+        .julia-character img {
+            width: 120px;
+            height: auto;
+        }
+        .character-name {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="opponents-area">
+            <div class="opponent">
+                <div class="player-name">Bingo</div>
+                <div class="card-hand">
+                    <!-- Cards would be dynamically added here -->
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                </div>
+            </div>
+            <div class="opponent">
+                <div class="player-name">Muffin</div>
+                <div class="card-hand">
+                    <!-- Cards would be dynamically added here -->
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                </div>
+            </div>
+            <div class="opponent">
+                <div class="player-name">Bluey</div>
+                <div class="card-hand">
+                    <!-- Cards would be dynamically added here -->
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                    <div style="width: 60px; height: 90px; background-color: #ff6b6b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="julia-character">
+            <img src="bluey" alt="Julia">
+            <div class="character-name">Julia</div>
+        </div>
+        
+        <div class="bluey-character">
+            <img src="bluey.png" alt="Bluey">
+            <div class="character-name">Bluey</div>
+        </div>
+
+        <div class="player-area">
+            <div class="player-name">You</div>
+            <div class="card-hand">
+                <!-- Cards would be dynamically added here -->
+                <div style="width: 60px; height: 90px; background-color: #4cd3c2; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                <div style="width: 60px; height: 90px; background-color: #4361ee; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                <div style="width: 60px; height: 90px; background-color: #e63946; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                <div style="width: 60px; height: 90px; background-color: #ffbe0b; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+                <div style="width: 60px; height: 90px; background-color: #8ac926; margin: 0 -15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2)"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // This would be where game logic would be initialized
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Game loaded!');
+            // Game initialization would happen here
+        });
+    </script>
+</body>
+</html>

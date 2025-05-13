@@ -1,0 +1,835 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@font-face {
+  font-family: 'Comic Sans MS';
+  src: local('Comic Sans MS'),
+       url('https://fonts.cdnfonts.com/css/comic-sans-ms') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+body {
+  font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+  background-color: #ffdbec; /* Light pink background */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* iPad Mini in landscape orientation is roughly 1024x768 */
+#game-container {
+  width: 100%;
+  height: 100%;
+  background-color: #ffc0dc; /* Slightly darker pink for the game container */
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative; /* For absolute positioning of side elements */
+}
+
+/* Side indicators container */
+#side-indicators {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  z-index: 100;
+}
+
+#opponents-area {
+  display: flex;
+  justify-content: space-evenly;
+  height: 30%;
+  padding: 10px 20px;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 10px auto;
+}
+
+.opponent-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 200px;
+  min-height: 200px;
+}
+
+.opponent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.character-image {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  margin-bottom: 10px;
+  border: 5px solid transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 50px;
+  font-weight: bold;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  overflow: hidden; /* Keep images inside the circle */
+  position: relative;
+}
+
+.opponent.current-player .character-image {
+  border-color: gold;
+  box-shadow: 0 0 15px gold;
+}
+
+/* Character image styles */
+.character-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  border: 5px solid white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+/* Character initial (fallback) styles */
+.character-initial {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 60px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.character-name {
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.card-count {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 5px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.card-count::before {
+  content: '🃏';
+  margin-right: 5px;
+  font-size: 22px;
+}
+
+.uno-indicator {
+  font-weight: bold;
+  color: red;
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background-color: white;
+  border-radius: 20px;
+  padding: 8px 12px;
+  font-size: 22px;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+  animation: bounce 0.8s infinite alternate;
+  z-index: 10;
+}
+
+@keyframes bounce {
+  from { transform: scale(1); }
+  to { transform: scale(1.2); }
+}
+
+.opponent-cards {
+  position: relative;
+  margin: 10px auto 5px auto;
+  width: 100%;
+  max-width: 300px;
+  min-height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+
+#game-area {
+  flex: 0.8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 10px 0;
+}
+
+#deck, #discard-pile {
+  width: 140px;
+  height: 210px;
+  border-radius: 15px;
+  margin: 0 30px;
+  position: relative;
+}
+
+#deck {
+  background-color: white;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: 5px solid white;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Removed start deck arrow indicator */
+
+@keyframes float-tip {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+#deck.active-deck {
+  border-color: rgba(255, 215, 0, 0.4);
+}
+
+#deck.required-draw {
+  border-color: rgba(255, 59, 59, 0.6);
+}
+
+#deck.start-deck {
+  border-color: rgba(255, 59, 59, 0.6);
+  box-shadow: 0 0 15px 5px rgba(255, 59, 59, 0.5);
+  animation: pulse-start 1.5s infinite;
+}
+
+@keyframes pulse-start {
+  0% { transform: scale(1); box-shadow: 0 0 15px 5px rgba(255, 59, 59, 0.5); }
+  50% { transform: scale(1.05); box-shadow: 0 0 25px 8px rgba(255, 59, 59, 0.7); }
+  100% { transform: scale(1); box-shadow: 0 0 15px 5px rgba(255, 59, 59, 0.5); }
+}
+
+@keyframes pulse-deck-urgent {
+  0% { box-shadow: 0 0 15px rgba(255, 59, 59, 0.6); }
+  50% { box-shadow: 0 0 30px rgba(255, 59, 59, 0.8); }
+  100% { box-shadow: 0 0 15px rgba(255, 59, 59, 0.6); }
+}
+
+@keyframes pulse-deck-gold {
+  0% { box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); }
+  50% { box-shadow: 0 10px 25px rgba(255, 215, 0, 0.6); }
+  100% { box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); }
+}
+
+@keyframes pulse-deck {
+  0% { box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); }
+  50% { box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5); }
+  100% { box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); }
+}
+
+#deck:active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.deck-back {
+  width: 100%;
+  height: 100%;
+  background-color: #ff66a5; /* Pink for deck back */
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #ff66a5,
+    #ff66a5 15px,
+    #e5407e 15px,
+    #e5407e 30px
+  );
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.uno-logo {
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-size: 40px;
+  font-weight: bold;
+  color: white;
+  background-color: red;
+  padding: 5px 15px;
+  border-radius: 20px;
+  border: 3px solid white;
+  transform: rotate(-30deg);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.deck-count {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: white;
+  color: black;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+#discard-pile {
+  background-color: rgba(255, 240, 245, 0.7); /* Light pink */
+  border: 3px dashed #ff66a5; /* Pink border */
+  position: relative;
+}
+
+#discard-pile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50L20 20M50 50L80 80M50 50L80 20M50 50L20 80' stroke='%23ff66a5' stroke-width='2'/%3E%3C/svg%3E");
+  background-size: 30px 30px;
+  opacity: 0.2;
+  z-index: -1;
+}
+
+/* Side color indicator */
+#color-indicator {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border: 5px solid white;
+  position: relative;
+  background-color: #bdbdbd; /* Default gray color */
+}
+
+/* Pulsing animation for the color indicator */
+@keyframes pulse-color {
+  0% { box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); }
+  100% { box-shadow: 0 0 20px currentColor; }
+}
+
+/* Colors for the color indicator */
+#color-indicator.red {
+  background-color: #ff3b3b;
+  color: rgba(255, 59, 59, 0.7);
+  animation: pulse-color 1.5s infinite alternate;
+}
+
+#color-indicator.blue {
+  background-color: #0066cc;
+  color: rgba(0, 102, 204, 0.7);
+  animation: pulse-color 1.5s infinite alternate;
+}
+
+#color-indicator.green {
+  background-color: #3cb043;
+  color: rgba(60, 176, 67, 0.7);
+  animation: pulse-color 1.5s infinite alternate;
+}
+
+#color-indicator.yellow {
+  background-color: #ffcc00;
+  color: rgba(255, 204, 0, 0.7);
+  animation: pulse-color 1.5s infinite alternate;
+}
+
+#julia-display {
+  position: absolute;
+  top: 400px;
+  left: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+}
+
+#player-hand {
+  height: 40%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+  position: relative;
+  padding: 15px 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  margin: 0 15px;
+  box-shadow: inset 0 0 15px rgba(255, 105, 180, 0.2);
+  border: 2px dashed rgba(255, 105, 180, 0.3);
+  
+  /* Enhance scrollable area to use more space */
+  min-height: 200px; /* Reduced from 250px */
+  width: 98%; /* Increased from 95% */
+  max-width: 1200px;
+  margin-top: 15px; /* Reduced from 20px */
+}
+
+#player-hand::-webkit-scrollbar {
+  display: none;
+}
+
+.player-hand-container {
+  position: relative;
+  padding-top: 30px;
+}
+
+.card {
+  width: 96px; /* 120px * 0.8 = 96px */
+  height: 144px; /* 180px * 0.8 = 144px */
+  border-radius: 12px; /* 15px * 0.8 = 12px */
+  background-color: white;
+  margin: 0 -10px 0 0; /* Overlapping cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px; /* 30px * 0.8 = 24px */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  position: relative;
+  border: 4px solid white; /* 5px * 0.8 = 4px */
+  transform: scale(1);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  z-index: 1; /* Base z-index */
+}
+
+/* Add hover effect for better interactivity */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card:active {
+  transform: scale(0.95);
+}
+
+/* Removed playable card highlighting */
+
+.card.shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+/* UNO Card Colors */
+.card.red { background-color: #ff3b3b; color: white; }
+.card.blue { background-color: #0066cc; color: white; }
+.card.green { background-color: #3cb043; color: white; }
+.card.yellow { background-color: #ffcc00; color: black; }
+.card.wild { 
+  background: black;
+  color: white;
+}
+
+/* Card inner oval design */
+.card-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+}
+
+.card-oval {
+  width: 80%;
+  height: 65%;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: rotate(-20deg);
+  position: relative;
+  border: 4px solid black;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2) inset;
+}
+
+.card-emoji {
+  font-size: 60px;
+  transform: rotate(20deg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* For special cards */
+.wild-draw-4 {
+  font-size: 70px;
+  animation: bounce 0.8s infinite alternate;
+}
+
+/* Special card styles based on the image */
+.card[data-value="Skip"] .card-emoji {
+  font-size: 80px;
+}
+
+.card[data-value="Reverse"] .card-emoji {
+  font-size: 80px;
+  position: absolute;
+  top: 30%;
+}
+
+.card[data-value="Reverse"]::after {
+  content: '👉';
+  position: absolute;
+  font-size: 80px;
+  bottom: 30%;
+  right: 50%;
+  transform: rotate(180deg) translateX(50%);
+}
+
+.card[data-value="Draw 2"] .card-emoji {
+  font-size: 80px;
+}
+
+.card[data-value="Wild"] .card-emoji {
+  font-size: 80px;
+}
+
+.card[data-value="Wild Draw 4"] .card-emoji {
+  font-size: 90px;
+}
+
+/* Make the Wild card match the image with the colorful segments */
+.card.wild {
+  background: black;
+  color: white;
+}
+
+/* Special styles for the Wild Draw 4 card */
+.card[data-value="Wild Draw 4"] {
+  background: black;
+  color: white;
+}
+
+/* For the Wild cards, make the oval bigger to match the image */
+.card.wild .card-oval {
+  height: 75%;
+  width: 90%;
+  transform: rotate(0deg);
+  border-color: white;
+}
+
+.card.wild .card-emoji {
+  transform: rotate(0deg);
+}
+
+/* Rainbow circle in the corner for Wild cards */
+.rainbow-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, 
+    #ff3b3b 0%, #ff3b3b 25%, 
+    #ffcc00 25%, #ffcc00 50%, 
+    #3cb043 50%, #3cb043 75%, 
+    #0066cc 75%, #0066cc 100%
+  );
+  border: 1px solid white;
+}
+
+.card-corner {
+  position: absolute;
+  font-size: 28px;
+  font-weight: bold;
+  color: white;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Style for the yellow cards which need dark text */
+.card.yellow .card-corner {
+  color: black;
+}
+
+.top-left {
+  top: 8px;
+  left: 8px;
+}
+
+.bottom-right {
+  bottom: 8px;
+  right: 8px;
+  transform: rotate(180deg);
+}
+
+/* UNO-style numbers */
+.card[data-value="0"] .card-corner,
+.card[data-value="1"] .card-corner,
+.card[data-value="2"] .card-corner,
+.card[data-value="3"] .card-corner,
+.card[data-value="4"] .card-corner,
+.card[data-value="5"] .card-corner,
+.card[data-value="6"] .card-corner,
+.card[data-value="7"] .card-corner,
+.card[data-value="8"] .card-corner,
+.card[data-value="9"] .card-corner {
+  font-size: 36px;
+}
+
+#controls {
+  display: flex;
+  justify-content: center;
+  padding: 15px 0;
+  height: 12%;
+}
+
+#controls button {
+  margin: 0 20px;
+}
+
+button {
+  padding: 0;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  background-color: #ff66a5; /* Pink buttons */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 6px 0 #e5407e; /* Darker pink shadow */
+  outline: none;
+  min-width: 100px;
+  height: 100px;
+  width: 100px;
+  font-size: 0; /* Hide text */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+button::before {
+  font-size: 50px;
+  display: block;
+}
+
+#start-game::before {
+  content: '▶️';
+}
+
+#draw-card::before {
+  content: '🃏';
+}
+
+button:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 #3b6e96;
+}
+
+button:disabled {
+  background-color: #aaaaaa;
+  box-shadow: 0 6px 0 #888888;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.card-special {
+  font-size: 45px;
+}
+
+#color-choice {
+  border: 8px solid white;
+  border-radius: 25px;
+  background-color: white;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 30px;
+  z-index: 1000;
+}
+
+#color-choice h2 {
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 32px;
+}
+
+#color-buttons {
+  display: flex;
+  justify-content: space-around;
+}
+
+#color-choice button {
+  width: 120px;
+  height: 120px;
+  border-radius: 25px;
+  margin: 0 15px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Special color styling for color buttons */
+#color-buttons button:nth-child(1) { background-color: #ff6b6b; } /* Red */
+#color-buttons button:nth-child(2) { background-color: #6b6bff; } /* Blue */
+#color-buttons button:nth-child(3) { background-color: #6bff6b; } /* Green */
+#color-buttons button:nth-child(4) { background-color: #ffff6b; } /* Yellow */
+
+/* Landscape orientation specific tweaks */
+@media (orientation: landscape) {
+  #opponents-area {
+    height: 28%;
+  }
+  
+  #game-area {
+    flex: 0.8;
+  }
+  
+  #player-hand {
+    height: 36%;
+  }
+  
+  #controls {
+    height: 20%;
+  }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+  .character-image {
+    width: 90px;
+    height: 90px;
+    font-size: 32px;
+  }
+  
+  #deck, #discard-pile {
+    width: 120px;
+    height: 180px;
+  }
+  
+  button {
+    height: 90px;
+    width: 90px;
+  }
+  
+  button::before {
+    font-size: 45px;
+  }
+}
+
+/* Turn indicator - hidden, we don't need it anymore */
+.turn-indicator {
+  display: none;
+}
+
+@keyframes pulse-turn {
+  0% { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(1.2); }
+}
+
+/* Card drawing highlight effect */
+@keyframes draw-highlight {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Welcome screen */
+.welcome-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #ff66a5 0%, #ffa0c3 100%); /* Pink gradient */
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.welcome-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  position: relative;
+}
+
+.welcome-content button:hover {
+  transform: scale(1.05);
+  background-color: #ff5555;
+}
+
+.welcome-content button:active {
+  transform: scale(0.98);
+}
+
+/* Animation for welcome cards */
+@keyframes float {
+  0% { transform: translateY(0) rotate(var(--rotation)); }
+  50% { transform: translateY(-20px) rotate(var(--rotation)); }
+  100% { transform: translateY(0) rotate(var(--rotation)); }
+}
+
+.welcome-card {
+  --rotation: 0deg;
+  animation: float 4s infinite ease-in-out;
+  animation-delay: calc(var(--index) * 0.5s);
+}

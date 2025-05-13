@@ -1,0 +1,25 @@
+# Node modules
+node_modules/
+
+# Parcel build directory
+dist/
+.cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+**/.claude/settings.local.json
+.parcel-cache/
+
+**/CLAUDE.local.md

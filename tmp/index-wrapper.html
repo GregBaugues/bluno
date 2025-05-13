@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bluey Uno">
+  <title>Bluey Uno</title>
+  
+  <!-- App Icons -->
+  <link rel="icon" href="../public/images/app-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../public/images/app-icon.png">
+  <link rel="manifest" href="../public/manifest.json">
+  
+  <!-- Splash Screen -->
+  <link rel="apple-touch-startup-image" href="../public/images/app-icon.png">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="../src/styles.css">
+  
+  <!-- Comic Sans MS Font -->
+  <link href="https://fonts.cdnfonts.com/css/comic-sans-ms" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="opponents-area">
+      <!-- Bluey characters will go here -->
+    </div>
+    
+    <div id="side-indicators">
+      <!-- Side color indicator will go here -->
+      <div id="color-indicator"></div>
+    </div>
+    
+    <div id="game-area">
+      <div class="turn-indicator"></div>
+      <div id="deck"></div>
+      <div id="discard-pile"></div>
+    </div>
+    
+    <div id="player-hand">
+      <!-- Player's cards will go here -->
+    </div>
+    
+    <div id="controls" style="display:none;">
+    </div>
+  </div>
+  
+  <!-- Color choice UI -->
+  <div id="color-choice" style="display: none;">
+    <h2>🎨 Choose a color:</h2>
+    <div id="color-buttons"></div>
+  </div>
+  
+  <!-- Load the original game JavaScript -->
+  <script src="../src/game.js" type="module"></script>
+  
+  <!-- Load our custom character images JavaScript -->
+  <script src="./character-images.js"></script>
+  
+  <!-- Prevent elastic scrolling on iOS -->
+  <script>
+    document.addEventListener('touchmove', function(event) {
+      if (event.scale !== 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevent double-tap to zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+  </script>
+</body>
+</html>

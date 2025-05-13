@@ -1,0 +1,16 @@
+{
+  "name": "Bluey Uno",
+  "short_name": "Bluey Uno",
+  "description": "Play Uno with Bluey characters!",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#c3e6fc",
+  "theme_color": "#4682b4",
+  "icons": [
+    {
+      "src": "images/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

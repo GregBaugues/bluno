@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" ry="100" fill="#c3e6fc" />
+  
+  <!-- UNO Cards -->
+  <g transform="translate(256, 256) rotate(15) translate(-150, -120)">
+    <rect width="180" height="240" rx="20" ry="20" fill="#ff6b6b" stroke="white" stroke-width="8" />
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" text-anchor="middle">U</text>
+  </g>
+  
+  <g transform="translate(256, 256) rotate(-15) translate(20, -140)">
+    <rect width="180" height="240" rx="20" ry="20" fill="#6b6bff" stroke="white" stroke-width="8" />
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="white" text-anchor="middle">N</text>
+  </g>
+  
+  <g transform="translate(256, 256) rotate(5) translate(-60, 0)">
+    <rect width="180" height="240" rx="20" ry="20" fill="#6bff6b" stroke="white" stroke-width="8" />
+    <text x="90" y="120" font-family="Arial, sans-serif" font-size="100" font-weight="bold" fill="black" text-anchor="middle">O</text>
+  </g>
+</svg>

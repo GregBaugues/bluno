@@ -1,20 +1,14 @@
 // Character image data and functionality
 
-// Direct image imports - this will ensure Parcel processes them correctly
-import blueyImage from '../bluey.png';
-import bingoImage from '../public/images/bingo.png';
-import banditImage from '../public/images/bandit.png';
-import juliaImage from '../julia.png';
-
-// Map character names to their imported images
-const characterImageSources = {
-  'Bluey': blueyImage,
-  'Bingo': bingoImage,
-  'Bandit': banditImage,
-  'Julia': juliaImage
+// Character colors for the colored circle fallbacks
+const characterColors = {
+  'Bluey': '#1E90FF',    // Blue
+  'Bingo': '#FF6B6B',    // Red/orange
+  'Bandit': '#4169E1',   // Royal blue
+  'Julia': '#FFCC66'     // Golden yellow
 };
 
-// Function to get character display - image only, no fallbacks
+// Simple function to get HTML for a character display with initial
 function getCharacterDisplay(characterName) {
   // Create a container div for the character display
   const container = document.createElement('div');
@@ -23,28 +17,32 @@ function getCharacterDisplay(characterName) {
   container.style.height = '100%';
   container.style.position = 'relative';
   
-  // Create image element with direct source
-  const imgElem = document.createElement('img');
-  imgElem.className = 'character-img';
-  imgElem.src = characterImageSources[characterName];
-  imgElem.alt = characterName;
-  imgElem.style.width = '100%';
-  imgElem.style.height = '100%';
-  imgElem.style.objectFit = 'cover';
-  imgElem.style.objectPosition = 'center';
-  imgElem.style.borderRadius = '50%';
-  imgElem.style.border = '3px solid white';
-  imgElem.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
+  // Get the background color
+  const bgColor = characterColors[characterName] || '#4682B4'; // Default if not found
   
-  container.appendChild(imgElem);
+  // Create the circle with initial
+  const circleDiv = document.createElement('div');
+  circleDiv.className = 'character-initial';
+  circleDiv.textContent = characterName.charAt(0);
+  circleDiv.style.backgroundColor = bgColor;
+  circleDiv.style.width = '100%';
+  circleDiv.style.height = '100%';
+  circleDiv.style.borderRadius = '50%';
+  circleDiv.style.display = 'flex';
+  circleDiv.style.justifyContent = 'center';
+  circleDiv.style.alignItems = 'center';
+  circleDiv.style.color = 'white';
+  circleDiv.style.fontSize = '60px';
+  circleDiv.style.fontWeight = 'bold';
+  circleDiv.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
+  
+  container.appendChild(circleDiv);
   
   // Return the HTML string
   return container.outerHTML;
 }
 
-// No loading function needed, we're using direct image paths
-
 export {
-  characterImageSources,
+  characterColors,
   getCharacterDisplay
 };
