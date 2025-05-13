@@ -2,6 +2,14 @@ import { gameState, playCard, chooseColor, startGame, drawCard, initializeEmptyG
 import { colors } from './deck.js';
 import { getCharacterDisplay, loadCharacterImages } from './images.js';
 
+// Helper function to apply common styles to elements
+function applyStyles(element, styles) {
+  for (const [property, value] of Object.entries(styles)) {
+    element.style[property] = value;
+  }
+  return element;
+}
+
 // Initialize the game board
 function renderGame() {
   // Load character images (when they become available)
@@ -53,12 +61,81 @@ function updateTurnIndicator() {
   });
 }
 
+// Create character name element
+function createCharacterName(characterName, isNameOnly = false) {
+  return createNameBadge(characterName, false);
+}
+
+// Create card badge for displaying card count
+function createCardBadge(cards) {
+  const cardBadge = document.createElement('div');
+  cardBadge.className = 'card-badge';
+  cardBadge.innerHTML = `🃏 <span>${cards}</span>`;
+  cardBadge.style.position = 'absolute';
+  cardBadge.style.bottom = '-15px';
+  cardBadge.style.right = '-15px';
+  cardBadge.style.backgroundColor = 'white';
+  cardBadge.style.color = '#333';
+  cardBadge.style.padding = '5px 12px';
+  cardBadge.style.borderRadius = '20px';
+  cardBadge.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+  cardBadge.style.fontSize = '20px';
+  cardBadge.style.fontWeight = 'bold';
+  
+  return cardBadge;
+}
+
+// Create a container for opponent cards
+function createCardsContainer(player) {
+  const cardsContainer = document.createElement('div');
+  cardsContainer.className = 'opponent-cards';
+  cardsContainer.style.position = 'relative';
+  cardsContainer.style.display = 'flex';
+  cardsContainer.style.flexDirection = 'row';
+  cardsContainer.style.justifyContent = 'center';
+  cardsContainer.style.marginTop = '20px';
+  cardsContainer.style.minHeight = '70px';
+  cardsContainer.style.width = '110%';
+  cardsContainer.style.maxWidth = '350px';
+  cardsContainer.style.flexWrap = 'wrap';
+  cardsContainer.style.alignItems = 'center';
+  cardsContainer.style.marginLeft = '-5%';
+  
+  // Calculate card overlap factor based on number of cards
+  const cardOverlapFactor = Math.min(1, 7 / Math.max(1, player.hand.length));
+  const cardOverlap = -20 * cardOverlapFactor;
+  
+  // Create visual representation of all cards
+  for (let j = 0; j < player.hand.length; j++) {
+    const card = document.createElement('div');
+    card.className = 'opponent-card';
+    
+    // Calculate card size based on number of cards
+    const cardSize = Math.max(26, 35 - Math.min(10, Math.max(0, player.hand.length - 5)));
+    
+    // Style the card
+    card.style.width = `${cardSize}px`;
+    card.style.height = `${cardSize * 1.4}px`;
+    card.style.backgroundColor = '#4682b4';
+    card.style.border = '2px solid white';
+    card.style.borderRadius = '5px';
+    card.style.margin = `0 ${cardOverlap}px`;
+    card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+    card.style.zIndex = j;
+    card.style.position = 'relative';
+    
+    cardsContainer.appendChild(card);
+  }
+  
+  return cardsContainer;
+}
+
 // Render the opponents (Bluey characters)
 function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
-  // Keep original layout but just ensure there's enough room for larger cards
+  // Set up the layout
   opponentsArea.style.display = 'flex'; 
   opponentsArea.style.justifyContent = 'center';
   opponentsArea.style.gap = '15px';
@@ -74,117 +151,7 @@ function renderOpponents() {
       opponent.classList.add('current-player');
     }
     
-    // For Bluey, ONLY show the name text, no blue oval/image
-    if (player.name === 'Bluey') {
-      // Character name only
-      const name = document.createElement('div');
-      name.className = 'character-name';
-      name.textContent = player.name;
-      name.style.fontSize = '24px';
-      name.style.fontWeight = 'bold';
-      name.style.color = 'black';
-      name.style.textShadow = '0 1px 2px rgba(255,255,255,0.6)';
-      name.style.marginTop = '15px';
-      
-      // Add name only
-      opponent.appendChild(name);
-    } 
-    else if (player.name === 'Bingo') {
-      // Character image with direct styling for each character
-      const image = document.createElement('div');
-      image.className = 'character-image';
-    
-      // Restore original size for character image
-      image.style.width = '100px'; 
-      image.style.height = '100px';
-      
-      // Bingo - Orange with red heart
-      image.style.backgroundColor = '#FF6B6B'; // Bingo red/orange
-      image.style.position = 'relative';
-      image.style.overflow = 'hidden';
-      
-      // Add a heart icon in the background
-      const decoration = document.createElement('div');
-      decoration.style.position = 'absolute';
-      decoration.style.top = '50%';
-      decoration.style.left = '50%';
-      decoration.style.transform = 'translate(-50%, -50%)';
-      decoration.style.fontSize = '100px';
-      decoration.style.opacity = '0.3';
-      decoration.textContent = '❤️';
-      image.appendChild(decoration);
-      
-      const initial = document.createElement('div');
-      initial.className = 'character-initial';
-      initial.textContent = 'B';
-      initial.style.color = 'white';
-      initial.style.fontSize = '80px';
-      initial.style.fontWeight = 'bold';
-      initial.style.position = 'relative';
-      initial.style.zIndex = '1';
-      image.appendChild(initial);
-    }
-    else if (player.name === 'Bandit') {
-      // Bandit - Darker blue with sunglasses
-      image.style.backgroundColor = '#4169E1'; // Bandit blue
-      image.style.position = 'relative';
-      image.style.overflow = 'hidden';
-      
-      // Add sunglasses icon in the background
-      const decoration = document.createElement('div');
-      decoration.style.position = 'absolute';
-      decoration.style.top = '50%';
-      decoration.style.left = '50%';
-      decoration.style.transform = 'translate(-50%, -50%)';
-      decoration.style.fontSize = '90px';
-      decoration.style.opacity = '0.3';
-      decoration.textContent = '😎';
-      image.appendChild(decoration);
-      
-      const initial = document.createElement('div');
-      initial.className = 'character-initial';
-      initial.textContent = 'B';
-      initial.style.color = 'white';
-      initial.style.fontSize = '80px';
-      initial.style.fontWeight = 'bold';
-      initial.style.position = 'relative';
-      initial.style.zIndex = '1';
-      image.appendChild(initial);
-    }
-    else {
-      // For other characters, use the standard approach
-      const image = document.createElement('div');
-      image.className = 'character-image';
-      image.style.width = '100px'; 
-      image.style.height = '100px';
-      image.innerHTML = getCharacterDisplay(player.name);
-    }
-    
-    // Character name
-    const name = document.createElement('div');
-    name.className = 'character-name';
-    name.textContent = player.name;
-    
-    // Card count (now moved into the character image)
-    // Display cards info at the bottom of the image
-    const cards = player.hand.length;
-    
-    // Create card badge
-    const cardBadge = document.createElement('div');
-    cardBadge.className = 'card-badge';
-    cardBadge.innerHTML = `🃏 <span>${cards}</span>`;
-    cardBadge.style.position = 'absolute';
-    cardBadge.style.bottom = '-15px';
-    cardBadge.style.right = '-15px';
-    cardBadge.style.backgroundColor = 'white';
-    cardBadge.style.color = '#333';
-    cardBadge.style.padding = '5px 12px';
-    cardBadge.style.borderRadius = '20px';
-    cardBadge.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-    cardBadge.style.fontSize = '20px';
-    cardBadge.style.fontWeight = 'bold';
-    
-    // Uno indicator
+    // Create UNO indicator if needed
     if (player.hand.length === 1 && player.hasCalledUno) {
       const unoIndicator = document.createElement('div');
       unoIndicator.className = 'uno-indicator';
@@ -192,66 +159,36 @@ function renderOpponents() {
       opponent.appendChild(unoIndicator);
     }
     
-    // Add elements to opponent div (only add the image if it exists)
-    // Need to keep track of the image variable for each character type
+    // Handle different character types
     if (player.name === 'Bluey') {
-      // For Bluey, we only added the name, no image
-    } else if (player.name === 'Bingo' || player.name === 'Bandit') {
-      // For Bingo and Bandit, the image variable should exist
-      opponent.appendChild(image);
-      // Add the card badge to the image
-      image.appendChild(cardBadge);
+      // For Bluey, only add the name (no image)
+      opponent.appendChild(createNameBadge(player.name, false));
     } else {
-      // For other characters, add the image and badge
-      opponent.appendChild(image);
-      // Add the card badge to the image
-      image.appendChild(cardBadge);
-    }
-    // Add name for all characters
-    opponent.appendChild(name);
-    
-    // Add a visual representation of cards in hand - more prominent next to character name
-    const cardsContainer = document.createElement('div');
-    cardsContainer.className = 'opponent-cards';
-    cardsContainer.style.position = 'relative';
-    cardsContainer.style.display = 'flex';
-    cardsContainer.style.flexDirection = 'row';
-    cardsContainer.style.justifyContent = 'center';
-    cardsContainer.style.marginTop = '20px'; // Increased margin top
-    cardsContainer.style.minHeight = '70px'; // Increased height for larger cards
-    cardsContainer.style.width = '110%'; // Extended width beyond parent to allow for proper card layout
-    cardsContainer.style.maxWidth = '350px'; // Max width to prevent extremely wide card rows
-    cardsContainer.style.flexWrap = 'wrap'; // Allow wrapping for many cards
-    cardsContainer.style.alignItems = 'center';
-    cardsContainer.style.marginLeft = '-5%'; // Offset for the extended width
-    
-    // Calculate how much we need to overlap cards based on number of cards
-    const cardOverlapFactor = Math.min(1, 7 / Math.max(1, player.hand.length)); // More cards = more overlap
-    const cardOverlap = -20 * cardOverlapFactor; // From -20px to 0px
-    
-    // Show all cards
-    for (let j = 0; j < player.hand.length; j++) {
-      const card = document.createElement('div');
-      card.className = 'opponent-card';
+      // For other characters, create and add the image with badge
+      const characterImage = document.createElement('div');
+      characterImage.className = 'character-image';
+      characterImage.style.width = '100px';
+      characterImage.style.height = '100px';
+      characterImage.style.position = 'relative';
       
-      // Smaller cards to fit more
-      const cardSize = Math.max(26, 35 - Math.min(10, Math.max(0, player.hand.length - 5))); // Reduce size for many cards
+      // Add the character display inside this container
+      const display = createCharacterDisplay(player.name, 100, true);
+      characterImage.appendChild(display);
       
-      // Opponent cards with UNO styling
-      card.style.width = `${cardSize}px`;
-      card.style.height = `${cardSize * 1.4}px`;
-      card.style.backgroundColor = '#4682b4'; // UNO blue color
-      card.style.border = '2px solid white';
-      card.style.borderRadius = '5px';
-      card.style.margin = `0 ${cardOverlap}px`; // Overlap based on card count
-      card.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-      card.style.zIndex = j;
-      card.style.position = 'relative';
+      // Add the card badge
+      const cardBadge = createCardBadge(player.hand.length);
+      characterImage.appendChild(cardBadge);
       
-      cardsContainer.appendChild(card);
+      opponent.appendChild(characterImage);
+      
+      // Add character name
+      opponent.appendChild(createNameBadge(player.name, false));
     }
     
-    opponent.appendChild(cardsContainer);
+    // Add cards container to show visual representation of cards
+    opponent.appendChild(createCardsContainer(player));
+    
+    // Add the opponent to the area
     opponentsArea.appendChild(opponent);
   }
 }
@@ -502,6 +439,88 @@ function renderDeckAndDiscardPile() {
   }
 }
 
+// Create a container for player cards
+function createPlayerCardsContainer() {
+  const container = document.createElement('div');
+  
+  applyStyles(container, {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '5px',
+    padding: '10px 5px',
+    width: '100%'
+  });
+  
+  return container;
+}
+
+// Create player cards title
+function createPlayerCardsTitle() {
+  const title = document.createElement('div');
+  title.textContent = 'Your Cards';
+  
+  applyStyles(title, {
+    width: '100%',
+    textAlign: 'center',
+    fontSize: '20px',
+    fontWeight: 'bold',
+    marginBottom: '8px',
+    color: '#333'
+  });
+  
+  return title;
+}
+
+// Create UNO indicator for player
+function createPlayerUnoIndicator() {
+  const indicator = document.createElement('div');
+  indicator.className = 'uno-indicator';
+  indicator.textContent = 'UNO!';
+  
+  applyStyles(indicator, {
+    position: 'absolute',
+    top: '0',
+    left: '50%',
+    transform: 'translateX(-50%)'
+  });
+  
+  return indicator;
+}
+
+// Customize a card element for player's hand
+function customizePlayerCard(cardElement) {
+  // Make cards smaller with slight spacing
+  applyStyles(cardElement, {
+    width: '88px',
+    height: '132px',
+    margin: '0 -2px 0 0'
+  });
+  
+  // Reduce emoji size
+  const emoji = cardElement.querySelector('.card-emoji');
+  if (emoji) {
+    emoji.style.fontSize = '35px';
+  }
+  
+  // Make corner numbers smaller
+  const corners = cardElement.querySelectorAll('.card-corner');
+  corners.forEach(corner => {
+    applyStyles(corner, {
+      fontSize: '15px',
+      width: '20px',
+      height: '20px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '0',
+      margin: '0'
+    });
+  });
+  
+  return cardElement;
+}
+
 // Render the player's hand
 function renderPlayerHand() {
   const playerHandElement = document.getElementById('player-hand');
@@ -510,75 +529,122 @@ function renderPlayerHand() {
   
   const player = gameState.players[0]; // Human player
   
-  // Create a container for better card arrangement
-  const cardsContainer = document.createElement('div');
-  cardsContainer.style.display = 'flex';
-  cardsContainer.style.flexWrap = 'wrap';
-  cardsContainer.style.justifyContent = 'center';
-  cardsContainer.style.gap = '5px'; // Increased from 2px to add more spacing
-  cardsContainer.style.padding = '10px 5px'; // Reduced padding
-  cardsContainer.style.width = '100%';
+  // Create container for better card arrangement
+  const cardsContainer = createPlayerCardsContainer();
   
-  // Add visual title for player's cards
-  const handTitle = document.createElement('div');
-  handTitle.textContent = 'Your Cards';
-  handTitle.style.width = '100%';
-  handTitle.style.textAlign = 'center';
-  handTitle.style.fontSize = '20px'; // Smaller text
-  handTitle.style.fontWeight = 'bold';
-  handTitle.style.marginBottom = '8px'; // Reduced margin
-  handTitle.style.color = '#333';
-  cardsContainer.appendChild(handTitle);
+  // Add title for player's cards
+  cardsContainer.appendChild(createPlayerCardsTitle());
   
-  // Handle Uno
+  // Handle Uno indicator
   if (player.hand.length === 1 && player.hasCalledUno) {
-    const unoIndicator = document.createElement('div');
-    unoIndicator.className = 'uno-indicator';
-    unoIndicator.textContent = 'UNO!';
-    unoIndicator.style.position = 'absolute';
-    unoIndicator.style.top = '0';
-    unoIndicator.style.left = '50%';
-    unoIndicator.style.transform = 'translateX(-50%)';
-    playerHandElement.appendChild(unoIndicator);
+    playerHandElement.appendChild(createPlayerUnoIndicator());
   }
   
-  const isPlayerTurn = gameState.currentPlayerIndex === 0 && gameState.isGameStarted;
-  
-  // Create card elements
+  // Create and add card elements
   player.hand.forEach((card, index) => {
-    // No longer highlighting playable cards
+    // Create the base card
     const cardElement = createCardElement(card, index, false);
     
-    // Make cards 20% smaller with slightly increased spacing between cards
-    cardElement.style.width = '88px';  // 110px * 0.8 = 88px
-    cardElement.style.height = '132px'; // 165px * 0.8 = 132px
-    cardElement.style.margin = '0 -2px 0 0';  // Reduced negative margin to add spacing between cards
+    // Customize it for player's hand
+    customizePlayerCard(cardElement);
     
-    // Reduce emoji size in player's hand cards
-    const emoji = cardElement.querySelector('.card-emoji');
-    if (emoji) {
-      emoji.style.fontSize = '35px'; // Reduced from default size
-    }
-    
-    // Make corner numbers smaller and ensure they stay in corners
-    const corners = cardElement.querySelectorAll('.card-corner');
-    corners.forEach(corner => {
-      corner.style.fontSize = '15px';  // Reduced font size further
-      corner.style.width = '20px';     // Even more constrained width
-      corner.style.height = '20px';    // Even more constrained height
-      corner.style.display = 'flex';
-      corner.style.justifyContent = 'center';
-      corner.style.alignItems = 'center';
-      corner.style.padding = '0';      // Remove any padding
-      corner.style.margin = '0';       // Remove any margin
-    });
-    
-    // Add card to container
+    // Add to container
     cardsContainer.appendChild(cardElement);
   });
   
   // Add the cards container to the hand element
   playerHandElement.appendChild(cardsContainer);
+}
+
+// Moved the applyStyles function to be at the top of the file
+
+// Helper function to create card corners
+function createCardCorner(card, position) {
+  const corner = document.createElement('div');
+  corner.className = `card-corner ${position}`;
+  
+  // Set position styles
+  const styles = {
+    position: 'absolute',
+    ...(position === 'top-left' 
+        ? { top: '2px', left: '2px' } 
+        : { bottom: '2px', right: '2px' })
+  };
+  
+  applyStyles(corner, styles);
+  
+  // Determine what text to show in the corner
+  let cornerText;
+  if (card.value === 'Skip') {
+    cornerText = '⊘';
+  } else if (card.value === 'Reverse') {
+    cornerText = '⟷';
+  } else if (card.value === 'Draw 2') {
+    cornerText = '+2';
+  } else if (card.value === 'Wild') {
+    cornerText = '';
+  } else if (card.value === 'Wild Draw 4') {
+    cornerText = '+4';
+  } else {
+    cornerText = card.value;
+  }
+  
+  corner.textContent = cornerText;
+  
+  // For Wild cards, create a rainbow circle icon in the corners
+  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
+    const rainbowCircle = document.createElement('div');
+    rainbowCircle.className = 'rainbow-circle';
+    applyStyles(rainbowCircle, {
+      width: '12px',
+      height: '12px'
+    });
+    
+    corner.appendChild(rainbowCircle);
+  }
+  
+  return corner;
+}
+
+// Helper function to create card oval and emoji
+function createCardCenter(card) {
+  // Create the oval background
+  const ovalBackground = document.createElement('div');
+  ovalBackground.className = 'card-oval';
+  
+  applyStyles(ovalBackground, {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%) rotate(0deg)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '80%',
+    height: '65%'
+  });
+  
+  // Create emoji element
+  const emojiElement = document.createElement('div');
+  emojiElement.className = 'card-emoji';
+  emojiElement.textContent = card.emoji;
+  
+  applyStyles(emojiElement, {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+    transform: 'rotate(0deg)'
+  });
+  
+  // Add special class for Wild Draw 4
+  if (card.color === 'wild' && card.value === 'Wild Draw 4') {
+    emojiElement.classList.add('wild-draw-4');
+  }
+  
+  ovalBackground.appendChild(emojiElement);
+  return { ovalBackground, emojiElement };
 }
 
 // Create a card element
@@ -602,101 +668,18 @@ function createCardElement(card, index, isPlayable) {
   const cardInner = document.createElement('div');
   cardInner.className = 'card-inner';
   
-  // Card value in top left and bottom right
-  const topLeft = document.createElement('div');
-  topLeft.className = 'card-corner top-left';
-  topLeft.style.position = 'absolute';
-  topLeft.style.top = '2px';
-  topLeft.style.left = '2px';
+  // Create card corners
+  const topLeft = createCardCorner(card, 'top-left');
+  const bottomRight = createCardCorner(card, 'bottom-right');
   
-  // Determine what to show in the corners based on the image
-  let cornerText;
-  if (card.value === 'Skip') {
-    cornerText = '⊘';
-  } else if (card.value === 'Reverse') {
-    cornerText = '⟷';
-  } else if (card.value === 'Draw 2') {
-    cornerText = '+2';
-  } else if (card.value === 'Wild') {
-    cornerText = '';  // The wild card in the image has the rainbow circle instead of text
-  } else if (card.value === 'Wild Draw 4') {
-    cornerText = '+4';
-  } else {
-    cornerText = card.value;
-  }
+  // Create card center with emoji
+  const { ovalBackground, emojiElement } = createCardCenter(card);
   
-  // For Wild cards, create a rainbow circle icon in the corners
-  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
-    // Create rainbow circle for wild cards
-    const rainbowCircle = document.createElement('div');
-    rainbowCircle.className = 'rainbow-circle';
-    rainbowCircle.style.width = '12px';
-    rainbowCircle.style.height = '12px';
-    
-    topLeft.textContent = cornerText;
-    topLeft.appendChild(rainbowCircle);
-  } else {
-    topLeft.textContent = cornerText;
-  }
-  
-  const bottomRight = document.createElement('div');
-  bottomRight.className = 'card-corner bottom-right';
-  bottomRight.style.position = 'absolute';
-  bottomRight.style.bottom = '2px';
-  bottomRight.style.right = '2px';
-  
-  // For Wild cards, create a rainbow circle icon in the corners
-  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
-    // Create rainbow circle for wild cards
-    const rainbowCircle = document.createElement('div');
-    rainbowCircle.className = 'rainbow-circle';
-    rainbowCircle.style.width = '12px';
-    rainbowCircle.style.height = '12px';
-    
-    bottomRight.textContent = cornerText;
-    bottomRight.appendChild(rainbowCircle);
-  } else {
-    bottomRight.textContent = cornerText;
-  }
-  
-  // Create the oval background for the emoji
-  const ovalBackground = document.createElement('div');
-  ovalBackground.className = 'card-oval';
-  ovalBackground.style.position = 'absolute';
-  ovalBackground.style.top = '50%';
-  ovalBackground.style.left = '50%';
-  ovalBackground.style.transform = 'translate(-50%, -50%) rotate(0deg)'; // Added rotate(0deg) to ensure no tilting
-  ovalBackground.style.display = 'flex';
-  ovalBackground.style.justifyContent = 'center';
-  ovalBackground.style.alignItems = 'center';
-  ovalBackground.style.width = '80%';
-  ovalBackground.style.height = '65%';
-  
-  // Card emoji in center
-  const emojiElement = document.createElement('div');
-  emojiElement.className = 'card-emoji';
-  emojiElement.textContent = card.emoji;
-  emojiElement.style.display = 'flex';
-  emojiElement.style.justifyContent = 'center';
-  emojiElement.style.alignItems = 'center';
-  emojiElement.style.width = '100%';
-  emojiElement.style.height = '100%';
-  emojiElement.style.transform = 'rotate(0deg)'; // Ensure emoji is straight up and down
-  
-  // Add elements to card
-  ovalBackground.appendChild(emojiElement);
+  // Assemble the card
   cardInner.appendChild(ovalBackground);
   cardElement.appendChild(cardInner);
   cardElement.appendChild(topLeft);
   cardElement.appendChild(bottomRight);
-  
-  // Wild cards should get special styling
-  if (card.color === 'wild') {
-    // For Wild Draw 4 (poop emoji)
-    if (card.value === 'Wild Draw 4') {
-      emojiElement.classList.add('wild-draw-4');
-    }
-  }
   
   // Add touch event for playing cards (if it's in player's hand)
   if (index >= 0) {
@@ -914,7 +897,90 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Render Julia on the left side of the screen - now just using colored initial
+// Create a standard character display with size customization
+function createCharacterDisplay(characterName, size = 100, includeDecorations = true) {
+  const container = document.createElement('div');
+  container.style.width = `${size}px`;
+  container.style.height = `${size}px`;
+  container.style.borderRadius = '50%';
+  
+  // Determine the background color based on character
+  let bgColor;
+  let decoration = null;
+  
+  if (characterName === 'Julia') {
+    bgColor = '#FFCC66'; // Golden yellow for Julia
+  } else if (characterName === 'Bluey') {
+    bgColor = '#1E90FF';
+  } else if (characterName === 'Bingo') {
+    bgColor = '#FF6B6B';
+    if (includeDecorations) decoration = '❤️';
+  } else if (characterName === 'Bandit') {
+    bgColor = '#4169E1';
+    if (includeDecorations) decoration = '😎';
+  } else {
+    bgColor = '#4682B4'; // Default color
+  }
+  
+  container.style.backgroundColor = bgColor;
+  container.style.display = 'flex';
+  container.style.justifyContent = 'center';
+  container.style.alignItems = 'center';
+  container.style.position = 'relative';
+  container.style.border = '3px solid white';
+  container.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+  
+  // Add decoration if needed
+  if (decoration) {
+    const decorationElem = document.createElement('div');
+    decorationElem.style.position = 'absolute';
+    decorationElem.style.top = '50%';
+    decorationElem.style.left = '50%';
+    decorationElem.style.transform = 'translate(-50%, -50%)';
+    decorationElem.style.fontSize = `${size * 0.8}px`;
+    decorationElem.style.opacity = '0.3';
+    decorationElem.textContent = decoration;
+    container.appendChild(decorationElem);
+  }
+  
+  // Add the initial
+  const initial = document.createElement('div');
+  initial.textContent = characterName.charAt(0);
+  initial.style.color = 'white';
+  initial.style.fontSize = `${size * 0.5}px`;
+  initial.style.fontWeight = 'bold';
+  initial.style.position = 'relative';
+  initial.style.zIndex = '1';
+  
+  container.appendChild(initial);
+  return container;
+}
+
+// Create a name badge for character
+function createNameBadge(characterName, isStandalone = false) {
+  const nameElem = document.createElement('span');
+  nameElem.textContent = characterName;
+  nameElem.style.fontSize = '20px';
+  nameElem.style.fontWeight = 'bold';
+  nameElem.style.color = 'black';
+  
+  if (isStandalone) {
+    // Standalone style (used for Julia)
+    nameElem.style.backgroundColor = 'white';
+    nameElem.style.padding = '5px 12px';
+    nameElem.style.borderRadius = '12px';
+    nameElem.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
+    nameElem.style.marginTop = '10px';
+    nameElem.style.display = 'inline-block';
+  } else {
+    // Regular style (used within opponent div)
+    nameElem.className = 'character-name';
+  }
+  
+  return nameElem;
+}
+
+// Render Julia on the left side of the screen
 function renderJulia() {
   const juliaDisplay = document.getElementById('julia-display');
   if (!juliaDisplay) return;
@@ -922,34 +988,11 @@ function renderJulia() {
   // Clear previous content
   juliaDisplay.innerHTML = '';
   
-  // Create Julia's container with just a colored circle and initial
-  const juliaContainer = document.createElement('div');
-  juliaContainer.style.width = '120px';
-  juliaContainer.style.height = '120px';
-  juliaContainer.style.borderRadius = '50%';
-  juliaContainer.style.backgroundColor = '#FFCC66'; // Golden yellow for Julia
-  juliaContainer.style.display = 'flex';
-  juliaContainer.style.justifyContent = 'center';
-  juliaContainer.style.alignItems = 'center';
-  juliaContainer.style.fontSize = '60px';
-  juliaContainer.style.color = 'white';
-  juliaContainer.style.fontWeight = 'bold';
-  juliaContainer.style.border = '3px solid white';
-  juliaContainer.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-  juliaContainer.textContent = 'J';
+  // Create Julia's container with a colored circle and initial
+  const juliaContainer = createCharacterDisplay('Julia', 120, false);
   
-  // Create Julia's name
-  const juliaName = document.createElement('span');
-  juliaName.textContent = 'Julia';
-  juliaName.style.fontSize = '20px';
-  juliaName.style.fontWeight = 'bold';
-  juliaName.style.color = 'black';
-  juliaName.style.backgroundColor = 'white';
-  juliaName.style.padding = '5px 12px';
-  juliaName.style.borderRadius = '12px';
-  juliaName.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-  juliaName.style.marginTop = '10px';
-  juliaName.style.display = 'inline-block';
+  // Create Julia's name badge
+  const juliaName = createNameBadge('Julia', true);
   
   // Add elements to Julia display
   juliaDisplay.appendChild(juliaContainer);

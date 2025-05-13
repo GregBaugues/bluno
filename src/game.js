@@ -1,0 +1,686 @@
+import { createDeck, shuffleDeck, dealCards } from './deck.js';
+import { createPlayers } from './players.js';
+import { renderGame, updateGameDisplay } from './ui.js';
+import soundSystem from './sounds.js';
+
+// Game state
+let gameState = {
+  deck: [],
+  discardPile: [],
+  players: [],
+  currentPlayerIndex: 0,
+  direction: 1, // 1 for clockwise, -1 for counter-clockwise
+  isGameStarted: false,
+  currentColor: null,
+  waitingForColorChoice: false,
+  waitingForImplicitColor: false, // For the new implicit color choice feature
+  requiredDraws: 0 // Number of cards player must draw (due to Draw 2 or Draw 4)
+};
+
+// Create empty deck and discard pile for initial display
+function initializeEmptyGame() {
+  gameState.deck = [{ color: 'blue', value: '0', emoji: '😶' }]; // Just for display
+  gameState.discardPile = [];
+  
+  // Create player with sample cards for initial display
+  gameState.players = [{
+    name: 'You',
+    hand: [
+      { color: 'red', value: '7', emoji: '😊' },
+      { color: 'blue', value: '4', emoji: '😇' },
+      { color: 'green', value: '2', emoji: '😁' },
+      { color: 'yellow', value: '9', emoji: '😠' },
+      { color: 'wild', value: 'Wild', emoji: '🌈' }
+    ],
+    isAI: false,
+    hasCalledUno: false
+  }];
+  
+  gameState.isGameStarted = false;
+}
+
+// Start the game
+function startGame(numPlayers = 2) { // Player + 1 Bluey character by default, can be 2-4 total
+  // Initialize sound system if it's the first game
+  soundSystem.initialize();
+  
+  // Create and shuffle the deck
+  gameState.deck = createDeck();
+  gameState.deck = shuffleDeck(gameState.deck);
+  
+  // Create players (1 human, 1-3 AI)
+  // Ensure numPlayers is between 2 and 4 (1 human + 1-3 AI)
+  const totalPlayers = Math.max(2, Math.min(4, numPlayers));
+  gameState.players = createPlayers(totalPlayers);
+  
+  // Deal cards
+  dealCards(gameState.players, gameState.deck, 7);
+  
+  // Put one card on discard pile
+  placeInitialCard();
+  
+  // Set game as started
+  gameState.isGameStarted = true;
+  gameState.currentPlayerIndex = 0; // Human player goes first
+  
+  // Update UI
+  updateGameDisplay(gameState);
+  
+  // Play "your turn" sound since the player goes first
+  soundSystem.play('yourTurn');
+  
+  // If it's not the player's turn (index 0), let AI make a move
+  if (gameState.currentPlayerIndex !== 0) {
+    setTimeout(playAITurn, 1000);
+  }
+}
+
+function placeInitialCard() {
+  // Get a card from the deck that is not a special card
+  let initialCardIndex;
+  do {
+    initialCardIndex = Math.floor(Math.random() * gameState.deck.length);
+  } while (
+    gameState.deck[initialCardIndex].value === 'Skip' ||
+    gameState.deck[initialCardIndex].value === 'Reverse' ||
+    gameState.deck[initialCardIndex].value === 'Draw 2' ||
+    gameState.deck[initialCardIndex].value === 'Wild' ||
+    gameState.deck[initialCardIndex].value === 'Wild Draw 4'
+  );
+  
+  // Move the card from deck to discard pile
+  const initialCard = gameState.deck.splice(initialCardIndex, 1)[0];
+  gameState.discardPile.push(initialCard);
+  gameState.currentColor = initialCard.color;
+}
+
+// Player plays a card
+function playCard(cardIndex) {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const card = player.hand[cardIndex];
+  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+  
+  // Check if we're waiting for implicit color choice from a previous wild card
+  if (gameState.waitingForImplicitColor && gameState.currentPlayerIndex === 0) {
+    // Set the color based on the card being played now
+    if (card.color !== 'wild') {
+      gameState.currentColor = card.color;
+      gameState.waitingForImplicitColor = false;
+    }
+  }
+  
+  // Check if card can be played
+  if (canPlayCard(card, topDiscard, gameState.currentColor)) {
+    // Play the card play sound
+    soundSystem.play('cardPlay');
+    
+    // Move card from hand to discard pile
+    const playedCard = player.hand.splice(cardIndex, 1)[0];
+    gameState.discardPile.push(playedCard);
+    
+    // Special handling for wild cards played by human player
+    if ((playedCard.value === 'Wild' || playedCard.value === 'Wild Draw 4') && 
+        gameState.currentPlayerIndex === 0) {
+      // Instead of showing color choice, we now handle wild cards differently
+      // The color will be set implicitly by the next card played
+      
+      // Handle special card effects (this will handle Wild Draw 4 correctly)
+      handleSpecialCard(playedCard);
+      
+      // Update the UI 
+      updateGameDisplay(gameState);
+      return;
+    } else {
+      // Handle all other types of cards
+      handleSpecialCard(playedCard);
+    }
+    
+    // Check if player has won
+    if (player.hand.length === 0) {
+      handleGameEnd();
+      return;
+    }
+    
+    // Check for Uno - automatically call for everyone
+    if (player.hand.length === 1 && !player.hasCalledUno) {
+      player.hasCalledUno = true;
+      // Play the UNO call sound
+      soundSystem.play('unoCall');
+    }
+    
+    // Move to next player's turn
+    nextTurn();
+    
+    // Update the UI
+    updateGameDisplay(gameState);
+    
+    // If it's AI's turn, let them play
+    if (gameState.currentPlayerIndex !== 0) {
+      setTimeout(playAITurn, 1000);
+    }
+  }
+}
+
+// Check if a card can be played
+function canPlayCard(card, topDiscard, currentColor) {
+  // Wild cards can always be played
+  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
+    return true;
+  }
+  
+  // If we're waiting for an implicit color choice, any colored card can be played
+  if (gameState.waitingForImplicitColor && card.color !== 'wild') {
+    return true;
+  }
+  
+  // Card can be played if it matches the current color
+  if (card.color === currentColor) {
+    return true;
+  }
+  
+  // Card can be played if it matches the value of the top card
+  if (card.value === topDiscard.value) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Helper functions for special card handling
+
+// Get the next player index based on current player and direction
+function getNextPlayerIndex() {
+  let nextIndex = (gameState.currentPlayerIndex + gameState.direction) % gameState.players.length;
+  if (nextIndex < 0) {
+    nextIndex += gameState.players.length;
+  }
+  return nextIndex;
+}
+
+// Handle drawing cards for the next player
+function handleDrawCards(numCards) {
+  const nextPlayerIndex = getNextPlayerIndex();
+  const nextPlayer = gameState.players[nextPlayerIndex];
+  
+  // If the next player is AI, draw cards automatically
+  if (nextPlayer.isAI) {
+    // Draw multiple cards for AI
+    for (let i = 0; i < numCards; i++) {
+      drawSingleCard(nextPlayerIndex);
+    }
+    
+    // Update UI to show the AI's new cards
+    updateGameDisplay(gameState);
+    
+    // Play a sound effect to indicate cards were drawn
+    soundSystem.play('cardPlay');
+  } else {
+    // For human player, set a draw requirement state
+    gameState.requiredDraws = numCards;
+  }
+  
+  return nextPlayerIndex;
+}
+
+// Handle skipping the next player's turn
+function handleSkipNextPlayer(nextPlayerIndex) {
+  // Skip their turn - in 2-player games this means it's your turn again
+  if (gameState.players.length === 2) {
+    // In 2-player game, keep the currentPlayerIndex the same 
+    // (effectively skipping the other player and returning to you)
+    // No change to currentPlayerIndex needed
+  } else {
+    // For 3+ player games, skip the next player's turn
+    gameState.currentPlayerIndex = (nextPlayerIndex + gameState.direction) % gameState.players.length;
+    if (gameState.currentPlayerIndex < 0) {
+      gameState.currentPlayerIndex += gameState.players.length;
+    }
+  }
+}
+
+// Handle wild card color selection
+function handleWildCardColor() {
+  // For AI player, choose color based on hand
+  if (gameState.currentPlayerIndex !== 0) {
+    // AI chooses most frequent color in hand
+    chooseAIColor();
+  }
+  // For human player, set a temporary color and wait for the next card
+  else {
+    // Set a temporary color (needed for game logic)
+    gameState.currentColor = 'blue'; // Default temporary color
+    // Tell the game we're waiting for an implicit color choice via the next card
+    gameState.waitingForImplicitColor = true;
+  }
+}
+
+// Handle special cards
+function handleSpecialCard(card) {
+  // Always update the current color to the card's color
+  // This fixes the color not updating when playing special cards
+  if (card.color !== 'wild') {
+    gameState.currentColor = card.color;
+  }
+  
+  switch (card.value) {
+    case 'Skip':
+      // Skip the next player
+      gameState.currentPlayerIndex = getNextPlayerIndex();
+      break;
+      
+    case 'Reverse':
+      // Reverse direction
+      gameState.direction *= -1;
+      // In a 2-player game, reverse acts like skip
+      if (gameState.players.length === 2) {
+        gameState.currentPlayerIndex = getNextPlayerIndex();
+      }
+      break;
+      
+    case 'Draw 2':
+      // Next player draws 2 cards and skips their turn
+      const nextPlayerIndex = handleDrawCards(2);
+      // Skip their turn
+      handleSkipNextPlayer(nextPlayerIndex);
+      break;
+      
+    case 'Wild':
+      // Handle wild card color selection
+      handleWildCardColor();
+      break;
+      
+    case 'Wild Draw 4':
+      // Handle wild card color selection
+      handleWildCardColor();
+      
+      // Next player draws 4 cards and loses turn
+      const nextIdx = handleDrawCards(4);
+      
+      // Skip their turn
+      handleSkipNextPlayer(nextIdx);
+      break;
+      
+    default:
+      // We already set the current color at the beginning of this function
+      // for all non-wild cards, so no additional action is needed here
+      break;
+  }
+}
+
+// Choose color for AI
+function chooseAIColor() {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const colorCounts = {
+    red: 0,
+    blue: 0,
+    green: 0,
+    yellow: 0
+  };
+  
+  // Count colors in hand
+  player.hand.forEach(card => {
+    if (card.color !== 'wild') {
+      colorCounts[card.color]++;
+    }
+  });
+  
+  // Find most frequent color
+  let maxCount = 0;
+  let chosenColor = 'red'; // Default if no colored cards in hand
+  
+  for (const color in colorCounts) {
+    if (colorCounts[color] > maxCount) {
+      maxCount = colorCounts[color];
+      chosenColor = color;
+    }
+  }
+  
+  gameState.currentColor = chosenColor;
+  gameState.waitingForColorChoice = false;
+}
+
+// Show color choice UI for human player
+function showColorChoiceUI() {
+  // To be implemented in UI.js
+}
+
+// Human player chooses color after playing a wild card
+function chooseColor(color) {
+  gameState.currentColor = color;
+  gameState.waitingForColorChoice = false;
+  
+  // Need to determine if we should change turns based on the last played card
+  const lastPlayedCard = gameState.discardPile[gameState.discardPile.length - 1];
+  const wasWildDraw4 = lastPlayedCard.value === 'Wild Draw 4';
+  
+  // For Wild Draw 4 in a 2-player game, the player who played it gets another turn
+  // Only call nextTurn if it wasn't a Wild Draw 4 in a 2-player game
+  if (!(wasWildDraw4 && gameState.players.length === 2)) {
+    // For regular Wild cards or Wild Draw 4 in 3+ player games, move to next player's turn
+    nextTurn();
+  }
+  
+  // Update the UI
+  updateGameDisplay(gameState);
+  
+  // If it's AI's turn, let them play
+  if (gameState.currentPlayerIndex !== 0) {
+    setTimeout(playAITurn, 1000);
+  }
+}
+
+// Draw a single card and add it to player's hand
+function drawSingleCard(playerIndex) {
+  // Check if deck is empty
+  if (gameState.deck.length === 0) {
+    reshuffleDeck();
+  }
+  
+  // Draw a card from the deck
+  const drawnCard = gameState.deck.pop();
+  gameState.players[playerIndex].hand.push(drawnCard);
+  
+  return drawnCard;
+}
+
+// Animate the deck for a card draw effect
+function animateDeckDraw() {
+  const deck = document.getElementById('deck');
+  if (deck) {
+    // Quick animation to show the card is being drawn
+    deck.animate(
+      [
+        { transform: 'translateY(0) rotate(0deg)' },
+        { transform: 'translateY(-20px) rotate(-5deg)' },
+        { transform: 'translateY(0) rotate(0deg)' }
+      ],
+      {
+        duration: 400,
+        easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)'
+      }
+    );
+  }
+}
+
+// Check if player has any legal moves
+function playerHasLegalMoves(playerIndex) {
+  const player = gameState.players[playerIndex];
+  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+  
+  // Check each card in hand to see if any can be played
+  for (let i = 0; i < player.hand.length; i++) {
+    if (canPlayCard(player.hand[i], topDiscard, gameState.currentColor)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// Handle required draws (Draw 2 or Draw 4)
+function handleRequiredDraw() {
+  // Decrement the required draws counter
+  gameState.requiredDraws--;
+  
+  // Update UI to show the updated counter
+  updateGameDisplay(gameState);
+  
+  // If that was the last required draw, end turn
+  if (gameState.requiredDraws === 0) {
+    // Play a sound to indicate all required cards have been drawn
+    setTimeout(() => {
+      soundSystem.play('cardPlay');
+    }, 300);
+    
+    // Move to next player's turn
+    nextTurn();
+    
+    // Update the UI
+    updateGameDisplay(gameState);
+    
+    // If it's AI's turn, let them play
+    if (gameState.currentPlayerIndex !== 0) {
+      setTimeout(playAITurn, 1000);
+    }
+    
+    return true; // Handled the last required draw
+  }
+  
+  return false; // More required draws needed
+}
+
+// Player draws a card
+function drawCard() {
+  if (gameState.currentPlayerIndex !== 0) return; // Only human player can use this function
+  if (gameState.waitingForColorChoice) return; // Don't draw if waiting for color choice
+  if (gameState.waitingForImplicitColor) return; // Don't draw if waiting for implicit color
+  
+  // Check if player has legal moves and there are no required draws
+  if (gameState.requiredDraws === 0 && playerHasLegalMoves(0)) {
+    return; // Don't allow drawing if player has legal moves
+  }
+  
+  // Play a soft "draw" sound
+  soundSystem.play('cardPlay');
+  
+  // Visual feedback - animate the deck
+  animateDeckDraw();
+  
+  // Draw ONE CARD AT A TIME - always just one card per click
+  const drawnCard = drawSingleCard(gameState.currentPlayerIndex);
+  
+  // For required draws (Draw 2 or Draw 4 cases), handle properly
+  if (gameState.requiredDraws > 0) {
+    const turnComplete = handleRequiredDraw();
+    if (!turnComplete) {
+      // Return after drawing a required card - player needs to click again for next card
+      return;
+    }
+  } else {
+    // Normal draw case - update display and never auto-play drawn card
+    updateGameDisplay(gameState);
+    
+    // Only move to next player's turn if the drawn card can't be played
+    const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+    if (!canPlayCard(drawnCard, topDiscard, gameState.currentColor)) {
+      // Move to next player's turn
+      nextTurn();
+      
+      // Update the UI
+      updateGameDisplay(gameState);
+      
+      // If it's AI's turn, let them play
+      if (gameState.currentPlayerIndex !== 0) {
+        setTimeout(playAITurn, 1000);
+      }
+    }
+    // If card is playable, player must choose to play it manually
+  }
+}
+
+// AI makes a turn
+function playAITurn() {
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+  
+  // Look for a card to play
+  for (let i = 0; i < player.hand.length; i++) {
+    const card = player.hand[i];
+    if (canPlayCard(card, topDiscard, gameState.currentColor)) {
+      // Play the card
+      setTimeout(() => playCard(i), 500);
+      return;
+    }
+  }
+  
+  // If no card can be played, draw a card
+  const drawnCard = drawSingleCard(gameState.currentPlayerIndex);
+  
+  // Check if drawn card can be played
+  if (canPlayCard(drawnCard, topDiscard, gameState.currentColor)) {
+    // Play the card
+    setTimeout(() => playCard(player.hand.length - 1), 500);
+  } else {
+    // Move to next player's turn
+    nextTurn();
+    
+    // Update the UI
+    updateGameDisplay(gameState);
+    
+    // If it's still AI's turn, continue
+    if (gameState.currentPlayerIndex !== 0) {
+      setTimeout(playAITurn, 1000);
+    }
+  }
+}
+
+// Move to next player's turn
+function nextTurn() {
+  gameState.currentPlayerIndex = (gameState.currentPlayerIndex + gameState.direction) % gameState.players.length;
+  if (gameState.currentPlayerIndex < 0) {
+    gameState.currentPlayerIndex += gameState.players.length;
+  }
+  
+  // Play your turn sound if it's the player's turn
+  if (gameState.currentPlayerIndex === 0) {
+    soundSystem.play('yourTurn');
+  }
+}
+
+// Reshuffle discard pile into deck
+function reshuffleDeck() {
+  // Keep the top card of the discard pile
+  const topCard = gameState.discardPile.pop();
+  
+  // Move all other cards to the deck and shuffle
+  gameState.deck = shuffleDeck([...gameState.discardPile]);
+  
+  // Clear discard pile and put top card back
+  gameState.discardPile = [topCard];
+}
+
+// Player says Uno
+function sayUno() {
+  const player = gameState.players[0]; // Human player
+  player.hasCalledUno = true;
+  
+  // Play the UNO call sound
+  soundSystem.play('unoCall');
+  
+  // Update UI
+  updateGameDisplay(gameState);
+}
+
+// Handle game end
+function handleGameEnd() {
+  const winnerIndex = gameState.currentPlayerIndex;
+  const winnerName = gameState.players[winnerIndex].name;
+  const isPlayerWinner = winnerIndex === 0;
+  
+  // Play victory sound
+  soundSystem.play('win');
+  
+  // Create a fun victory screen
+  const victoryScreen = document.createElement('div');
+  victoryScreen.style.position = 'fixed';
+  victoryScreen.style.top = '0';
+  victoryScreen.style.left = '0';
+  victoryScreen.style.width = '100%';
+  victoryScreen.style.height = '100%';
+  victoryScreen.style.backgroundColor = isPlayerWinner ? 'rgba(255, 215, 0, 0.8)' : 'rgba(100, 149, 237, 0.8)';
+  victoryScreen.style.display = 'flex';
+  victoryScreen.style.flexDirection = 'column';
+  victoryScreen.style.justifyContent = 'center';
+  victoryScreen.style.alignItems = 'center';
+  victoryScreen.style.zIndex = '2000';
+  
+  // Winner announcement
+  const winnerMessage = document.createElement('h1');
+  winnerMessage.style.fontSize = '40px';
+  winnerMessage.style.color = 'white';
+  winnerMessage.style.textShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+  winnerMessage.style.marginBottom = '20px';
+  winnerMessage.style.textAlign = 'center';
+  winnerMessage.style.padding = '0 20px';
+  
+  // Add emojis and different messages based on who won
+  if (isPlayerWinner) {
+    winnerMessage.innerHTML = '🎉 YOU WIN! 🎉<br>HOORAY!';
+  } else {
+    winnerMessage.innerHTML = `${winnerName} wins!<br>Try again!`;
+  }
+  
+  // Add celebration emojis that float up
+  for (let i = 0; i < 20; i++) {
+    const emoji = document.createElement('div');
+    emoji.style.position = 'absolute';
+    emoji.style.fontSize = '30px';
+    emoji.style.left = `${Math.random() * 100}%`;
+    emoji.style.bottom = '0';
+    emoji.style.opacity = '0';
+    emoji.textContent = ['🎉', '🎊', '🎈', '⭐', '🏆'][Math.floor(Math.random() * 5)];
+    
+    // Animate the emoji floating up
+    emoji.animate(
+      [
+        { transform: 'translateY(0)', opacity: 1 },
+        { transform: `translateY(-${Math.random() * 400 + 200}px)`, opacity: 0 }
+      ],
+      {
+        duration: Math.random() * 3000 + 2000,
+        iterations: Infinity
+      }
+    );
+    
+    victoryScreen.appendChild(emoji);
+  }
+  
+  // Play again button
+  const playAgainButton = document.createElement('button');
+  playAgainButton.textContent = 'Play Again';
+  playAgainButton.style.fontSize = '24px';
+  playAgainButton.style.padding = '15px 30px';
+  playAgainButton.style.marginTop = '30px';
+  playAgainButton.style.backgroundColor = '#4CAF50';
+  playAgainButton.style.border = 'none';
+  playAgainButton.style.borderRadius = '50px';
+  playAgainButton.style.color = 'white';
+  playAgainButton.style.cursor = 'pointer';
+  playAgainButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+  
+  playAgainButton.innerHTML = '▶️ Play Again ▶️';
+  
+  playAgainButton.addEventListener('click', () => {
+    document.body.removeChild(victoryScreen);
+    startGame();
+  });
+  
+  victoryScreen.appendChild(winnerMessage);
+  victoryScreen.appendChild(playAgainButton);
+  document.body.appendChild(victoryScreen);
+  
+  // Game is ended - we'll let them tap on deck to start a new game later
+  
+  // Reset game state
+  gameState.isGameStarted = false;
+}
+
+// Toggle sound
+function toggleSound() {
+  const button = document.getElementById('toggle-sound');
+  const isMuted = button.classList.toggle('muted');
+  soundSystem.toggleSound(!isMuted);
+}
+
+// No event listeners needed for buttons anymore
+
+// Export game functions for other modules
+export {
+  gameState,
+  startGame,
+  playCard,
+  drawCard,
+  sayUno,
+  chooseColor,
+  initializeEmptyGame
+};
