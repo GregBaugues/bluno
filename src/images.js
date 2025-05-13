@@ -16,48 +16,19 @@ const characterColors = {
   'Bandit': '#4169E1'    // Royal blue
 };
 
-// Function to load character images
+// Function to load character images - now just logs a message
 function loadCharacterImages() {
-  console.log('Loading character images from public/images directory');
+  console.log('Using colored initials for character display');
   
-  // Try to load images for each character
+  // No longer attempting to load actual images, just use null for all
   Object.keys(characterImages).forEach(character => {
-    const imageName = character.toLowerCase();
-    try {
-      // Set the path to image files with multiple possible locations
-      const paths = [
-        `/public/images/${imageName}.png`,
-        `./public/images/${imageName}.png`,
-        `public/images/${imageName}.png`,
-        `/images/${imageName}.png`,
-        `./images/${imageName}.png`,
-        `images/${imageName}.png`
-      ];
-      
-      // Use a more direct approach to assign images
-      // Assign static paths rather than trying to load them via onload/onerror
-      if (character === 'Bluey') {
-        characterImages[character] = `/public/images/bluey.png`;
-        console.log(`Assigned image path for ${character}`);
-      } 
-      else if (character === 'Bingo') {
-        characterImages[character] = `/public/images/bingo.png`;
-        console.log(`Assigned image path for ${character}`);
-      }
-      else if (character === 'Bandit') {
-        characterImages[character] = `/public/images/bandit.png`;
-        console.log(`Assigned image path for ${character}`);
-      }
-    } catch (e) {
-      console.log(`Error loading image for ${character}:`, e);
-      characterImages[character] = null;
-    }
+    characterImages[character] = null;
   });
   
   return Promise.resolve(); // Return a resolved promise for async compatibility
 }
 
-// Function to get character display (either image or colored circle with initial)
+// Function to get character display (colored circle with initial)
 function getCharacterDisplay(characterName) {
   // Create a container div for the character display
   const container = document.createElement('div');
@@ -66,32 +37,13 @@ function getCharacterDisplay(characterName) {
   container.style.height = '100%';
   container.style.position = 'relative';
   
-  // Create the character initial fallback
+  // Get the character initial
   const initial = characterName.charAt(0);
-  let bgColor = '#4682B4'; // Default color
   
+  // Determine the background color
+  let bgColor = '#4682B4'; // Default color
   if (characterName === 'Bluey') {
     bgColor = '#1E90FF';
-    
-    // Try to load the Bluey image
-    const img = document.createElement('img');
-    img.src = 'bluey.png';
-    img.alt = 'Bluey';
-    img.className = 'character-img';
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'cover';
-    img.style.borderRadius = '50%';
-    img.style.position = 'absolute';
-    img.style.top = '0';
-    img.style.left = '0';
-    
-    // Hide the image if it fails to load
-    img.onerror = function() {
-      img.style.display = 'none';
-    };
-    
-    container.appendChild(img);
   } 
   else if (characterName === 'Bingo') {
     bgColor = '#FF6B6B';
@@ -117,14 +69,6 @@ function getCharacterDisplay(characterName) {
   initialDiv.style.color = 'white';
   initialDiv.style.fontSize = '60px';
   initialDiv.style.fontWeight = 'bold';
-  initialDiv.style.position = 'absolute';
-  initialDiv.style.top = '0';
-  initialDiv.style.left = '0';
-  
-  if (characterName === 'Bluey') {
-    // For Bluey, only show the initial if the image fails to load
-    initialDiv.style.zIndex = '-1';
-  }
   
   container.appendChild(initialDiv);
   

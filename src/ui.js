@@ -914,7 +914,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Render Julia on the left side of the screen
+// Render Julia on the left side of the screen - now just using colored initial
 function renderJulia() {
   const juliaDisplay = document.getElementById('julia-display');
   if (!juliaDisplay) return;
@@ -922,36 +922,21 @@ function renderJulia() {
   // Clear previous content
   juliaDisplay.innerHTML = '';
   
-  // Create Julia's container 
+  // Create Julia's container with just a colored circle and initial
   const juliaContainer = document.createElement('div');
   juliaContainer.style.width = '120px';
   juliaContainer.style.height = '120px';
   juliaContainer.style.borderRadius = '50%';
-  juliaContainer.style.backgroundColor = '#FFCC66';
+  juliaContainer.style.backgroundColor = '#FFCC66'; // Golden yellow for Julia
   juliaContainer.style.display = 'flex';
   juliaContainer.style.justifyContent = 'center';
   juliaContainer.style.alignItems = 'center';
   juliaContainer.style.fontSize = '60px';
   juliaContainer.style.color = 'white';
   juliaContainer.style.fontWeight = 'bold';
+  juliaContainer.style.border = '3px solid white';
+  juliaContainer.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
   juliaContainer.textContent = 'J';
-  
-  // Try to load the Julia image
-  const juliaImg = new Image();
-  juliaImg.src = 'julia.png';
-  juliaImg.alt = 'Julia';
-  juliaImg.style.width = '100%';
-  juliaImg.style.height = '100%';
-  juliaImg.style.objectFit = 'cover';
-  juliaImg.style.borderRadius = '50%';
-  juliaImg.style.border = '3px solid white';
-  juliaImg.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-  
-  // When image loads successfully, replace the container content
-  juliaImg.onload = function() {
-    juliaContainer.textContent = '';
-    juliaContainer.appendChild(juliaImg);
-  };
   
   // Create Julia's name
   const juliaName = document.createElement('span');
