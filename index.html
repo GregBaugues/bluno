@@ -56,6 +56,7 @@
     .bingo-color { background-color: #FF6B6B; }
     .bandit-color { background-color: #4169E1; }
     .julia-color { background-color: #FFCC66; }
+    .coco-color { background-color: #8A2BE2; }
     
     /* Hide fallbacks when images are loaded */
     body.images-loaded .character-fallback {
@@ -68,6 +69,7 @@
   <link rel="preload" as="image" href="public/images/bingo.png">
   <link rel="preload" as="image" href="public/images/bandit.png">
   <link rel="preload" as="image" href="public/images/julia.png">
+  <link rel="preload" as="image" href="public/images/coco.png">
 </head>
 <body>
   <!-- Hidden image preloading container -->
@@ -76,6 +78,7 @@
     <img src="public/images/bingo.png" id="bingo-img" onload="characterImgLoaded('bingo')">
     <img src="public/images/bandit.png" id="bandit-img" onload="characterImgLoaded('bandit')">
     <img src="public/images/julia.png" id="julia-img" onload="characterImgLoaded('julia')">
+    <img src="public/images/coco.png" id="coco-img" onload="characterImgLoaded('coco')">
   </div>
 
   <div id="game-container">
@@ -110,16 +113,60 @@
   
   <script>
     // Track loaded images
-    const loadedImages = { bluey: false, bingo: false, bandit: false, julia: false };
+    const loadedImages = { bluey: false, bingo: false, bandit: false, julia: false, coco: false };
+    let loadingTimeout = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    // Force images-loaded after timeout - no matter what
+    function enforceImagesLoaded() {
+      console.log('Forcing images-loaded state after timeout');
+      document.body.classList.add('images-loaded');
+      
+      // Try to reload any images that failed
+      retryFailedImages();
+    }
+    
+    // Retry loading any failed images
+    function retryFailedImages() {
+      if (retryCount >= MAX_RETRIES) {
+        console.warn('Max retries reached, some images may not load');
+        return;
+      }
+      
+      retryCount++;
+      
+      // Check each image and retry if needed
+      for (const char in loadedImages) {
+        if (!loadedImages[char]) {
+          console.log(`Retrying load for ${char} image (attempt ${retryCount})`);
+          const img = document.getElementById(`${char}-img`);
+          if (img) {
+            // Force re-fetch by adding timestamp to URL
+            const originalSrc = img.getAttribute('data-original-src') || img.src;
+            img.setAttribute('data-original-src', originalSrc);
+            img.src = `${originalSrc}?retry=${Date.now()}`;
+          }
+        }
+      }
+    }
     
     function characterImgLoaded(character) {
       console.log(`${character} image loaded!`);
       loadedImages[character] = true;
       
       // Check if all images are loaded
-      if (loadedImages.bluey && loadedImages.bingo && loadedImages.bandit && loadedImages.julia) {
+      const allLoaded = Object.values(loadedImages).every(loaded => loaded);
+      
+      if (allLoaded) {
         console.log('All character images loaded successfully!');
         document.body.classList.add('images-loaded');
+        
+        // Clear timeout if it exists
+        if (loadingTimeout) {
+          clearTimeout(loadingTimeout);
+          loadingTimeout = null;
+        }
       }
     }
     
@@ -127,15 +174,29 @@
     function handleImageError(character) {
       console.warn(`Failed to load ${character} image`);
       loadedImages[character] = false;
-      document.getElementById(`${character}-img`).style.display = 'none';
+      
+      // Don't hide immediately, we'll retry loading
+      // document.getElementById(`${character}-img`).style.display = 'none';
+      
+      // If we've reached max retries, then hide the img
+      if (retryCount >= MAX_RETRIES) {
+        const img = document.getElementById(`${character}-img`);
+        if (img) img.style.display = 'none';
+      }
     }
     
-    // Set error handlers
+    // Set event handlers and start loading timeout
     document.addEventListener('DOMContentLoaded', function() {
+      // Set error handlers
       document.getElementById('bluey-img').onerror = () => handleImageError('bluey');
       document.getElementById('bingo-img').onerror = () => handleImageError('bingo');
       document.getElementById('bandit-img').onerror = () => handleImageError('bandit');
       document.getElementById('julia-img').onerror = () => handleImageError('julia');
+      document.getElementById('coco-img').onerror = () => handleImageError('coco');
+      
+      // Set a timeout to force images-loaded state after 5 seconds
+      // This helps with race conditions or permanent failures
+      loadingTimeout = setTimeout(enforceImagesLoaded, 5000);
     });
   </script>
   
@@ -159,7 +220,7 @@
       lastTouchEnd = now;
     }, { passive: false });
     
-    // Creating a placeholder for Julia display with image preloading
+    // Creating placeholders for Julia and Bingo displays with image preloading
     document.addEventListener('DOMContentLoaded', function() {
       // Create a placeholder for Julia display
       const juliaDisplay = document.createElement('div');
@@ -216,6 +277,62 @@
       
       // Add the Julia display to the DOM
       document.getElementById('game-container').appendChild(juliaDisplay);
+      
+      // Create a placeholder for Bingo display, positioned inline with Bluey
+      const bingoDisplay = document.createElement('div');
+      bingoDisplay.id = 'bingo-display';
+      bingoDisplay.style.position = 'absolute';
+      bingoDisplay.style.right = '25%'; // Position to the right side, matching Bluey's left 25%
+      bingoDisplay.style.top = '0'; // Same top position as Bluey
+      bingoDisplay.style.display = 'flex';
+      bingoDisplay.style.flexDirection = 'column';
+      bingoDisplay.style.alignItems = 'center';
+      bingoDisplay.style.zIndex = '100';
+      
+      // Add Bingo's image and fallback directly
+      const bingoContent = document.createElement('div');
+      bingoContent.style.width = '120px';
+      bingoContent.style.height = '120px';
+      bingoContent.style.position = 'relative';
+      
+      // Add fallback
+      const bingoFallback = document.createElement('div');
+      bingoFallback.className = 'character-fallback bingo-color';
+      bingoFallback.textContent = 'B';
+      bingoContent.appendChild(bingoFallback);
+      
+      // Add image - get from preloaded element if possible
+      const bingoImg = document.createElement('img');
+      bingoImg.className = 'character-img';
+      
+      // Use preloaded image if available
+      const preloadedBingo = document.getElementById('bingo-img');
+      if (preloadedBingo) {
+        bingoImg.src = preloadedBingo.src;
+      } else {
+        bingoImg.src = 'public/images/bingo.png';
+      }
+      
+      bingoImg.alt = 'Bingo';
+      bingoContent.appendChild(bingoImg);
+      
+      // Add name badge
+      const bingoName = document.createElement('div');
+      bingoName.textContent = 'Bingo';
+      bingoName.style.backgroundColor = 'white';
+      bingoName.style.color = '#333';
+      bingoName.style.borderRadius = '15px';
+      bingoName.style.padding = '8px 15px';
+      bingoName.style.fontWeight = 'bold';
+      bingoName.style.fontSize = '22px';
+      bingoName.style.marginTop = '8px';
+      bingoName.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+      
+      bingoDisplay.appendChild(bingoContent);
+      bingoDisplay.appendChild(bingoName);
+      
+      // Add the Bingo display to the DOM
+      document.getElementById('game-container').appendChild(bingoDisplay);
     });
   </script>
 </body>

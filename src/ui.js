@@ -26,6 +26,17 @@ function renderGame() {
     renderJulia();
   }
   
+  // Always call renderBingo if the function exists, even for 2-player games
+  // The function will handle hiding itself when needed
+  if (typeof renderBingo === 'function') {
+    renderBingo();
+  }
+  
+  // Always call renderCoco, and let it decide whether to show itself
+  if (typeof renderCoco === 'function') {
+    renderCoco();
+  }
+  
   console.log('Initial renderGame complete');
 }
 
@@ -37,6 +48,9 @@ function updateTurnIndicator() {
   if (!gameState.isGameStarted) {
     // Hide the turn indicator before game starts
     turnIndicator.style.display = 'none';
+    
+    // Make sure name turn indicator is also hidden
+    updateNameTurnIndicator(null);
     return;
   }
   
@@ -57,6 +71,109 @@ function updateTurnIndicator() {
       opponent.classList.remove('current-player');
     }
   });
+  
+  // Update the name-based turn indicator
+  if (gameState.players && gameState.players.length > 0) {
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    updateNameTurnIndicator(currentPlayer?.name || null);
+  } else {
+    updateNameTurnIndicator(null);
+  }
+}
+
+// Create or update the name-based turn indicator next to the color indicator
+function updateNameTurnIndicator(playerName) {
+  // Find the side indicators container
+  const sideIndicators = document.getElementById('side-indicators');
+  if (!sideIndicators) return;
+  
+  // Look for existing turn indicator or create a new one
+  let nameTurnIndicator = document.getElementById('name-turn-indicator');
+  
+  if (!nameTurnIndicator) {
+    // Create new turn indicator
+    nameTurnIndicator = document.createElement('div');
+    nameTurnIndicator.id = 'name-turn-indicator';
+    
+    // Style the indicator
+    nameTurnIndicator.style.backgroundColor = 'white';
+    nameTurnIndicator.style.color = '#333';
+    nameTurnIndicator.style.padding = '10px 15px';
+    nameTurnIndicator.style.borderRadius = '15px';
+    nameTurnIndicator.style.fontWeight = 'bold';
+    nameTurnIndicator.style.fontSize = '18px';
+    nameTurnIndicator.style.marginTop = '25px';
+    nameTurnIndicator.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+    nameTurnIndicator.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
+    nameTurnIndicator.style.textAlign = 'center';
+    nameTurnIndicator.style.minWidth = '130px';
+    nameTurnIndicator.style.border = '3px solid gold';
+    nameTurnIndicator.style.position = 'relative';
+    
+    // Add a label above the indicator
+    const turnLabel = document.createElement('div');
+    turnLabel.textContent = "Current Turn";
+    turnLabel.style.fontSize = '14px';
+    turnLabel.style.fontWeight = 'bold';
+    turnLabel.style.color = 'white';
+    turnLabel.style.textShadow = '0 1px 3px rgba(0, 0, 0, 0.5)';
+    turnLabel.style.position = 'absolute';
+    turnLabel.style.top = '-25px';
+    turnLabel.style.left = '50%';
+    turnLabel.style.transform = 'translateX(-50%)';
+    turnLabel.style.width = '100%';
+    turnLabel.style.textAlign = 'center';
+    
+    nameTurnIndicator.appendChild(turnLabel);
+    
+    // Add after the color indicator
+    sideIndicators.appendChild(nameTurnIndicator);
+  }
+  
+  // Set or clear content based on playerName
+  if (playerName) {
+    nameTurnIndicator.style.display = 'block';
+    // Use inner span for the actual player name for styling purposes
+    nameTurnIndicator.innerHTML = `<div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; color: white; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); font-size: 14px; width: 100%; text-align: center;">Current Turn</div><span>${playerName}</span>`;
+    
+    // Add pulsing animation
+    const animation = nameTurnIndicator.animate(
+      [
+        { boxShadow: '0 0 10px gold' },
+        { boxShadow: '0 0 20px gold' },
+        { boxShadow: '0 0 10px gold' }
+      ],
+      {
+        duration: 1500,
+        iterations: Infinity
+      }
+    );
+    
+    // Set background color based on player name
+    if (playerName === 'Bluey') {
+      nameTurnIndicator.style.backgroundColor = '#1E90FF'; // Bluey blue
+      nameTurnIndicator.style.color = 'white';
+    } else if (playerName === 'Bingo') {
+      nameTurnIndicator.style.backgroundColor = '#FF6B6B'; // Bingo red/orange
+      nameTurnIndicator.style.color = 'white';
+    } else if (playerName === 'Coco') {
+      nameTurnIndicator.style.backgroundColor = '#8A2BE2'; // Coco purple
+      nameTurnIndicator.style.color = 'white';
+    } else if (playerName === 'Bandit') {
+      nameTurnIndicator.style.backgroundColor = '#4169E1'; // Bandit blue
+      nameTurnIndicator.style.color = 'white';
+    } else if (playerName === 'Julia') {
+      nameTurnIndicator.style.backgroundColor = '#FFCC66'; // Julia's color (golden yellow)
+      nameTurnIndicator.style.color = '#333';
+    } else {
+      // Default fallback
+      nameTurnIndicator.style.backgroundColor = 'white';
+      nameTurnIndicator.style.color = '#333';
+    }
+  } else {
+    // No current player, hide the indicator
+    nameTurnIndicator.style.display = 'none';
+  }
 }
 
 // Create character name element
@@ -187,19 +304,35 @@ function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
-  // Set up the layout - always show 3 opponent slots
+  // Set up the layout - we're now handling Bluey and Bingo separately in fixed positions
   opponentsArea.style.display = 'flex'; 
-  opponentsArea.style.justifyContent = 'space-evenly';
+  opponentsArea.style.justifyContent = 'space-between'; // Changed from space-evenly to space-between
   opponentsArea.style.width = '100%';
   opponentsArea.style.maxWidth = '900px';
   opponentsArea.style.margin = '0 auto';
+  opponentsArea.style.position = 'relative'; // Ensure relative positioning for absolute children
   
-  // Define fixed positions for each character
-  const positions = [
-    { left: '25%', top: '0' },   // Bluey (always first)
-    { left: '50%', top: '0' },   // Bingo (middle)
-    { left: '75%', top: '0' }    // Bandit (right)
-  ];
+  // Get the total number of expected opponents (excluding player 0 which is human)
+  const totalOpponents = gameState.players ? gameState.players.length - 1 : 3;
+  const isFourPlayerGame = totalOpponents >= 3;
+  
+  // Define positions based on how many opponents we have
+  let positions;
+  if (isFourPlayerGame) {
+    // For 4-player games, spread them out (3 opponents)
+    positions = [
+      { left: '15%', top: '0' },  // Bluey (further left)
+      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
+      { left: '85%', top: '0' }   // Position for Coco or Bandit (far right)
+    ];
+  } else {
+    // For 2-3 player games
+    positions = [
+      { left: '25%', top: '0' },  // Bluey (left)
+      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
+      { left: '75%', top: '0' }   // Bandit (right)
+    ];
+  }
   
   // Create placeholders for all 3 potential opponent slots
   for (let i = 0; i < 3; i++) {
@@ -211,6 +344,13 @@ function renderOpponents() {
     opponentSlot.style.flexDirection = 'column';
     opponentSlot.style.alignItems = 'center';
     opponentSlot.style.justifyContent = 'center';
+    
+    // Apply fixed positioning based on the position array
+    opponentSlot.style.position = 'relative';
+    if (positions[i]) {
+      if (positions[i].left) opponentSlot.style.left = positions[i].left;
+      if (positions[i].top) opponentSlot.style.top = positions[i].top;
+    }
     
     // Check if this position has a player in the current game
     const playerIndex = i + 1; // +1 because human is index 0
@@ -246,8 +386,15 @@ function renderOpponents() {
         // For Bluey, use the createCharacterDisplay function
         const blueyDisplay = createCharacterDisplay('Bluey', 100);
         characterImage.appendChild(blueyDisplay);
+      } else if (player.name === 'Bingo') {
+        // Skip displaying Bingo in the opponent area, as it's handled separately
+        opponent.style.visibility = 'hidden'; // Hide the opponent but keep the layout intact
+      } else if (player.name === 'Coco') {
+        // For Coco, use the createCharacterDisplay function
+        const cocoDisplay = createCharacterDisplay('Coco', 100);
+        characterImage.appendChild(cocoDisplay);
       } else {
-        // For other characters, use getCharacterDisplay from images.js
+        // For other characters (like Bandit), use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
       }
       
@@ -876,6 +1023,21 @@ function updateGameDisplay(gameState) {
   renderPlayerHand();
   setupColorChoiceUI();
   updateTurnIndicator();
+  
+  // Render Julia if function exists
+  if (typeof renderJulia === 'function') {
+    renderJulia();
+  }
+  
+  // Always call renderBingo and let it handle visibility based on player count
+  if (typeof renderBingo === 'function') {
+    renderBingo();
+  }
+  
+  // Always call renderCoco and let it handle visibility based on player count
+  if (typeof renderCoco === 'function') {
+    renderCoco();
+  }
 }
 
 // Create a standard character display with size customization
@@ -895,6 +1057,8 @@ function createCharacterDisplay(characterName, size = 100) {
     colorClass = 'bandit-color';
   } else if (characterName === 'Julia') {
     colorClass = 'julia-color';
+  } else if (characterName === 'Coco') {
+    colorClass = 'coco-color';
   }
   
   // Create fallback first
@@ -906,14 +1070,30 @@ function createCharacterDisplay(characterName, size = 100) {
   // Add image element for real image
   const image = document.createElement('img');
   image.className = 'character-img';
+  
   // Get image path from preloaded images in the HTML
   const preloadedImg = document.getElementById(`${characterName.toLowerCase()}-img`);
   if (preloadedImg) {
+    // Try to use the preloaded image's source
     image.src = preloadedImg.src;
+    
+    // Ensure the image displays when loaded
+    image.onload = function() {
+      // Once this instance loads, make sure it's visible
+      image.style.display = 'block';
+    };
+    
+    // Handle any loading error in this instance
+    image.onerror = function() {
+      console.warn(`Failed to load ${characterName} image in UI`);
+      // Force direct load on error as a backup
+      image.src = `public/images/${characterName.toLowerCase()}.png?direct=${Date.now()}`;
+    };
   } else {
-    // Fallback path for direct loading
-    image.src = `public/images/${characterName.toLowerCase()}.png`;
+    // Fallback path for direct loading with cache-busting
+    image.src = `public/images/${characterName.toLowerCase()}.png?ts=${Date.now()}`;
   }
+  
   image.alt = characterName;
   container.appendChild(image);
   
@@ -939,6 +1119,140 @@ function renderJulia() {
   // Add elements to Julia display
   juliaDisplay.appendChild(juliaContainer);
   juliaDisplay.appendChild(juliaName);
+}
+
+// Render Bingo, positioned inline with Bluey
+function renderBingo() {
+  const bingoDisplay = document.getElementById('bingo-display');
+  if (!bingoDisplay) return;
+  
+  // Only show Bingo if game has at least 3 players (or we're not in a game yet)
+  if (gameState.isGameStarted && gameState.players && gameState.players.length < 3) {
+    // Hide Bingo's display completely when less than 3 players
+    bingoDisplay.innerHTML = '';
+    bingoDisplay.style.display = 'none';
+    return;
+  } else {
+    // Make sure it's visible
+    bingoDisplay.style.display = 'flex';
+  }
+  
+  // Clear previous content
+  bingoDisplay.innerHTML = '';
+  
+  // Create Bingo's container with a colored circle and initial - use 100px to match Bluey's size
+  const bingoContainer = createCharacterDisplay('Bingo', 100);
+  
+  // Create Bingo's name badge - use false to match Bluey's style
+  const bingoName = createNameBadge('Bingo', false);
+  
+  // Create a div to hold Bingo's image and name (similar to opponent structure)
+  const bingoOpponent = document.createElement('div');
+  bingoOpponent.className = 'opponent';
+  bingoOpponent.appendChild(bingoContainer);
+  bingoOpponent.appendChild(bingoName);
+  
+  // Get Bingo's player data if game is started
+  if (gameState.isGameStarted && gameState.players && gameState.players.length >= 3) {
+    // Find Bingo in the players array
+    const bingoPlayer = gameState.players.find(player => player.name === 'Bingo');
+    
+    if (bingoPlayer) {
+      // Add cards container to show visual representation of Bingo's cards
+      const cardsContainer = createCardsContainer(bingoPlayer);
+      bingoOpponent.appendChild(cardsContainer);
+      
+      // Add UNO indicator if needed
+      if (bingoPlayer.hand.length === 1 && bingoPlayer.hasCalledUno) {
+        const unoIndicator = document.createElement('div');
+        unoIndicator.className = 'uno-indicator';
+        unoIndicator.textContent = 'UNO!';
+        bingoOpponent.appendChild(unoIndicator);
+      }
+      
+      // Highlight if it's Bingo's turn
+      if (gameState.currentPlayerIndex === gameState.players.indexOf(bingoPlayer)) {
+        bingoOpponent.classList.add('current-player');
+      }
+    }
+  }
+  
+  // Add the opponent to the display
+  bingoDisplay.appendChild(bingoOpponent);
+}
+
+// Render Coco at the right position
+function renderCoco() {
+  // Check for an existing coco-display div, create one if it doesn't exist
+  let cocoDisplay = document.getElementById('coco-display');
+  if (!cocoDisplay) {
+    cocoDisplay = document.createElement('div');
+    cocoDisplay.id = 'coco-display';
+    cocoDisplay.style.position = 'absolute';
+    cocoDisplay.style.right = '10%'; // Position at far right
+    cocoDisplay.style.top = '0'; // Same top position as others
+    cocoDisplay.style.display = 'flex';
+    cocoDisplay.style.flexDirection = 'column';
+    cocoDisplay.style.alignItems = 'center';
+    cocoDisplay.style.zIndex = '100';
+    
+    // Add to the game container
+    document.getElementById('game-container').appendChild(cocoDisplay);
+  }
+  
+  // Only show Coco if game has 4 players
+  if (gameState.isGameStarted && gameState.players && gameState.players.length < 4) {
+    // Hide Coco's display completely when less than 4 players
+    cocoDisplay.innerHTML = '';
+    cocoDisplay.style.display = 'none';
+    return;
+  } else {
+    // Make sure it's visible
+    cocoDisplay.style.display = 'flex';
+  }
+  
+  // Clear previous content
+  cocoDisplay.innerHTML = '';
+  
+  // Create Coco's container
+  const cocoContainer = createCharacterDisplay('Coco', 100);
+  
+  // Create Coco's name badge
+  const cocoName = createNameBadge('Coco', false);
+  
+  // Create a div to hold Coco's image and name
+  const cocoOpponent = document.createElement('div');
+  cocoOpponent.className = 'opponent';
+  cocoOpponent.appendChild(cocoContainer);
+  cocoOpponent.appendChild(cocoName);
+  
+  // Get Coco's player data if game is started
+  if (gameState.isGameStarted && gameState.players && gameState.players.length >= 4) {
+    // Find Coco in the players array (typically index 3)
+    const cocoPlayer = gameState.players.find(player => player.name === 'Coco');
+    
+    if (cocoPlayer) {
+      // Add cards container to show visual representation of Coco's cards
+      const cardsContainer = createCardsContainer(cocoPlayer);
+      cocoOpponent.appendChild(cardsContainer);
+      
+      // Add UNO indicator if needed
+      if (cocoPlayer.hand.length === 1 && cocoPlayer.hasCalledUno) {
+        const unoIndicator = document.createElement('div');
+        unoIndicator.className = 'uno-indicator';
+        unoIndicator.textContent = 'UNO!';
+        cocoOpponent.appendChild(unoIndicator);
+      }
+      
+      // Highlight if it's Coco's turn
+      if (gameState.currentPlayerIndex === gameState.players.indexOf(cocoPlayer)) {
+        cocoOpponent.classList.add('current-player');
+      }
+    }
+  }
+  
+  // Add the opponent to the display
+  cocoDisplay.appendChild(cocoOpponent);
 }
 
 // Show welcome screen on first load
@@ -1101,8 +1415,11 @@ window.addEventListener('DOMContentLoaded', () => {
   initializeEmptyGame();
   renderGame();
   
-  // Render Julia character
+  // Render Julia and Bingo characters
   renderJulia();
+  renderBingo();
+  // Initialize Coco for 4-player game support
+  renderCoco();
   
   // Add welcome screen
   showWelcomeScreen();
@@ -1116,5 +1433,7 @@ window.addEventListener('DOMContentLoaded', () => {
 export {
   renderGame,
   updateGameDisplay,
-  showWelcomeScreen
+  showWelcomeScreen,
+  renderBingo,
+  renderCoco
 };

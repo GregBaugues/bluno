@@ -25,7 +25,7 @@ function initializeEmptyGame() {
   
   // Create player with sample cards for initial display
   gameState.players = [{
-    name: 'You',
+    name: 'Julia',
     hand: [
       { color: 'red', value: '7', emoji: '😊' },
       { color: 'blue', value: '4', emoji: '😇' },

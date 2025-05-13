@@ -5,7 +5,8 @@ const characterColors = {
   'Bluey': '#1E90FF',    // Blue
   'Bingo': '#FF6B6B',    // Red/orange
   'Bandit': '#4169E1',   // Royal blue
-  'Julia': '#FFCC66'     // Golden yellow
+  'Julia': '#FFCC66',    // Golden yellow
+  'Coco': '#8A2BE2'      // Purple for Coco
 };
 
 // Simple function to get HTML for a character display with initial
