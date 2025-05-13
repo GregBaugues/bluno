@@ -159,7 +159,7 @@
       lastTouchEnd = now;
     }, { passive: false });
     
-    // Creating a placeholder for Julia and Bluey displays with image preloading
+    // Creating a placeholder for Julia display with image preloading
     document.addEventListener('DOMContentLoaded', function() {
       // Create a placeholder for Julia display
       const juliaDisplay = document.createElement('div');
@@ -216,62 +216,6 @@
       
       // Add the Julia display to the DOM
       document.getElementById('game-container').appendChild(juliaDisplay);
-      
-      // Create a placeholder for Bluey display
-      const blueyDisplay = document.createElement('div');
-      blueyDisplay.id = 'bluey-display';
-      blueyDisplay.style.position = 'absolute';
-      blueyDisplay.style.right = '40px';
-      blueyDisplay.style.top = '120px';
-      blueyDisplay.style.display = 'flex';
-      blueyDisplay.style.flexDirection = 'column';
-      blueyDisplay.style.alignItems = 'center';
-      blueyDisplay.style.zIndex = '100';
-      
-      // Add Bluey's image and fallback directly
-      const blueyContent = document.createElement('div');
-      blueyContent.style.width = '120px';
-      blueyContent.style.height = '120px';
-      blueyContent.style.position = 'relative';
-      
-      // Add fallback
-      const blueyFallback = document.createElement('div');
-      blueyFallback.className = 'character-fallback bluey-color';
-      blueyFallback.textContent = 'B';
-      blueyContent.appendChild(blueyFallback);
-      
-      // Add image - get from preloaded element if possible
-      const blueyImg = document.createElement('img');
-      blueyImg.className = 'character-img';
-      
-      // Use preloaded image if available
-      const preloadedBluey = document.getElementById('bluey-img');
-      if (preloadedBluey) {
-        blueyImg.src = preloadedBluey.src;
-      } else {
-        blueyImg.src = 'public/images/bluey.png';
-      }
-      
-      blueyImg.alt = 'Bluey';
-      blueyContent.appendChild(blueyImg);
-      
-      // Add name badge
-      const blueyName = document.createElement('div');
-      blueyName.textContent = 'Bluey';
-      blueyName.style.backgroundColor = 'white';
-      blueyName.style.color = '#333';
-      blueyName.style.borderRadius = '15px';
-      blueyName.style.padding = '8px 15px';
-      blueyName.style.fontWeight = 'bold';
-      blueyName.style.fontSize = '22px';
-      blueyName.style.marginTop = '8px';
-      blueyName.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-      
-      blueyDisplay.appendChild(blueyContent);
-      blueyDisplay.appendChild(blueyName);
-      
-      // Add the Bluey display to the DOM
-      document.getElementById('game-container').appendChild(blueyDisplay);
     });
   </script>
 </body>

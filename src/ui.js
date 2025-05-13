@@ -234,30 +234,31 @@ function renderOpponents() {
         opponent.appendChild(unoIndicator);
       }
       
-      // Handle different character types
+      // Create and add the image with badge for all characters
+      const characterImage = document.createElement('div');
+      characterImage.className = 'character-image';
+      characterImage.style.width = '100px';
+      characterImage.style.height = '100px';
+      characterImage.style.position = 'relative';
+      
+      // Add the character display inside this container
       if (player.name === 'Bluey') {
-        // For Bluey, only add the name (no image)
-        opponent.appendChild(createNameBadge(player.name, false));
+        // For Bluey, use the createCharacterDisplay function
+        const blueyDisplay = createCharacterDisplay('Bluey', 100, true);
+        characterImage.appendChild(blueyDisplay);
       } else {
-        // For other characters, create and add the image with badge
-        const characterImage = document.createElement('div');
-        characterImage.className = 'character-image';
-        characterImage.style.width = '100px';
-        characterImage.style.height = '100px';
-        characterImage.style.position = 'relative';
-        
-        // Add the character display inside this container
+        // For other characters, use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
-        
-        // Add the card badge
-        const cardBadge = createCardBadge(player.hand.length);
-        characterImage.appendChild(cardBadge);
-        
-        opponent.appendChild(characterImage);
-        
-        // Add character name
-        opponent.appendChild(createNameBadge(player.name, false));
       }
+      
+      // Add the card badge
+      const cardBadge = createCardBadge(player.hand.length);
+      characterImage.appendChild(cardBadge);
+      
+      opponent.appendChild(characterImage);
+      
+      // Add character name
+      opponent.appendChild(createNameBadge(player.name, false));
       
       // Add cards container to show visual representation of cards
       opponent.appendChild(createCardsContainer(player));
