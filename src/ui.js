@@ -727,7 +727,10 @@ function setupColorChoiceUI() {
       // Add click handler
       button.onclick = () => {
         chooseColor(gameState, color);
+        // Force hide the color choice UI
         colorChoiceElement.style.display = 'none';
+        // Make sure the waitingForColorChoice flag is set to false
+        gameState.waitingForColorChoice = false;
       };
       
       colorButtonsElement.appendChild(button);

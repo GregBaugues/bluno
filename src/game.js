@@ -346,18 +346,27 @@ function showColorChoiceUI() {
 }
 
 // Human player chooses color after playing a wild card
-function chooseColor(color) {
-  gameState.currentColor = color;
-  gameState.waitingForColorChoice = false;
+function chooseColor(gameStateParam, color) {
+  // For compatibility - if only one parameter passed, it's the color
+  if (color === undefined && typeof gameStateParam === 'string') {
+    color = gameStateParam;
+    gameStateParam = gameState;
+  }
+  
+  // Use either passed gameState or global gameState
+  const gs = gameStateParam || gameState;
+  
+  gs.currentColor = color;
+  gs.waitingForColorChoice = false;
   
   // Get the last played card
-  const lastPlayedCard = gameState.discardPile[gameState.discardPile.length - 1];
+  const lastPlayedCard = gs.discardPile[gs.discardPile.length - 1];
   const wasWildDraw4 = lastPlayedCard.value === 'Wild Draw 4';
   
   // If it was a Wild Draw 4, make the next player draw 4 cards
   if (wasWildDraw4) {
     // Handle the draw 4 effect now that color has been chosen
-    const nextPlayerIndex = gameState.pendingDrawPlayerIndex || getNextPlayerIndex();
+    const nextPlayerIndex = gs.pendingDrawPlayerIndex || getNextPlayerIndex();
     handleDrawCards(4);
     
     // Skip the next player's turn
@@ -368,10 +377,10 @@ function chooseColor(color) {
   }
   
   // Update the UI
-  updateGameDisplay(gameState);
+  updateGameDisplay(gs);
   
   // If it's AI's turn, let them play
-  if (gameState.currentPlayerIndex !== 0) {
+  if (gs.currentPlayerIndex !== 0) {
     setTimeout(playAITurn, 1000);
   }
 }
