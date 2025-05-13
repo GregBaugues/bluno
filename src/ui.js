@@ -464,7 +464,8 @@ function renderDeckAndDiscardPile() {
   
   if (gameState.discardPile.length > 0) {
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
-    const cardElement = createCardElement(topCard);
+    // Pass true as second argument to create a larger card for the discard pile
+    const cardElement = createCardElement(topCard, true);
     
     // Add a subtle glow effect to the top discard card
     cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
@@ -771,13 +772,13 @@ function isCardPlayable(card) {
 }
 
 // Create a card element for display
-function createCardElement(card) {
+function createCardElement(card, isDiscardPile = false) {
   const cardElement = document.createElement('div');
   cardElement.className = 'card';
   
-  // Base card styling
-  cardElement.style.width = '80px';
-  cardElement.style.height = '112px';
+  // Base card styling - larger size for discard pile
+  cardElement.style.width = isDiscardPile ? '120px' : '80px';
+  cardElement.style.height = isDiscardPile ? '168px' : '112px';
   cardElement.style.borderRadius = '10px';
   cardElement.style.border = '3px solid white';
   cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
@@ -821,7 +822,7 @@ function createCardElement(card) {
   topValue.style.position = 'absolute';
   topValue.style.top = '5px';
   topValue.style.left = '5px';
-  topValue.style.fontSize = '16px';
+  topValue.style.fontSize = isDiscardPile ? '24px' : '16px';
   topValue.style.fontWeight = 'bold';
   topValue.style.color = 'white';
   
@@ -831,7 +832,7 @@ function createCardElement(card) {
   bottomValue.style.position = 'absolute';
   bottomValue.style.bottom = '5px';
   bottomValue.style.right = '5px';
-  bottomValue.style.fontSize = '16px';
+  bottomValue.style.fontSize = isDiscardPile ? '24px' : '16px';
   bottomValue.style.fontWeight = 'bold';
   bottomValue.style.color = 'white';
   bottomValue.style.transform = 'rotate(180deg)';
@@ -842,7 +843,7 @@ function createCardElement(card) {
   // Add emoji for card value
   const emoji = document.createElement('div');
   emoji.textContent = card.emoji;
-  emoji.style.fontSize = '40px';
+  emoji.style.fontSize = isDiscardPile ? '60px' : '40px';
   emoji.style.textAlign = 'center';
   
   cardContent.appendChild(emoji);
