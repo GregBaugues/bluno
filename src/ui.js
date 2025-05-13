@@ -776,9 +776,9 @@ function createCardElement(card, isDiscardPile = false) {
   const cardElement = document.createElement('div');
   cardElement.className = 'card';
   
-  // Base card styling - larger size for discard pile
-  cardElement.style.width = isDiscardPile ? '120px' : '80px';
-  cardElement.style.height = isDiscardPile ? '168px' : '112px';
+  // Base card styling - much larger size for discard pile
+  cardElement.style.width = isDiscardPile ? '140px' : '80px';
+  cardElement.style.height = isDiscardPile ? '196px' : '112px';
   cardElement.style.borderRadius = '10px';
   cardElement.style.border = '3px solid white';
   cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
@@ -820,9 +820,9 @@ function createCardElement(card, isDiscardPile = false) {
   topValue.className = 'card-corner top-left';
   topValue.textContent = card.value;
   topValue.style.position = 'absolute';
-  topValue.style.top = '5px';
-  topValue.style.left = '5px';
-  topValue.style.fontSize = isDiscardPile ? '24px' : '16px';
+  topValue.style.top = isDiscardPile ? '10px' : '5px';
+  topValue.style.left = isDiscardPile ? '10px' : '5px';
+  topValue.style.fontSize = isDiscardPile ? '28px' : '16px';
   topValue.style.fontWeight = 'bold';
   topValue.style.color = 'white';
   
@@ -830,9 +830,9 @@ function createCardElement(card, isDiscardPile = false) {
   bottomValue.className = 'card-corner bottom-right';
   bottomValue.textContent = card.value;
   bottomValue.style.position = 'absolute';
-  bottomValue.style.bottom = '5px';
-  bottomValue.style.right = '5px';
-  bottomValue.style.fontSize = isDiscardPile ? '24px' : '16px';
+  bottomValue.style.bottom = isDiscardPile ? '10px' : '5px';
+  bottomValue.style.right = isDiscardPile ? '10px' : '5px';
+  bottomValue.style.fontSize = isDiscardPile ? '28px' : '16px';
   bottomValue.style.fontWeight = 'bold';
   bottomValue.style.color = 'white';
   bottomValue.style.transform = 'rotate(180deg)';
@@ -843,7 +843,7 @@ function createCardElement(card, isDiscardPile = false) {
   // Add emoji for card value
   const emoji = document.createElement('div');
   emoji.textContent = card.emoji;
-  emoji.style.fontSize = isDiscardPile ? '60px' : '40px';
+  emoji.style.fontSize = isDiscardPile ? '80px' : '40px';
   emoji.style.textAlign = 'center';
   
   cardContent.appendChild(emoji);
