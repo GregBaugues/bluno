@@ -249,11 +249,9 @@ function renderOpponents() {
       } else {
         // For other characters, use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
-        
-        // Add the card badge - only for non-Bluey characters
-        const cardBadge = createCardBadge(player.hand.length);
-        characterImage.appendChild(cardBadge);
       }
+      
+      // Card badges have been removed from all character images
       
       opponent.appendChild(characterImage);
       
