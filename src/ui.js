@@ -244,7 +244,7 @@ function renderOpponents() {
       // Add the character display inside this container
       if (player.name === 'Bluey') {
         // For Bluey, use the createCharacterDisplay function
-        const blueyDisplay = createCharacterDisplay('Bluey', 100, true);
+        const blueyDisplay = createCharacterDisplay('Bluey', 100);
         characterImage.appendChild(blueyDisplay);
       } else {
         // For other characters, use getCharacterDisplay from images.js
@@ -886,7 +886,7 @@ function updateGameDisplay(gameState) {
 }
 
 // Create a standard character display with size customization
-function createCharacterDisplay(characterName, size = 100, includeDecorations = true) {
+function createCharacterDisplay(characterName, size = 100) {
   const container = document.createElement('div');
   container.style.width = `${size}px`;
   container.style.height = `${size}px`;
@@ -924,26 +924,7 @@ function createCharacterDisplay(characterName, size = 100, includeDecorations = 
   image.alt = characterName;
   container.appendChild(image);
   
-  // Add decoration if needed
-  if (includeDecorations) {
-    let decoration = null;
-    if (characterName === 'Bingo') decoration = '❤️';
-    else if (characterName === 'Bandit') decoration = '😎';
-    
-    if (decoration) {
-      const decorationElem = document.createElement('div');
-      decorationElem.style.position = 'absolute';
-      decorationElem.style.top = '50%';
-      decorationElem.style.left = '50%';
-      decorationElem.style.transform = 'translate(-50%, -50%)';
-      decorationElem.style.fontSize = `${size * 0.8}px`;
-      decorationElem.style.opacity = '0.3';
-      decorationElem.style.pointerEvents = 'none';
-      decorationElem.style.zIndex = '10';
-      decorationElem.textContent = decoration;
-      container.appendChild(decorationElem);
-    }
-  }
+  // No decorations - removed emoji overlays
   
   return container;
 }
