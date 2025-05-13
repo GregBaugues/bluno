@@ -13,7 +13,8 @@ let gameState = {
   isGameStarted: false,
   currentColor: null,
   waitingForColorChoice: false,
-  waitingForImplicitColor: false, // For the new implicit color choice feature
+  pendingDrawPlayerIndex: null, // Store next player index who will draw (for Wild Draw 4)
+  pendingDrawCount: 0, // Number of cards to draw (for Wild Draw 4)
   requiredDraws: 0 // Number of cards player must draw (due to Draw 2 or Draw 4)
 };
 
@@ -95,19 +96,16 @@ function placeInitialCard() {
 }
 
 // Player plays a card
-function playCard(cardIndex) {
-  const player = gameState.players[gameState.currentPlayerIndex];
+function playCard(gameState, playerIndex, cardIndex) {
+  const player = gameState.players[playerIndex];
   const card = player.hand[cardIndex];
-  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
   
-  // Check if we're waiting for implicit color choice from a previous wild card
-  if (gameState.waitingForImplicitColor && gameState.currentPlayerIndex === 0) {
-    // Set the color based on the card being played now
-    if (card.color !== 'wild') {
-      gameState.currentColor = card.color;
-      gameState.waitingForImplicitColor = false;
-    }
-  }
+  // Handle case when there's no discard pile yet
+  const topDiscard = gameState.discardPile.length > 0 ? 
+    gameState.discardPile[gameState.discardPile.length - 1] : 
+    null;
+  
+  // We no longer use implicit color choice
   
   // Check if card can be played
   if (canPlayCard(card, topDiscard, gameState.currentColor)) {
@@ -121,13 +119,17 @@ function playCard(cardIndex) {
     // Special handling for wild cards played by human player
     if ((playedCard.value === 'Wild' || playedCard.value === 'Wild Draw 4') && 
         gameState.currentPlayerIndex === 0) {
-      // Instead of showing color choice, we now handle wild cards differently
-      // The color will be set implicitly by the next card played
+      // Set waiting for color choice flag
+      gameState.waitingForColorChoice = true;
       
-      // Handle special card effects (this will handle Wild Draw 4 correctly)
-      handleSpecialCard(playedCard);
+      // For Wild Draw 4, set up the pending draw action for the next player
+      if (playedCard.value === 'Wild Draw 4') {
+        // Store the next player index who will draw
+        gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
+        gameState.pendingDrawCount = 4;
+      }
       
-      // Update the UI 
+      // Show color choice UI
       updateGameDisplay(gameState);
       return;
     } else {
@@ -168,10 +170,13 @@ function canPlayCard(card, topDiscard, currentColor) {
     return true;
   }
   
-  // If we're waiting for an implicit color choice, any colored card can be played
-  if (gameState.waitingForImplicitColor && card.color !== 'wild') {
+  // If there's no discard pile yet, any card can be played
+  if (!topDiscard) {
     return true;
   }
+  
+  // If we're waiting for an implicit color choice, any colored card can be played
+  // Wild card color selection is now handled manually
   
   // Card can be played if it matches the current color
   if (card.color === currentColor) {
@@ -245,13 +250,7 @@ function handleWildCardColor() {
     // AI chooses most frequent color in hand
     chooseAIColor();
   }
-  // For human player, set a temporary color and wait for the next card
-  else {
-    // Set a temporary color (needed for game logic)
-    gameState.currentColor = 'blue'; // Default temporary color
-    // Tell the game we're waiting for an implicit color choice via the next card
-    gameState.waitingForImplicitColor = true;
-  }
+  // For human player, we'll show color choice UI (handled in playCard function)
 }
 
 // Handle special cards
@@ -341,7 +340,9 @@ function chooseAIColor() {
 
 // Show color choice UI for human player
 function showColorChoiceUI() {
-  // To be implemented in UI.js
+  // This is handled directly in UI.js when gameState.waitingForColorChoice is true
+  gameState.waitingForColorChoice = true;
+  updateGameDisplay(gameState);
 }
 
 // Human player chooses color after playing a wild card
@@ -349,14 +350,20 @@ function chooseColor(color) {
   gameState.currentColor = color;
   gameState.waitingForColorChoice = false;
   
-  // Need to determine if we should change turns based on the last played card
+  // Get the last played card
   const lastPlayedCard = gameState.discardPile[gameState.discardPile.length - 1];
   const wasWildDraw4 = lastPlayedCard.value === 'Wild Draw 4';
   
-  // For Wild Draw 4 in a 2-player game, the player who played it gets another turn
-  // Only call nextTurn if it wasn't a Wild Draw 4 in a 2-player game
-  if (!(wasWildDraw4 && gameState.players.length === 2)) {
-    // For regular Wild cards or Wild Draw 4 in 3+ player games, move to next player's turn
+  // If it was a Wild Draw 4, make the next player draw 4 cards
+  if (wasWildDraw4) {
+    // Handle the draw 4 effect now that color has been chosen
+    const nextPlayerIndex = gameState.pendingDrawPlayerIndex || getNextPlayerIndex();
+    handleDrawCards(4);
+    
+    // Skip the next player's turn
+    handleSkipNextPlayer(nextPlayerIndex);
+  } else {
+    // For regular Wild cards, just move to next player's turn
     nextTurn();
   }
   
@@ -453,7 +460,6 @@ function handleRequiredDraw() {
 function drawCard() {
   if (gameState.currentPlayerIndex !== 0) return; // Only human player can use this function
   if (gameState.waitingForColorChoice) return; // Don't draw if waiting for color choice
-  if (gameState.waitingForImplicitColor) return; // Don't draw if waiting for implicit color
   
   // Check if player has legal moves and there are no required draws
   if (gameState.requiredDraws === 0 && playerHasLegalMoves(0)) {
@@ -508,7 +514,7 @@ function playAITurn() {
     const card = player.hand[i];
     if (canPlayCard(card, topDiscard, gameState.currentColor)) {
       // Play the card
-      setTimeout(() => playCard(i), 500);
+      setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, i), 500);
       return;
     }
   }
@@ -519,7 +525,7 @@ function playAITurn() {
   // Check if drawn card can be played
   if (canPlayCard(drawnCard, topDiscard, gameState.currentColor)) {
     // Play the card
-    setTimeout(() => playCard(player.hand.length - 1), 500);
+    setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, player.hand.length - 1), 500);
   } else {
     // Move to next player's turn
     nextTurn();
