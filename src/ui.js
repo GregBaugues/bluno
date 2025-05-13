@@ -1,6 +1,6 @@
 import { gameState, playCard, chooseColor, startGame, drawCard, initializeEmptyGame } from './game.js';
 import { colors } from './deck.js';
-import { getCharacterDisplay, characterImageSources } from './images.js';
+import { getCharacterDisplay, characterColors } from './images.js';
 
 // Helper function to apply common styles to elements
 function applyStyles(element, styles) {
@@ -889,21 +889,39 @@ function createCharacterDisplay(characterName, size = 100, includeDecorations = 
   const container = document.createElement('div');
   container.style.width = `${size}px`;
   container.style.height = `${size}px`;
-  container.style.borderRadius = '50%';
   container.style.position = 'relative';
-  container.style.overflow = 'hidden';
-  container.style.border = '3px solid white';
-  container.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
   
-  // Create image element using the direct path
-  const imgElem = document.createElement('img');
-  imgElem.src = characterImageSources[characterName];
-  imgElem.alt = characterName;
-  imgElem.style.width = '100%';
-  imgElem.style.height = '100%';
-  imgElem.style.objectFit = 'cover';
-  imgElem.style.objectPosition = 'center';
-  container.appendChild(imgElem);
+  // Choose the proper class for fallback
+  let colorClass;
+  if (characterName === 'Bluey') {
+    colorClass = 'bluey-color';
+  } else if (characterName === 'Bingo') {
+    colorClass = 'bingo-color';
+  } else if (characterName === 'Bandit') {
+    colorClass = 'bandit-color';
+  } else if (characterName === 'Julia') {
+    colorClass = 'julia-color';
+  }
+  
+  // Create fallback first
+  const fallback = document.createElement('div');
+  fallback.className = `character-fallback ${colorClass}`;
+  fallback.textContent = characterName.charAt(0);
+  container.appendChild(fallback);
+  
+  // Add image element for real image
+  const image = document.createElement('img');
+  image.className = 'character-img';
+  // Get image path from preloaded images in the HTML
+  const preloadedImg = document.getElementById(`${characterName.toLowerCase()}-img`);
+  if (preloadedImg) {
+    image.src = preloadedImg.src;
+  } else {
+    // Fallback path for direct loading
+    image.src = `public/images/${characterName.toLowerCase()}.png`;
+  }
+  image.alt = characterName;
+  container.appendChild(image);
   
   // Add decoration if needed
   if (includeDecorations) {
@@ -920,6 +938,7 @@ function createCharacterDisplay(characterName, size = 100, includeDecorations = 
       decorationElem.style.fontSize = `${size * 0.8}px`;
       decorationElem.style.opacity = '0.3';
       decorationElem.style.pointerEvents = 'none';
+      decorationElem.style.zIndex = '10';
       decorationElem.textContent = decoration;
       container.appendChild(decorationElem);
     }

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bluey Uno">
+  <title>Bluey Uno</title>
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="src/styles.css">
+  
+  <!-- Comic Sans MS Font -->
+  <link href="https://fonts.cdnfonts.com/css/comic-sans-ms" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif !important;
+    }
+    
+    /* Character image styles */
+    .character-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Hide character images until they're loaded */
+    body:not(.images-loaded) .character-img {
+      display: none;
+    }
+    
+    /* Fallback styles */
+    .character-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 60px;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      border: 3px solid white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Character-specific colors */
+    .bluey-color { background-color: #1E90FF; }
+    .bingo-color { background-color: #FF6B6B; }
+    .bandit-color { background-color: #4169E1; }
+    .julia-color { background-color: #FFCC66; }
+    
+    /* Hide fallbacks when images are loaded */
+    body.images-loaded .character-fallback {
+      display: none;
+    }
+  </style>
+  
+  <!-- Preload character images -->
+  <link rel="preload" as="image" href="public/images/bluey.png">
+  <link rel="preload" as="image" href="public/images/bingo.png">
+  <link rel="preload" as="image" href="public/images/bandit.png">
+  <link rel="preload" as="image" href="public/images/julia.png">
+</head>
+<body>
+  <!-- Hidden image preloading container -->
+  <div style="display: none;" id="image-preload">
+    <img src="public/images/bluey.png" id="bluey-img" onload="characterImgLoaded('bluey')">
+    <img src="public/images/bingo.png" id="bingo-img" onload="characterImgLoaded('bingo')">
+    <img src="public/images/bandit.png" id="bandit-img" onload="characterImgLoaded('bandit')">
+    <img src="public/images/julia.png" id="julia-img" onload="characterImgLoaded('julia')">
+  </div>
+
+  <div id="game-container">
+    <div id="opponents-area">
+      <!-- Bluey characters will go here -->
+    </div>
+    
+    <div id="side-indicators">
+      <!-- Side color indicator will go here -->
+      <div id="color-indicator"></div>
+    </div>
+    
+    <div id="game-area">
+      <div class="turn-indicator"></div>
+      <div id="deck"></div>
+      <div id="discard-pile"></div>
+    </div>
+    
+    <div id="player-hand">
+      <!-- Player's cards will go here -->
+    </div>
+    
+    <div id="controls" style="display:none;">
+    </div>
+  </div>
+  
+  <!-- Color choice UI -->
+  <div id="color-choice" style="display: none;">
+    <h2>🎨 Choose a color:</h2>
+    <div id="color-buttons"></div>
+  </div>
+  
+  <script>
+    // Track loaded images
+    const loadedImages = { bluey: false, bingo: false, bandit: false, julia: false };
+    
+    function characterImgLoaded(character) {
+      console.log(`${character} image loaded!`);
+      loadedImages[character] = true;
+      
+      // Check if all images are loaded
+      if (loadedImages.bluey && loadedImages.bingo && loadedImages.bandit && loadedImages.julia) {
+        console.log('All character images loaded successfully!');
+        document.body.classList.add('images-loaded');
+      }
+    }
+    
+    // Handle image load errors
+    function handleImageError(character) {
+      console.warn(`Failed to load ${character} image`);
+      loadedImages[character] = false;
+      document.getElementById(`${character}-img`).style.display = 'none';
+    }
+    
+    // Set error handlers
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('bluey-img').onerror = () => handleImageError('bluey');
+      document.getElementById('bingo-img').onerror = () => handleImageError('bingo');
+      document.getElementById('bandit-img').onerror = () => handleImageError('bandit');
+      document.getElementById('julia-img').onerror = () => handleImageError('julia');
+    });
+  </script>
+  
+  <script src="src/game.js" type="module"></script>
+  
+  <!-- Prevent elastic scrolling on iOS -->
+  <script>
+    document.addEventListener('touchmove', function(event) {
+      if (event.scale !== 1) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevent double-tap to zoom
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
+    
+    // Creating a placeholder for Julia and Bluey displays with image preloading
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create a placeholder for Julia display
+      const juliaDisplay = document.createElement('div');
+      juliaDisplay.id = 'julia-display';
+      juliaDisplay.style.position = 'absolute';
+      juliaDisplay.style.left = '40px';
+      juliaDisplay.style.top = '400px';
+      juliaDisplay.style.display = 'flex';
+      juliaDisplay.style.flexDirection = 'column';
+      juliaDisplay.style.alignItems = 'center';
+      juliaDisplay.style.zIndex = '100';
+      
+      // Add Julia's image and fallback directly
+      const juliaContent = document.createElement('div');
+      juliaContent.style.width = '120px';
+      juliaContent.style.height = '120px';
+      juliaContent.style.position = 'relative';
+      
+      // Add fallback
+      const juliaFallback = document.createElement('div');
+      juliaFallback.className = 'character-fallback julia-color';
+      juliaFallback.textContent = 'J';
+      juliaContent.appendChild(juliaFallback);
+      
+      // Add image - get from preloaded element if possible
+      const juliaImg = document.createElement('img');
+      juliaImg.className = 'character-img';
+      
+      // Use preloaded image if available
+      const preloadedJulia = document.getElementById('julia-img');
+      if (preloadedJulia) {
+        juliaImg.src = preloadedJulia.src;
+      } else {
+        juliaImg.src = 'public/images/julia.png';
+      }
+      
+      juliaImg.alt = 'Julia';
+      juliaContent.appendChild(juliaImg);
+      
+      // Add name badge
+      const juliaName = document.createElement('div');
+      juliaName.textContent = 'Julia';
+      juliaName.style.backgroundColor = 'white';
+      juliaName.style.color = '#333';
+      juliaName.style.borderRadius = '15px';
+      juliaName.style.padding = '8px 15px';
+      juliaName.style.fontWeight = 'bold';
+      juliaName.style.fontSize = '22px';
+      juliaName.style.marginTop = '8px';
+      juliaName.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+      
+      juliaDisplay.appendChild(juliaContent);
+      juliaDisplay.appendChild(juliaName);
+      
+      // Add the Julia display to the DOM
+      document.getElementById('game-container').appendChild(juliaDisplay);
+      
+      // Create a placeholder for Bluey display
+      const blueyDisplay = document.createElement('div');
+      blueyDisplay.id = 'bluey-display';
+      blueyDisplay.style.position = 'absolute';
+      blueyDisplay.style.right = '40px';
+      blueyDisplay.style.top = '120px';
+      blueyDisplay.style.display = 'flex';
+      blueyDisplay.style.flexDirection = 'column';
+      blueyDisplay.style.alignItems = 'center';
+      blueyDisplay.style.zIndex = '100';
+      
+      // Add Bluey's image and fallback directly
+      const blueyContent = document.createElement('div');
+      blueyContent.style.width = '120px';
+      blueyContent.style.height = '120px';
+      blueyContent.style.position = 'relative';
+      
+      // Add fallback
+      const blueyFallback = document.createElement('div');
+      blueyFallback.className = 'character-fallback bluey-color';
+      blueyFallback.textContent = 'B';
+      blueyContent.appendChild(blueyFallback);
+      
+      // Add image - get from preloaded element if possible
+      const blueyImg = document.createElement('img');
+      blueyImg.className = 'character-img';
+      
+      // Use preloaded image if available
+      const preloadedBluey = document.getElementById('bluey-img');
+      if (preloadedBluey) {
+        blueyImg.src = preloadedBluey.src;
+      } else {
+        blueyImg.src = 'public/images/bluey.png';
+      }
+      
+      blueyImg.alt = 'Bluey';
+      blueyContent.appendChild(blueyImg);
+      
+      // Add name badge
+      const blueyName = document.createElement('div');
+      blueyName.textContent = 'Bluey';
+      blueyName.style.backgroundColor = 'white';
+      blueyName.style.color = '#333';
+      blueyName.style.borderRadius = '15px';
+      blueyName.style.padding = '8px 15px';
+      blueyName.style.fontWeight = 'bold';
+      blueyName.style.fontSize = '22px';
+      blueyName.style.marginTop = '8px';
+      blueyName.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+      
+      blueyDisplay.appendChild(blueyContent);
+      blueyDisplay.appendChild(blueyName);
+      
+      // Add the Bluey display to the DOM
+      document.getElementById('game-container').appendChild(blueyDisplay);
+    });
+  </script>
+</body>
+</html>
