@@ -531,16 +531,7 @@ function renderPlayerHand() {
   const playerHandElement = document.getElementById('player-hand');
   playerHandElement.innerHTML = '';
   
-  // Create title for player's hand
-  const titleElement = document.createElement('div');
-  titleElement.className = 'hand-title';
-  titleElement.textContent = 'Your Cards';
-  titleElement.style.textAlign = 'center';
-  titleElement.style.fontSize = '24px';
-  titleElement.style.fontWeight = 'bold';
-  titleElement.style.marginBottom = '15px';
-  titleElement.style.color = 'rgba(0, 0, 0, 0.7)';
-  playerHandElement.appendChild(titleElement);
+  // Removed the "Your Cards" title as it's obvious
   
   // Get player's hand
   const playerHand = gameState.players[0].hand;
