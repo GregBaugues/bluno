@@ -2,13 +2,14 @@
  * Turn management tests
  */
 
-import { createMockGameState, createMockEventBus } from './testUtils';
+import { createMockGameState } from './testUtils';
+import mockEventsModule from './eventsFixture';
 import { createGameState, createCard } from './fixtures/gameFixtures';
 import { CARD_VALUES } from '../../src/constants';
 
 // Mock dependencies
 jest.mock('../../src/gameState.js');
-jest.mock('../../src/events.js');
+jest.mock('../../src/events.js', () => mockEventsModule);
 jest.mock('../../src/gameRules.js');
 jest.mock('../../src/utils.js');
 jest.mock('../../src/deck.js');
@@ -22,31 +23,15 @@ describe('Turn Management', () => {
   let mockDeck;
   
   beforeEach(() => {
+    // Setup fake timers for this test suite
+    jest.useFakeTimers();
     // Set up mocks
     const initialState = createGameState();
     mockGameState = createMockGameState(initialState);
     jest.mock('../../src/gameState.js', () => mockGameState);
     
-    // Set up event bus mock
-    mockEventBus = createMockEventBus();
-    jest.mock('../../src/events.js', () => ({
-      default: mockEventBus,
-      GameEvents: {
-        CARD_PLAYED: 'card_played',
-        COLOR_CHOICE_REQUIRED: 'color_choice_required',
-        COLOR_CHOICE_MADE: 'color_choice_made',
-        INVALID_CARD_PLAY: 'invalid_card_play',
-        TURN_CHANGED: 'turn_changed',
-        TURN_SKIPPED: 'turn_skipped',
-        DIRECTION_CHANGED: 'direction_changed',
-        DRAW_REQUIREMENT: 'draw_requirement',
-        DRAW_REQUIREMENT_COMPLETE: 'draw_requirement_complete',
-        CARD_DRAWN: 'card_drawn',
-        UNO_CALLED: 'uno_called',
-        GAME_ENDED: 'game_ended',
-        UI_UPDATED: 'ui_updated'
-      }
-    }));
+    // Get the mocked event bus from the mocked module
+    mockEventBus = require('../../src/events.js').default;
     
     // Mock game rules
     mockGameRules = {
@@ -86,6 +71,8 @@ describe('Turn Management', () => {
   });
   
   afterEach(() => {
+    // Restore real timers after tests
+    jest.useRealTimers();
     jest.clearAllMocks();
     jest.resetModules();
   });
@@ -233,6 +220,7 @@ describe('Turn Management', () => {
       // Setup - player with just one card
       mockGameState.state.isDrawingCards = false;
       mockGameState.state.requiredDraws = 0;
+      mockGameState.state.discardPile = [createCard('red', '5')];
       mockGameState.state.players = [
         { name: 'Player', hand: [createCard('red', '7')], isAI: false, hasCalledUno: true },
         { name: 'AI 1', hand: [], isAI: true, hasCalledUno: false }
@@ -241,16 +229,20 @@ describe('Turn Management', () => {
       // Mock canPlayCard to return true
       mockGameRules.canPlayCard.mockReturnValueOnce(true);
       
+      // Mock checkWinCondition to return true after card is played
+      mockGameRules.checkWinCondition.mockImplementation(player => player.hand.length === 0);
+      
       // Play the last card
       turnManagerModule.playCard(0, 0);
       
       // Fast-forward any timeouts
       jest.runAllTimers();
       
-      // Verify win condition was set
-      expect(mockGameState.updateState).toHaveBeenCalledWith({
-        winningPlayerIndex: 0
-      });
+      // First update is for the card play, second should be for the win condition
+      expect(mockGameState.updateState).toHaveBeenCalledTimes(2);
+      
+      // Check the second call to have the winning player index set
+      expect(mockGameState.updateState.mock.calls[1][0]).toHaveProperty('winningPlayerIndex', 0);
       
       // Verify game ended event was emitted
       expect(mockEventBus.emit).toHaveBeenCalledWith('game_ended', expect.any(Object));
