@@ -1713,20 +1713,24 @@ function showErrorMessage(message) {
 }
 
 // Function to show a draw requirement message
-function showDrawRequirementMessage(numCards) {
+function showDrawRequirementMessage(numCards, customMessage = null) {
   // Create a message about drawing cards
-  const message = `You need to draw ${numCards} cards!`;
+  const message = customMessage || `You need to draw ${numCards} cards!`;
   showErrorMessage(message);
 }
 
 // Add event listeners for drawing requirements
 window.addEventListener('showDrawRequirement', (event) => {
   const numCards = event.detail.numCards;
-  showDrawRequirementMessage(numCards);
+  const customMessage = event.detail.message;
+  showDrawRequirementMessage(numCards, customMessage);
 });
 
-window.addEventListener('drawRequirementComplete', () => {
-  showErrorMessage('All required cards drawn! Next player\'s turn.');
+window.addEventListener('drawRequirementComplete', (event) => {
+  const message = event.detail && event.detail.message ? 
+    event.detail.message : 
+    'All required cards drawn! Next player\'s turn.';
+  showErrorMessage(message);
 });
 
 export {
