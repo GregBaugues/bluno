@@ -270,6 +270,8 @@ function handleSpecialCard(card) {
     case 'Reverse':
       // Reverse direction
       gameState.direction *= -1;
+      // Make sure UI updates when direction changes
+      updateGameDisplay(gameState);
       // In a 2-player game, reverse acts like skip
       if (gameState.players.length === 2) {
         gameState.currentPlayerIndex = getNextPlayerIndex();
@@ -559,6 +561,18 @@ function nextTurn() {
   // Play your turn sound if it's the player's turn
   if (gameState.currentPlayerIndex === 0) {
     soundSystem.play('yourTurn');
+  } 
+  // Play Bingo sound if it's Bingo's turn
+  else if (gameState.players[gameState.currentPlayerIndex].name === 'Bingo') {
+    soundSystem.play('bingo');
+  }
+  // Play Bluey sound if it's Bluey's turn
+  else if (gameState.players[gameState.currentPlayerIndex].name === 'Bluey') {
+    soundSystem.play('bluey');
+  }
+  // Play Dad sound if it's Dad's turn
+  else if (gameState.players[gameState.currentPlayerIndex].name === 'Dad') {
+    soundSystem.play('dad');
   }
 }
 

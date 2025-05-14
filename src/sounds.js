@@ -19,6 +19,9 @@ class SoundSystem {
       this.createYourTurnSound();
       this.createUnoCallSound();
       this.createWinSound();
+      this.loadBingoSound();
+      this.loadBlueySound();
+      this.loadDadSound();
       
       this.initialized = true;
     } catch (e) {
@@ -160,6 +163,171 @@ class SoundSystem {
           osc.start(now + (i * 0.2));
           osc.stop(now + 0.5 + (i * 0.2));
         });
+      }
+    };
+  }
+
+  // Load the Bingo sound file
+  loadBingoSound() {
+    // Similar to image handling, use the preloaded audio element
+    const preloadedBingoAudio = document.getElementById('bingo-sound-preload');
+    
+    this.sounds.bingo = {
+      play: () => {
+        if (!this.enabled) return;
+        
+        try {
+          // Use the preloaded audio element if available
+          if (preloadedBingoAudio) {
+            console.log('Using preloaded Bingo sound');
+            preloadedBingoAudio.currentTime = 0;
+            preloadedBingoAudio.volume = 0.5;
+            
+            // Create a clone to allow overlapping sounds
+            const audioClone = preloadedBingoAudio.cloneNode();
+            audioClone.volume = 0.5;
+            
+            // Play the sound
+            audioClone.play().then(() => {
+              console.log('Bingo sound played successfully!');
+              
+              // Remove clone after it finishes playing to prevent memory leaks
+              audioClone.onended = () => {
+                if (audioClone.parentNode) {
+                  audioClone.parentNode.removeChild(audioClone);
+                }
+              };
+            }).catch(err => {
+              console.error('Error playing cloned Bingo sound:', err);
+              
+              // Try direct play if clone fails
+              preloadedBingoAudio.play().catch(e => {
+                console.error('Error playing original Bingo sound:', e);
+              });
+            });
+          }
+          // Fallback to creating a new audio element with the full path
+          else {
+            console.log('Preloaded Bingo sound not found, using fallback');
+            const fallbackAudio = new Audio('public/bingo.mp3');
+            fallbackAudio.volume = 0.5;
+            fallbackAudio.play().catch(error => {
+              console.error('Fallback Bingo sound failed:', error);
+            });
+          }
+        } catch (e) {
+          console.error("Exception playing Bingo sound:", e);
+        }
+      }
+    };
+  }
+  
+  // Load the Bluey sound file
+  loadBlueySound() {
+    // Similar to Bingo sound, use the preloaded audio element
+    const preloadedBlueyAudio = document.getElementById('bluey-sound-preload');
+    
+    this.sounds.bluey = {
+      play: () => {
+        if (!this.enabled) return;
+        
+        try {
+          // Use the preloaded audio element if available
+          if (preloadedBlueyAudio) {
+            console.log('Using preloaded Bluey sound');
+            preloadedBlueyAudio.currentTime = 0;
+            preloadedBlueyAudio.volume = 0.5;
+            
+            // Create a clone to allow overlapping sounds
+            const audioClone = preloadedBlueyAudio.cloneNode();
+            audioClone.volume = 0.5;
+            
+            // Play the sound
+            audioClone.play().then(() => {
+              console.log('Bluey sound played successfully!');
+              
+              // Remove clone after it finishes playing to prevent memory leaks
+              audioClone.onended = () => {
+                if (audioClone.parentNode) {
+                  audioClone.parentNode.removeChild(audioClone);
+                }
+              };
+            }).catch(err => {
+              console.error('Error playing cloned Bluey sound:', err);
+              
+              // Try direct play if clone fails
+              preloadedBlueyAudio.play().catch(e => {
+                console.error('Error playing original Bluey sound:', e);
+              });
+            });
+          }
+          // Fallback to creating a new audio element with the full path
+          else {
+            console.log('Preloaded Bluey sound not found, using fallback');
+            const fallbackAudio = new Audio('public/bluey.mp3');
+            fallbackAudio.volume = 0.5;
+            fallbackAudio.play().catch(error => {
+              console.error('Fallback Bluey sound failed:', error);
+            });
+          }
+        } catch (e) {
+          console.error("Exception playing Bluey sound:", e);
+        }
+      }
+    };
+  }
+  
+  // Load the Dad sound file
+  loadDadSound() {
+    // Similar to Bingo sound, use the preloaded audio element
+    const preloadedDadAudio = document.getElementById('dad-sound-preload');
+    
+    this.sounds.dad = {
+      play: () => {
+        if (!this.enabled) return;
+        
+        try {
+          // Use the preloaded audio element if available
+          if (preloadedDadAudio) {
+            console.log('Using preloaded Dad sound');
+            preloadedDadAudio.currentTime = 0;
+            preloadedDadAudio.volume = 0.5;
+            
+            // Create a clone to allow overlapping sounds
+            const audioClone = preloadedDadAudio.cloneNode();
+            audioClone.volume = 0.5;
+            
+            // Play the sound
+            audioClone.play().then(() => {
+              console.log('Dad sound played successfully!');
+              
+              // Remove clone after it finishes playing to prevent memory leaks
+              audioClone.onended = () => {
+                if (audioClone.parentNode) {
+                  audioClone.parentNode.removeChild(audioClone);
+                }
+              };
+            }).catch(err => {
+              console.error('Error playing cloned Dad sound:', err);
+              
+              // Try direct play if clone fails
+              preloadedDadAudio.play().catch(e => {
+                console.error('Error playing original Dad sound:', e);
+              });
+            });
+          }
+          // Fallback to creating a new audio element with the full path
+          else {
+            console.log('Preloaded Dad sound not found, using fallback');
+            const fallbackAudio = new Audio('public/dad.mp3');
+            fallbackAudio.volume = 0.5;
+            fallbackAudio.play().catch(error => {
+              console.error('Fallback Dad sound failed:', error);
+            });
+          }
+        } catch (e) {
+          console.error("Exception playing Dad sound:", e);
+        }
       }
     };
   }

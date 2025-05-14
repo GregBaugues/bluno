@@ -1,9 +1,9 @@
-// Bluey character names - now includes Coco as the third opponent
+// Bluey character names - now includes Dad (replacing Coco)
 const blueyCharacters = [
   'Bluey',
   'Bingo',
   'Bandit',
-  'Coco'
+  'Dad'
 ];
 
 // Create players (1 human, rest AI)
@@ -19,8 +19,8 @@ function createPlayers(numPlayers) {
   });
   
   // Create AI players with specific Bluey characters
-  // We'll use Bluey, Bingo, and Coco in that priority order
-  const priorityCharacters = ['Bluey', 'Bingo', 'Coco'];
+  // We'll use Bluey, Bingo, and Dad in that priority order
+  const priorityCharacters = ['Bluey', 'Bingo', 'Dad'];
   
   // Use as many characters as needed based on numPlayers (1-3 AI players)
   for (let i = 0; i < Math.min(numPlayers - 1, priorityCharacters.length); i++) {

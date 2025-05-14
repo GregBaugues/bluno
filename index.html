@@ -69,16 +69,26 @@
   <link rel="preload" as="image" href="public/images/bingo.png">
   <link rel="preload" as="image" href="public/images/bandit.png">
   <link rel="preload" as="image" href="public/images/julia.png">
-  <link rel="preload" as="image" href="public/images/coco.png">
+  <link rel="preload" as="image" href="public/images/dad.png">
+  <!-- Preload audio files -->
+  <link rel="preload" as="audio" href="public/bingo.mp3">
+  <link rel="preload" as="audio" href="public/bluey.mp3">
+  <link rel="preload" as="audio" href="public/dad.mp3">
 </head>
 <body>
-  <!-- Hidden image preloading container -->
-  <div style="display: none;" id="image-preload">
+  <!-- Hidden asset preloading container -->
+  <div style="display: none;" id="asset-preload">
+    <!-- Image preloading -->
     <img src="public/images/bluey.png" id="bluey-img" onload="characterImgLoaded('bluey')">
     <img src="public/images/bingo.png" id="bingo-img" onload="characterImgLoaded('bingo')">
     <img src="public/images/bandit.png" id="bandit-img" onload="characterImgLoaded('bandit')">
     <img src="public/images/julia.png" id="julia-img" onload="characterImgLoaded('julia')">
-    <img src="public/images/coco.png" id="coco-img" onload="characterImgLoaded('coco')">
+    <img src="public/images/dad.png" id="dad-img" onload="characterImgLoaded('dad')">
+    
+    <!-- Audio preloading -->
+    <audio src="public/bingo.mp3" id="bingo-sound-preload" preload="auto"></audio>
+    <audio src="public/bluey.mp3" id="bluey-sound-preload" preload="auto"></audio>
+    <audio src="public/dad.mp3" id="dad-sound-preload" preload="auto"></audio>
   </div>
 
   <div id="game-container">
@@ -89,6 +99,8 @@
     <div id="side-indicators">
       <!-- Side color indicator will go here -->
       <div id="color-indicator"></div>
+      <!-- Direction indicator -->
+      <div id="direction-indicator"></div>
     </div>
     
     <div id="game-area">
@@ -113,7 +125,7 @@
   
   <script>
     // Track loaded images
-    const loadedImages = { bluey: false, bingo: false, bandit: false, julia: false, coco: false };
+    const loadedImages = { bluey: false, bingo: false, bandit: false, julia: false, dad: false };
     let loadingTimeout = null;
     let retryCount = 0;
     const MAX_RETRIES = 3;

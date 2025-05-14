@@ -21,6 +21,9 @@ function renderGame() {
   setupColorChoiceUI();
   updateTurnIndicator();
   
+  // Initialize direction indicator with the current game direction
+  updateDirectionIndicator(gameState.direction);
+  
   // Render Julia if the function exists
   if (typeof renderJulia === 'function') {
     renderJulia();
@@ -32,9 +35,9 @@ function renderGame() {
     renderBingo();
   }
   
-  // Always call renderCoco, and let it decide whether to show itself
-  if (typeof renderCoco === 'function') {
-    renderCoco();
+  // Always call renderDad, and let it decide whether to show itself
+  if (typeof renderDad === 'function') {
+    renderDad();
   }
   
   console.log('Initial renderGame complete');
@@ -78,6 +81,58 @@ function updateTurnIndicator() {
     updateNameTurnIndicator(currentPlayer?.name || null);
   } else {
     updateNameTurnIndicator(null);
+  }
+}
+
+// Update the direction indicator based on game direction
+function updateDirectionIndicator(direction) {
+  const directionIndicator = document.getElementById('direction-indicator');
+  if (!directionIndicator) return;
+  
+  // Set the style for the direction indicator
+  directionIndicator.style.width = '60px';
+  directionIndicator.style.height = '60px';
+  directionIndicator.style.borderRadius = '50%';
+  directionIndicator.style.backgroundColor = 'white';
+  directionIndicator.style.display = 'flex';
+  directionIndicator.style.justifyContent = 'center';
+  directionIndicator.style.alignItems = 'center';
+  directionIndicator.style.fontSize = '32px';
+  directionIndicator.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+  directionIndicator.style.border = '3px solid white';
+  directionIndicator.style.position = 'relative';
+  directionIndicator.style.marginTop = '20px';
+  
+  // Set the emoji based on direction
+  if (direction === 1) {
+    // Clockwise
+    directionIndicator.innerHTML = '🔁';
+    directionIndicator.title = 'Clockwise Direction';
+    // Add animation for clockwise rotation
+    directionIndicator.style.animation = 'rotate-clockwise 3s linear infinite';
+  } else {
+    // Counter-clockwise
+    directionIndicator.innerHTML = '🔄';
+    directionIndicator.title = 'Counter-Clockwise Direction';
+    // Add animation for counter-clockwise rotation
+    directionIndicator.style.animation = 'rotate-counter-clockwise 3s linear infinite';
+  }
+  
+  // Make sure the animation style is defined
+  if (!document.getElementById('direction-animations')) {
+    const style = document.createElement('style');
+    style.id = 'direction-animations';
+    style.textContent = `
+      @keyframes rotate-clockwise {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes rotate-counter-clockwise {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(-360deg); }
+      }
+    `;
+    document.head.appendChild(style);
   }
 }
 
@@ -156,8 +211,8 @@ function updateNameTurnIndicator(playerName) {
     } else if (playerName === 'Bingo') {
       nameTurnIndicator.style.backgroundColor = '#FF6B6B'; // Bingo red/orange
       nameTurnIndicator.style.color = 'white';
-    } else if (playerName === 'Coco') {
-      nameTurnIndicator.style.backgroundColor = '#8A2BE2'; // Coco purple
+    } else if (playerName === 'Dad') {
+      nameTurnIndicator.style.backgroundColor = '#5F4B32'; // Dad brown
       nameTurnIndicator.style.color = 'white';
     } else if (playerName === 'Bandit') {
       nameTurnIndicator.style.backgroundColor = '#4169E1'; // Bandit blue
@@ -389,10 +444,10 @@ function renderOpponents() {
       } else if (player.name === 'Bingo') {
         // Skip displaying Bingo in the opponent area, as it's handled separately
         opponent.style.visibility = 'hidden'; // Hide the opponent but keep the layout intact
-      } else if (player.name === 'Coco') {
-        // For Coco, use the createCharacterDisplay function
-        const cocoDisplay = createCharacterDisplay('Coco', 100);
-        characterImage.appendChild(cocoDisplay);
+      } else if (player.name === 'Dad') {
+        // For Dad, use the createCharacterDisplay function
+        const dadDisplay = createCharacterDisplay('Dad', 100);
+        characterImage.appendChild(dadDisplay);
       } else {
         // For other characters (like Bandit), use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
@@ -672,6 +727,9 @@ function updateColorIndicator(color) {
   indicator.style.borderRadius = '15px';
   indicator.style.boxShadow = `0 0 20px ${cssColor}88`;
   indicator.style.border = '3px solid white';
+  
+  // Make sure we also update the direction indicator with the current game direction
+  updateDirectionIndicator(gameState.direction);
 }
 
 // Render the player's hand
@@ -711,81 +769,10 @@ function renderPlayerHand() {
     cardsContainer.appendChild(cardElement);
   });
   
-  // Display UNO button if player has 2 cards left
+  // Automatically call UNO if player has 2 cards left and plays one
   if (playerHand.length === 2 && gameState.currentPlayerIndex === 0 && !gameState.players[0].hasCalledUno) {
-    const unoButtonContainer = document.createElement('div');
-    unoButtonContainer.style.display = 'flex';
-    unoButtonContainer.style.justifyContent = 'center';
-    unoButtonContainer.style.marginTop = '20px';
-    
-    const unoButton = document.createElement('button');
-    unoButton.textContent = 'Say UNO!';
-    unoButton.className = 'uno-button';
-    unoButton.style.padding = '10px 25px';
-    unoButton.style.fontSize = '20px';
-    unoButton.style.fontWeight = 'bold';
-    unoButton.style.backgroundColor = '#ff3b3b';
-    unoButton.style.color = 'white';
-    unoButton.style.border = 'none';
-    unoButton.style.borderRadius = '15px';
-    unoButton.style.cursor = 'pointer';
-    unoButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-    unoButton.style.transform = 'scale(1)';
-    unoButton.style.transition = 'transform 0.2s';
-    
-    // Add hover effect
-    unoButton.onmouseenter = () => {
-      unoButton.style.transform = 'scale(1.05)';
-    };
-    
-    unoButton.onmouseleave = () => {
-      unoButton.style.transform = 'scale(1)';
-    };
-    
-    // Add click handler
-    unoButton.onclick = () => {
-      // Set UNO flag for player
-      gameState.players[0].hasCalledUno = true;
-      // Update display
-      updateGameDisplay(gameState);
-      
-      // Add animation and sound
-      const unoAnimation = document.createElement('div');
-      unoAnimation.className = 'uno-animation';
-      unoAnimation.textContent = 'UNO!';
-      unoAnimation.style.position = 'fixed';
-      unoAnimation.style.top = '50%';
-      unoAnimation.style.left = '50%';
-      unoAnimation.style.transform = 'translate(-50%, -50%)';
-      unoAnimation.style.fontSize = '100px';
-      unoAnimation.style.fontWeight = 'bold';
-      unoAnimation.style.color = '#ff3b3b';
-      unoAnimation.style.textShadow = '0 0 20px white';
-      unoAnimation.style.zIndex = '9999';
-      document.body.appendChild(unoAnimation);
-      
-      // Play UNO sound
-      // soundSystem.playUnoSound();
-      
-      // Animate and remove
-      unoAnimation.animate(
-        [
-          { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0 },
-          { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1 },
-          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-          { transform: 'translate(-50%, -50%) scale(1.5)', opacity: 0 }
-        ],
-        {
-          duration: 1500,
-          easing: 'ease-in-out'
-        }
-      ).onfinish = () => {
-        document.body.removeChild(unoAnimation);
-      };
-    };
-    
-    unoButtonContainer.appendChild(unoButton);
-    playerHandElement.appendChild(unoButtonContainer);
+    // Set UNO flag automatically - no button needed
+    gameState.players[0].hasCalledUno = true;
   }
 }
 
@@ -1023,6 +1010,7 @@ function updateGameDisplay(gameState) {
   renderPlayerHand();
   setupColorChoiceUI();
   updateTurnIndicator();
+  updateDirectionIndicator(gameState.direction);
   
   // Render Julia if function exists
   if (typeof renderJulia === 'function') {
@@ -1034,9 +1022,9 @@ function updateGameDisplay(gameState) {
     renderBingo();
   }
   
-  // Always call renderCoco and let it handle visibility based on player count
-  if (typeof renderCoco === 'function') {
-    renderCoco();
+  // Always call renderDad and let it handle visibility based on player count
+  if (typeof renderDad === 'function') {
+    renderDad();
   }
 }
 
@@ -1181,78 +1169,78 @@ function renderBingo() {
   bingoDisplay.appendChild(bingoOpponent);
 }
 
-// Render Coco at the right position
-function renderCoco() {
-  // Check for an existing coco-display div, create one if it doesn't exist
-  let cocoDisplay = document.getElementById('coco-display');
-  if (!cocoDisplay) {
-    cocoDisplay = document.createElement('div');
-    cocoDisplay.id = 'coco-display';
-    cocoDisplay.style.position = 'absolute';
-    cocoDisplay.style.right = '10%'; // Position at far right
-    cocoDisplay.style.top = '0'; // Same top position as others
-    cocoDisplay.style.display = 'flex';
-    cocoDisplay.style.flexDirection = 'column';
-    cocoDisplay.style.alignItems = 'center';
-    cocoDisplay.style.zIndex = '100';
+// Render Dad at the right position
+function renderDad() {
+  // Check for an existing dad-display div, create one if it doesn't exist
+  let dadDisplay = document.getElementById('dad-display');
+  if (!dadDisplay) {
+    dadDisplay = document.createElement('div');
+    dadDisplay.id = 'dad-display';
+    dadDisplay.style.position = 'absolute';
+    dadDisplay.style.right = '10%'; // Position at far right
+    dadDisplay.style.top = '0'; // Same top position as others
+    dadDisplay.style.display = 'flex';
+    dadDisplay.style.flexDirection = 'column';
+    dadDisplay.style.alignItems = 'center';
+    dadDisplay.style.zIndex = '100';
     
     // Add to the game container
-    document.getElementById('game-container').appendChild(cocoDisplay);
+    document.getElementById('game-container').appendChild(dadDisplay);
   }
   
-  // Only show Coco if game has 4 players
+  // Only show Dad if game has 4 players
   if (gameState.isGameStarted && gameState.players && gameState.players.length < 4) {
-    // Hide Coco's display completely when less than 4 players
-    cocoDisplay.innerHTML = '';
-    cocoDisplay.style.display = 'none';
+    // Hide Dad's display completely when less than 4 players
+    dadDisplay.innerHTML = '';
+    dadDisplay.style.display = 'none';
     return;
   } else {
     // Make sure it's visible
-    cocoDisplay.style.display = 'flex';
+    dadDisplay.style.display = 'flex';
   }
   
   // Clear previous content
-  cocoDisplay.innerHTML = '';
+  dadDisplay.innerHTML = '';
   
-  // Create Coco's container
-  const cocoContainer = createCharacterDisplay('Coco', 100);
+  // Create Dad's container
+  const dadContainer = createCharacterDisplay('Dad', 100);
   
-  // Create Coco's name badge
-  const cocoName = createNameBadge('Coco', false);
+  // Create Dad's name badge
+  const dadName = createNameBadge('Dad', false);
   
-  // Create a div to hold Coco's image and name
-  const cocoOpponent = document.createElement('div');
-  cocoOpponent.className = 'opponent';
-  cocoOpponent.appendChild(cocoContainer);
-  cocoOpponent.appendChild(cocoName);
+  // Create a div to hold Dad's image and name
+  const dadOpponent = document.createElement('div');
+  dadOpponent.className = 'opponent';
+  dadOpponent.appendChild(dadContainer);
+  dadOpponent.appendChild(dadName);
   
-  // Get Coco's player data if game is started
+  // Get Dad's player data if game is started
   if (gameState.isGameStarted && gameState.players && gameState.players.length >= 4) {
-    // Find Coco in the players array (typically index 3)
-    const cocoPlayer = gameState.players.find(player => player.name === 'Coco');
+    // Find Dad in the players array (typically index 3)
+    const dadPlayer = gameState.players.find(player => player.name === 'Dad');
     
-    if (cocoPlayer) {
-      // Add cards container to show visual representation of Coco's cards
-      const cardsContainer = createCardsContainer(cocoPlayer);
-      cocoOpponent.appendChild(cardsContainer);
+    if (dadPlayer) {
+      // Add cards container to show visual representation of Dad's cards
+      const cardsContainer = createCardsContainer(dadPlayer);
+      dadOpponent.appendChild(cardsContainer);
       
       // Add UNO indicator if needed
-      if (cocoPlayer.hand.length === 1 && cocoPlayer.hasCalledUno) {
+      if (dadPlayer.hand.length === 1 && dadPlayer.hasCalledUno) {
         const unoIndicator = document.createElement('div');
         unoIndicator.className = 'uno-indicator';
         unoIndicator.textContent = 'UNO!';
-        cocoOpponent.appendChild(unoIndicator);
+        dadOpponent.appendChild(unoIndicator);
       }
       
-      // Highlight if it's Coco's turn
-      if (gameState.currentPlayerIndex === gameState.players.indexOf(cocoPlayer)) {
-        cocoOpponent.classList.add('current-player');
+      // Highlight if it's Dad's turn
+      if (gameState.currentPlayerIndex === gameState.players.indexOf(dadPlayer)) {
+        dadOpponent.classList.add('current-player');
       }
     }
   }
   
   // Add the opponent to the display
-  cocoDisplay.appendChild(cocoOpponent);
+  dadDisplay.appendChild(dadOpponent);
 }
 
 // Show welcome screen on first load
@@ -1419,7 +1407,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderJulia();
   renderBingo();
   // Initialize Coco for 4-player game support
-  renderCoco();
+  renderDad();
   
   // Add welcome screen
   showWelcomeScreen();
@@ -1435,5 +1423,5 @@ export {
   updateGameDisplay,
   showWelcomeScreen,
   renderBingo,
-  renderCoco
+  renderDad
 };
