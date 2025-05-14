@@ -290,11 +290,12 @@
       // Add the Julia display to the DOM
       document.getElementById('game-container').appendChild(juliaDisplay);
       
-      // Create a placeholder for Bingo display, positioned inline with Bluey
+      // Create a placeholder for Bingo display
       const bingoDisplay = document.createElement('div');
       bingoDisplay.id = 'bingo-display';
       bingoDisplay.style.position = 'absolute';
-      bingoDisplay.style.right = '25%'; // Position to the right side, matching Bluey's left 25%
+      bingoDisplay.style.left = '50%'; // Center horizontally
+      bingoDisplay.style.transform = 'translateX(-50%)'; // Center perfectly
       bingoDisplay.style.top = '0'; // Same top position as Bluey
       bingoDisplay.style.display = 'flex';
       bingoDisplay.style.flexDirection = 'column';

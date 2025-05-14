@@ -343,7 +343,7 @@ function renderOpponents() {
   
   // Set up the layout
   opponentsArea.style.display = 'flex'; 
-  opponentsArea.style.justifyContent = 'center'; // Changed to center for more even distribution
+  opponentsArea.style.justifyContent = 'space-evenly'; // Use space-evenly for even distribution
   opponentsArea.style.width = '100%';
   opponentsArea.style.maxWidth = '900px';
   opponentsArea.style.margin = '0 auto';
@@ -354,27 +354,30 @@ function renderOpponents() {
   const isFourPlayerGame = totalOpponents >= 3;
   
   // Define positions based on how many opponents we have
+  // Instead of using fixed position, we'll now apply styles differently
+  // based on the container justification which is space-evenly
   let positions;
   if (totalOpponents === 1) {
     // For 2-player games (1 opponent), center the opponent
+    // We'll handle this with a different approach
     positions = [
-      { left: '50%', top: '0', transform: 'translateX(-50%)' },  // Centered opponent
-      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '75%', top: '0' }   // Unused slot
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Unused slot
     ];
   } else if (isFourPlayerGame) {
-    // For 4-player games, spread them out evenly (3 opponents)
+    // For 4-player games with 3 opponents, rely on space-evenly
     positions = [
-      { left: '16.67%', top: '0' },  // First opponent (left)
-      { left: '50%', top: '0' },     // Center opponent
-      { left: '83.33%', top: '0' }   // Third opponent (right)
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Bandit
     ];
   } else {
-    // For 3-player games, spread them out evenly (2 opponents)
+    // For 3-player games with 2 opponents
     positions = [
-      { left: '25%', top: '0' },  // First opponent (left)
-      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '75%', top: '0' }   // Second opponent (right)
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Bandit
     ];
   }
   
@@ -389,12 +392,17 @@ function renderOpponents() {
     opponentSlot.style.alignItems = 'center';
     opponentSlot.style.justifyContent = 'center';
     
-    // Apply fixed positioning based on the position array
+    // Apply styling to the slots
     opponentSlot.style.position = 'relative';
-    if (positions[i]) {
-      if (positions[i].left) opponentSlot.style.left = positions[i].left;
-      if (positions[i].top) opponentSlot.style.top = positions[i].top;
-      if (positions[i].transform) opponentSlot.style.transform = positions[i].transform;
+    
+    // Set ID for the opponent slot for better identification
+    if (positions[i] && positions[i].id) {
+      opponentSlot.id = positions[i].id;
+    }
+    
+    // Special case for single opponent (center it)
+    if (totalOpponents === 1 && i === 0) {
+      opponentSlot.style.margin = '0 auto'; // Center the slot
     }
     
     // Check if this position has a player in the current game
@@ -1372,7 +1380,8 @@ function renderDad() {
     dadDisplay = document.createElement('div');
     dadDisplay.id = 'dad-display';
     dadDisplay.style.position = 'absolute';
-    dadDisplay.style.right = '10%'; // Position at far right
+    dadDisplay.style.right = '16.67%'; // Position at far right
+    dadDisplay.style.transform = 'translateX(50%)'; // Adjust positioning
     dadDisplay.style.top = '0'; // Same top position as others
     dadDisplay.style.display = 'flex';
     dadDisplay.style.flexDirection = 'column';
