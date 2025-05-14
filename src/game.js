@@ -163,8 +163,6 @@ function playCard(gameState, playerIndex, cardIndex) {
     return;
   }
   
-
-  
   // AI players need a pause after playing their card before continuing
   if (player.isAI) {
     // Add a 1 second pause for AI players after they play their card
