@@ -281,6 +281,15 @@ function handleDrawCards(numCards) {
     // Set the drawing cards flag to indicate the player must draw cards
     gameState.isDrawingCards = true;
     
+    // Temporarily set the current player index to the human player to allow drawing
+    // This is necessary because the drawCard function checks if it's the player's turn
+    if (gameState.currentPlayerIndex !== 0) {
+      // Remember the actual current player index to restore it later
+      gameState.pendingDrawPlayerIndex = gameState.currentPlayerIndex;
+      // Temporarily set current player to human player
+      gameState.currentPlayerIndex = 0;
+    }
+    
     // Update the UI to show the drawing state
     updateGameDisplay(gameState);
     
@@ -558,6 +567,12 @@ function handleRequiredDraw() {
     // Show a message indicating all required cards have been drawn
     window.dispatchEvent(new CustomEvent('drawRequirementComplete'));
     
+    // Restore the original player index if we temporarily changed it
+    if (gameState.pendingDrawPlayerIndex !== null) {
+      gameState.currentPlayerIndex = gameState.pendingDrawPlayerIndex;
+      gameState.pendingDrawPlayerIndex = null;
+    }
+    
     // Move to next player's turn
     nextTurn();
     
@@ -577,7 +592,14 @@ function handleRequiredDraw() {
 
 // Player draws a card
 function drawCard() {
-  if (gameState.currentPlayerIndex !== 0) return; // Only human player can use this function
+  // Always allow drawing if the player has required draws
+  if (gameState.requiredDraws > 0) {
+    // This is fine, we want to allow drawing when required
+  } else if (gameState.currentPlayerIndex !== 0) {
+    // Otherwise only human player can use this function when it's their turn
+    return;
+  }
+  
   if (gameState.waitingForColorChoice) return; // Don't draw if waiting for color choice
   
   // Check if player has legal moves and there are no required draws
