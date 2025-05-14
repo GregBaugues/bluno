@@ -111,12 +111,12 @@ function playCard(gameState, playerIndex, cardIndex) {
   if (!canPlayCard(card, topDiscard, gameState.currentColor, player.hand)) {
     // If human player tries to play an invalid card, trigger shake animation
     if (playerIndex === 0) {
-      // For Wild Draw 4, provide specific feedback if player has matching color cards
+      // For Wild Draw 4, provide specific feedback if player has playable cards
       if (card.value === 'Wild Draw 4') {
         window.dispatchEvent(new CustomEvent('invalidCardPlay', { 
           detail: { 
             cardIndex, 
-            message: "You can't play Wild Draw 4 when you have cards matching the current color!" 
+            message: "You can't play Wild Draw 4 when you have cards matching the current color or value!" 
           } 
         }));
       } else {
@@ -191,20 +191,23 @@ function canPlayCard(card, topDiscard, currentColor, playerHand) {
     return true;
   }
   
-  // Wild Draw 4 can only be played if the player has no cards matching the current color
+  // Wild Draw 4 can only be played if the player has no cards matching the current color or value
   if (card.value === 'Wild Draw 4') {
-    // If playerHand is provided (for validation), check if player has matching color cards
-    if (playerHand) {
-      // Check if player has any cards matching the current color
-      const hasMatchingColorCard = playerHand.some(handCard => 
-        handCard !== card && handCard.color === currentColor
+    // If playerHand is provided (for validation), check if player has playable cards
+    if (playerHand && topDiscard) {
+      // Check if player has any cards matching the current color or the value of the top card
+      const hasPlayableCard = playerHand.some(handCard => 
+        handCard !== card && (
+          handCard.color === currentColor || // Matching color
+          (handCard.value === topDiscard.value && handCard.value !== 'Wild' && handCard.value !== 'Wild Draw 4') // Matching value (excluding wilds)
+        )
       );
       
-      // Wild Draw 4 can only be played if player has no matching color cards
-      return !hasMatchingColorCard;
+      // Wild Draw 4 can only be played if player has no playable cards
+      return !hasPlayableCard;
     }
     
-    // If no hand is provided (backward compatibility), allow the play
+    // If no hand is provided or no top discard (backward compatibility), allow the play
     return true;
   }
   
