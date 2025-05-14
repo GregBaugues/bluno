@@ -100,8 +100,9 @@ function placeInitialCard() {
 
 // Player plays a card
 function playCard(gameState, playerIndex, cardIndex) {
-  // If a player is currently drawing cards, don't allow playing cards
-  if (gameState.isDrawingCards) {
+  // If any player is currently drawing cards, don't allow ANY actions
+  // This completely pauses the game until the drawing is complete
+  if (gameState.isDrawingCards || gameState.requiredDraws > 0) {
     // AI players should never try to play while isDrawingCards is true
     // But if they do, just silently prevent it
     
@@ -467,43 +468,58 @@ function handleSpecialCard(card) {
       break;
       
     case 'Wild Draw 4':
-      // Handle wild card color selection
-      handleWildCardColor();
+      // For Wild Draw 4, the player who played it MUST choose color first
+      // For human players, we already handle this in continueAfterCardPlay
+      // For AI players, we need to handle the color selection here
       
-      // Next player draws 4 cards and loses turn
-      const nextIdx = handleDrawCards(4);
-      
-      // Check for AI-to-AI drawing situation
-      const isCurrentPlayerAI_WD4 = gameState.players[gameState.currentPlayerIndex].isAI;
-      const isNextPlayerAI_WD4 = gameState.players[nextIdx].isAI;
-      const isAItoAIDrawing_WD4 = isCurrentPlayerAI_WD4 && isNextPlayerAI_WD4;
-      
-      // Handle AI and human players differently:
-      if (isNextPlayerAI_WD4) {
-        // For AI, skip their turn immediately since they've already drawn
-        handleSkipNextPlayer(nextIdx);
+      if (gameState.players[gameState.currentPlayerIndex].isAI) {
+        // AI chooses color based on their hand
+        handleWildCardColor();
         
-        // For AI-to-AI interactions, add a small delay to prevent freezing
-        if (isAItoAIDrawing_WD4) {
-          // Allow a small delay for UI updates
-          setTimeout(() => {
-            // Continue with the normal game flow after delay
-            updateGameDisplay(gameState);
-            
-            // Let the next AI player take their turn
-            if (gameState.currentPlayerIndex !== 0) {
-              setTimeout(playAITurn, 500);
-            }
-          }, 300);
+        // Store the next player index who will draw (important: do this BEFORE changing turns)
+        gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
+        gameState.pendingDrawCount = 4;
+        
+        // Next player draws 4 cards and loses turn
+        const nextIdx = handleDrawCards(4);
+        
+        // Check for AI-to-AI drawing situation
+        const isCurrentPlayerAI_WD4 = gameState.players[gameState.currentPlayerIndex].isAI;
+        const isNextPlayerAI_WD4 = gameState.players[nextIdx].isAI;
+        const isAItoAIDrawing_WD4 = isCurrentPlayerAI_WD4 && isNextPlayerAI_WD4;
+        
+        // Handle AI and human players differently:
+        if (isNextPlayerAI_WD4) {
+          // For AI, skip their turn immediately since they've already drawn
+          handleSkipNextPlayer(nextIdx);
+          
+          // For AI-to-AI interactions, add a small delay to prevent freezing
+          if (isAItoAIDrawing_WD4) {
+            // Allow a small delay for UI updates
+            setTimeout(() => {
+              // Continue with the normal game flow after delay
+              updateGameDisplay(gameState);
+              
+              // Let the next AI player take their turn
+              if (gameState.currentPlayerIndex !== 0) {
+                setTimeout(playAITurn, 500);
+              }
+            }, 300);
+          }
+          
+          // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
+          // to avoid skipping two turns
+          skipNextTurn = true;
+        } else {
+          // For human players, we pause the game until they draw all required cards
+          // Don't advance the turn yet - it will happen after they finish drawing
+          skipNextTurn = true;
         }
-        
-        // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
-        // to avoid skipping two turns
-        skipNextTurn = true;
       } else {
-        // For human players, we pause the game until they draw all required cards
-        // Don't advance the turn yet - it will happen after they finish drawing
-        skipNextTurn = true;
+        // Human player plays Wild Draw 4
+        // We don't handle any draw logic here
+        // It will be handled after the player chooses a color in chooseColor()
+        skipNextTurn = true; // Prevent automatic turn advancement
       }
       break;
       
@@ -577,50 +593,41 @@ function chooseColor(gameStateParam, color) {
   
   // If it was a Wild Draw 4, make the next player draw 4 cards
   if (wasWildDraw4) {
-    // Handle the draw 4 effect now that color has been chosen
-    const nextPlayerIndex = gs.pendingDrawPlayerIndex || getNextPlayerIndex();
+    // Store the next player index who will draw (if not already stored)
+    if (gs.pendingDrawPlayerIndex === null) {
+      gs.pendingDrawPlayerIndex = getNextPlayerIndex();
+    }
     
-    // Check for AI-to-AI drawing situation for Wild Draw 4 color choice
-    const isCurrentPlayerAI_WD4_Color = gs.players[gs.currentPlayerIndex].isAI;
-    const isNextPlayerAI_WD4_Color = gs.players[nextPlayerIndex].isAI;
-    const isAItoAIDrawing_WD4_Color = isCurrentPlayerAI_WD4_Color && isNextPlayerAI_WD4_Color;
+    // Get the next player who will draw
+    const nextPlayerIndex = gs.pendingDrawPlayerIndex;
+    console.log(`After Wild Draw 4 color choice, next player (${gs.players[nextPlayerIndex].name}) will draw 4 cards`);
+    
+    // Check if the next player is AI or human
+    const isNextPlayerAI = gs.players[nextPlayerIndex].isAI;
     
     // Have the next player draw 4 cards
     handleDrawCards(4);
     
     // Handle AI and human players differently:
-    if (gs.players[nextPlayerIndex].isAI) {
-      console.log("Wild Draw 4 color chosen - AI player needs to be skipped");
+    if (isNextPlayerAI) {
+      console.log("Wild Draw 4 - AI player needs to draw and be skipped");
       
       // For AI players, skip their turn immediately
-      // IMPORTANT: We only need to call handleSkipNextPlayer OR nextTurn, not both
-      // handleSkipNextPlayer already sets the current player index to skip the next player
       handleSkipNextPlayer(nextPlayerIndex);
       
       // Update the UI immediately
       updateGameDisplay(gs);
       
-      // For AI-to-AI interactions, ensure we don't freeze
-      if (isAItoAIDrawing_WD4_Color) {
-        // Reset drawing flags to ensure no freezing
-        gs.isDrawingCards = false;
-        
-        // Force an update to ensure the game doesn't freeze
-        setTimeout(() => updateGameDisplay(gs), 200);
-      }
-      
       // If it's AI's turn, let them play after a delay
       if (gs.currentPlayerIndex !== 0) {
-        console.log("Starting next AI turn after Wild Draw 4 color choice");
+        console.log("Starting next AI turn after Wild Draw 4 color choice and skip");
         setTimeout(playAITurn, 1000);
-      } else {
-        console.log("Human player's turn after Wild Draw 4 color choice and skip");
-      }
+      } 
     } else {
       console.log("Human player needs to draw 4 cards from Wild Draw 4");
+      // For human players, we've already set up the drawing state
+      // The turn will be handled automatically when they finish drawing
     }
-    // If human player, we wait for them to draw all required cards before continuing
-    // The turn will advance automatically when they finish drawing
   } else {
     // For regular Wild cards, just move to next player's turn
     nextTurn();
@@ -741,13 +748,13 @@ function handleRequiredDraw() {
     // 2. Second advance from you to the next player (needs to happen now)
     
     // SKIP: By default, after required draws, the person drawing should NOT play.
-    // For Wild Draw 4, we need to advance TWO positions from the AI player who played the card
+    // For Wild Draw 4, after the player finishes drawing, their turn is skipped
     console.log(`Turn will now be skipped for ${gameState.players[gameState.currentPlayerIndex].name}`);
     
-    // Advance to the player after the one who is being skipped (double advancement)
-    // This ensures that after an AI plays Wild Draw 4 against the human, the human is skipped
-    nextTurn(); // First advancement
-    nextTurn(); // Second advancement to skip the human player's turn
+    // For Wild Draw 4, we only need one advancement
+    // We've already restored currentPlayerIndex to the person who played the card
+    // Now we just need to skip the player who drew cards
+    nextTurn(); // Skip the player who drew cards and move to the next player in sequence
     
     console.log("After turn skip - Current player is now:", gameState.currentPlayerIndex, 
                 `(${gameState.players[gameState.currentPlayerIndex].name})`);
@@ -855,10 +862,10 @@ function playAITurn() {
     return;
   }
   
-  // If a human player is currently drawing cards, don't allow AI turns
-  // Only block when a human player is drawing, not when AI is drawing from another AI
-  if (gameState.isDrawingCards && gameState.requiredDraws > 0 && gameState.currentPlayerIndex === 0) {
-    console.log("Waiting for human player to finish drawing cards...");
+  // If ANY player is currently drawing cards, pause the game until drawing is complete
+  // This ensures the proper game flow and turn order
+  if (gameState.isDrawingCards || gameState.requiredDraws > 0) {
+    console.log("Game paused - waiting for player to finish drawing cards...");
     return;
   }
   

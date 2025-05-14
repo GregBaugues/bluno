@@ -494,7 +494,7 @@ function renderDeckAndDiscardPile() {
   deckBack.className = 'card-back';
   deckBack.style.width = '120px';
   
-  // Add a visual indicator if a player needs to draw cards
+  // Add a small visual indicator on the deck if a player needs to draw cards
   if (gameState.isDrawingCards && gameState.requiredDraws > 0) {
     const drawIndicator = document.createElement('div');
     drawIndicator.className = 'draw-indicator';
@@ -510,7 +510,6 @@ function renderDeckAndDiscardPile() {
     drawIndicator.style.textAlign = 'center';
     drawIndicator.style.fontWeight = 'bold';
     drawIndicator.style.zIndex = '10';
-    drawIndicator.style.animation = 'pulse 1s infinite';
     deckBack.appendChild(drawIndicator);
   }
   deckBack.style.height = '168px';
@@ -600,51 +599,8 @@ function renderDeckAndDiscardPile() {
       deckElement.classList.add('required-draw');
       deckElement.classList.add('active-deck');
       
-      // Create a large, prominent indicator that shows above the game area
-      const drawIndicator = document.createElement('div');
-      drawIndicator.className = 'draw-indicator';
-      
-      // Use different message based on number of cards remaining
-      if (gameState.requiredDraws === 1) {
-        drawIndicator.textContent = `YOU MUST DRAW 1 MORE CARD`;
-      } else {
-        drawIndicator.textContent = `YOU MUST DRAW ${gameState.requiredDraws} MORE CARDS`;
-      }
-      
-      drawIndicator.style.position = 'fixed';
-      drawIndicator.style.top = '50px';
-      drawIndicator.style.left = '50%';
-      drawIndicator.style.transform = 'translateX(-50%)';
-      drawIndicator.style.backgroundColor = 'rgba(255, 40, 40, 0.9)';
-      drawIndicator.style.color = 'white';
-      drawIndicator.style.padding = '12px 25px';
-      drawIndicator.style.borderRadius = '15px';
-      drawIndicator.style.fontWeight = 'bold';
-      drawIndicator.style.fontSize = '24px';
-      drawIndicator.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.5)';
-      drawIndicator.style.zIndex = '2000';
-      drawIndicator.style.textAlign = 'center';
-      drawIndicator.style.letterSpacing = '1px';
-      drawIndicator.style.border = '3px solid white';
-      drawIndicator.style.whiteSpace = 'nowrap';
-      drawIndicator.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
-      
-      // Add animation to make it more noticeable
-      drawIndicator.animate(
-        [
-          { transform: 'translateX(-50%) scale(1)' },
-          { transform: 'translateX(-50%) scale(1.05)' },
-          { transform: 'translateX(-50%) scale(1)' }
-        ],
-        {
-          duration: 2000,
-          iterations: Infinity,
-          easing: 'ease-in-out'
-        }
-      );
-      
-      // Add the draw indicator to the document body so it's always visible
-      document.body.appendChild(drawIndicator);
+      // We no longer need the large screen-covering indicator
+      // Just rely on the small indicator on the deck
       
       // Add a reminder text directly on the deck
       const deckReminder = document.createElement('div');
