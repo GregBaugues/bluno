@@ -341,6 +341,9 @@ function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
+  // Reset Dad display flag since we're rebuilding the opponents
+  document.body.dataset.dadDisplayed = "false";
+  
   // Set up the layout
   opponentsArea.style.display = 'flex'; 
   opponentsArea.style.justifyContent = 'space-evenly'; // Use space-evenly for even distribution
@@ -443,9 +446,17 @@ function renderOpponents() {
         // Skip displaying Bingo in the opponent area, as it's handled separately
         opponent.style.visibility = 'hidden'; // Hide the opponent but keep the layout intact
       } else if (player.name === 'Dad') {
-        // For Dad, use the createCharacterDisplay function
-        const dadDisplay = createCharacterDisplay('Dad', 100);
-        characterImage.appendChild(dadDisplay);
+        // For Dad, use the createCharacterDisplay function and mark as displayed
+        if (i === 2) { // Only show Dad in third opponent slot (i=2)
+          const dadDisplay = createCharacterDisplay('Dad', 100);
+          characterImage.appendChild(dadDisplay);
+          
+          // Mark the player as Dad for deduplication in renderDad
+          document.body.dataset.dadDisplayed = "true";
+        } else {
+          // If Dad is not in the correct slot, hide him
+          opponent.style.visibility = 'hidden';
+        }
       } else {
         // For other characters (like Bandit), use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
@@ -1392,9 +1403,12 @@ function renderDad() {
     document.getElementById('game-container').appendChild(dadDisplay);
   }
   
-  // Only show Dad if game has 4 players
-  if (gameState.isGameStarted && gameState.players && gameState.players.length < 4) {
-    // Hide Dad's display completely when less than 4 players
+  // Only show Dad in special Dad section if not already shown in opponents area
+  // Check if Dad is already displayed somewhere else
+  const isDadDisplayed = document.body.dataset.dadDisplayed === "true";
+  
+  if (isDadDisplayed || (gameState.isGameStarted && gameState.players && gameState.players.length < 4)) {
+    // Hide Dad's display completely
     dadDisplay.innerHTML = '';
     dadDisplay.style.display = 'none';
     return;
