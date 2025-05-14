@@ -341,9 +341,9 @@ function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
-  // Set up the layout - we're now handling Bluey and Bingo separately in fixed positions
+  // Set up the layout
   opponentsArea.style.display = 'flex'; 
-  opponentsArea.style.justifyContent = 'space-between'; // Changed from space-evenly to space-between
+  opponentsArea.style.justifyContent = 'center'; // Changed to center for more even distribution
   opponentsArea.style.width = '100%';
   opponentsArea.style.maxWidth = '900px';
   opponentsArea.style.margin = '0 auto';
@@ -355,19 +355,26 @@ function renderOpponents() {
   
   // Define positions based on how many opponents we have
   let positions;
-  if (isFourPlayerGame) {
-    // For 4-player games, spread them out (3 opponents)
+  if (totalOpponents === 1) {
+    // For 2-player games (1 opponent), center the opponent
     positions = [
-      { left: '15%', top: '0' },  // Bluey (further left)
+      { left: '50%', top: '0', transform: 'translateX(-50%)' },  // Centered opponent
       { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '85%', top: '0' }   // Position for Coco or Bandit (far right)
+      { left: '75%', top: '0' }   // Unused slot
+    ];
+  } else if (isFourPlayerGame) {
+    // For 4-player games, spread them out evenly (3 opponents)
+    positions = [
+      { left: '16.67%', top: '0' },  // First opponent (left)
+      { left: '50%', top: '0' },     // Center opponent
+      { left: '83.33%', top: '0' }   // Third opponent (right)
     ];
   } else {
-    // For 2-3 player games
+    // For 3-player games, spread them out evenly (2 opponents)
     positions = [
-      { left: '25%', top: '0' },  // Bluey (left)
+      { left: '25%', top: '0' },  // First opponent (left)
       { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '75%', top: '0' }   // Bandit (right)
+      { left: '75%', top: '0' }   // Second opponent (right)
     ];
   }
   
@@ -387,6 +394,7 @@ function renderOpponents() {
     if (positions[i]) {
       if (positions[i].left) opponentSlot.style.left = positions[i].left;
       if (positions[i].top) opponentSlot.style.top = positions[i].top;
+      if (positions[i].transform) opponentSlot.style.transform = positions[i].transform;
     }
     
     // Check if this position has a player in the current game
