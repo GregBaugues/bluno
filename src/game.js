@@ -100,6 +100,9 @@ function placeInitialCard() {
 function playCard(gameState, playerIndex, cardIndex) {
   // If a player is currently drawing cards, don't allow playing cards
   if (gameState.isDrawingCards) {
+    // AI players should never try to play while isDrawingCards is true
+    // But if they do, just silently prevent it
+    
     // Show a message if it's a human player trying to play during drawing
     if (playerIndex === 0) {
       window.dispatchEvent(new CustomEvent('invalidCardPlay', { 
@@ -109,6 +112,8 @@ function playCard(gameState, playerIndex, cardIndex) {
         } 
       }));
     }
+    
+    console.log("Prevented card play while drawing cards in progress");
     return; // Exit early, don't proceed with card play
   }
   
@@ -263,6 +268,9 @@ function handleDrawCards(numCards) {
   const nextPlayerIndex = getNextPlayerIndex();
   const nextPlayer = gameState.players[nextPlayerIndex];
   
+  // Set drawing cards flag regardless of player type
+  gameState.isDrawingCards = true;
+  
   // If the next player is AI, draw cards automatically
   if (nextPlayer.isAI) {
     // Draw multiple cards for AI
@@ -275,11 +283,12 @@ function handleDrawCards(numCards) {
     
     // Play a sound effect to indicate cards were drawn
     soundSystem.play('cardPlay');
+    
+    // Immediately clear the drawing flag for AI players since they draw automatically
+    gameState.isDrawingCards = false;
   } else {
     // For human player, set a draw requirement state
     gameState.requiredDraws = numCards;
-    // Set the drawing cards flag to indicate the player must draw cards
-    gameState.isDrawingCards = true;
     
     // Temporarily set the current player index to the human player to allow drawing
     // This is necessary because the drawCard function checks if it's the player's turn
@@ -297,6 +306,9 @@ function handleDrawCards(numCards) {
     window.dispatchEvent(new CustomEvent('showDrawRequirement', { 
       detail: { numCards: numCards }
     }));
+    
+    // Note: For human players, the isDrawingCards flag will be cleared in handleRequiredDraw
+    // when they finish drawing all required cards
   }
   
   return nextPlayerIndex;
@@ -364,14 +376,19 @@ function handleSpecialCard(card) {
       // Next player draws 2 cards and skips their turn
       const nextPlayerIndex = handleDrawCards(2);
       
-      // Skip their turn only if it's an AI player (human players need to manually draw)
+      // Handle AI and human players differently:
       if (gameState.players[nextPlayerIndex].isAI) {
+        // For AI, skip their turn immediately since they've already drawn
         handleSkipNextPlayer(nextPlayerIndex);
+        
+        // Since the AI has already drawn and been skipped,
+        // we can continue with the normal game flow
+        skipNextTurn = false;
+      } else {
+        // For human players, we pause the game until they draw all required cards
+        // Don't advance the turn yet - it will happen after they finish drawing
+        skipNextTurn = true;
       }
-      // We always skip normal turn advancement since either:
-      // 1. AI player has already had their turn skipped, or
-      // 2. Human player is in drawing state and we'll advance turns after they finish drawing
-      skipNextTurn = true;
       break;
       
     case 'Wild':
@@ -387,14 +404,19 @@ function handleSpecialCard(card) {
       // Next player draws 4 cards and loses turn
       const nextIdx = handleDrawCards(4);
       
-      // Skip their turn only if it's an AI player (human players need to manually draw)
+      // Handle AI and human players differently:
       if (gameState.players[nextIdx].isAI) {
+        // For AI, skip their turn immediately since they've already drawn
         handleSkipNextPlayer(nextIdx);
+        
+        // Since the AI has already drawn and been skipped,
+        // we can continue with the normal game flow
+        skipNextTurn = false;
+      } else {
+        // For human players, we pause the game until they draw all required cards
+        // Don't advance the turn yet - it will happen after they finish drawing
+        skipNextTurn = true;
       }
-      // We always skip normal turn advancement since either:
-      // 1. AI player has already had their turn skipped, or
-      // 2. Human player is in drawing state and we'll advance turns after they finish drawing
-      skipNextTurn = true;
       break;
       
     default:
@@ -471,19 +493,27 @@ function chooseColor(gameStateParam, color) {
     const nextPlayerIndex = gs.pendingDrawPlayerIndex || getNextPlayerIndex();
     handleDrawCards(4);
     
-    // Skip the next player's turn (but only if the next player is AI, since human players need to manually draw)
+    // Handle AI and human players differently:
     if (gs.players[nextPlayerIndex].isAI) {
+      // For AI players, skip their turn immediately
       handleSkipNextPlayer(nextPlayerIndex);
       
       // Update the UI immediately
       updateGameDisplay(gs);
       
-      // If it's AI's turn and no player is drawing cards, let them play
-      if (gs.currentPlayerIndex !== 0 && !gs.isDrawingCards) {
+      // Move to the next player's turn since AI drawing is already complete
+      nextTurn();
+      
+      // Update the UI again after turn changes
+      updateGameDisplay(gs);
+      
+      // If it's AI's turn, let them play after a delay
+      if (gs.currentPlayerIndex !== 0) {
         setTimeout(playAITurn, 1000);
       }
     }
     // If human player, we wait for them to draw all required cards before continuing
+    // The turn will advance automatically when they finish drawing
   } else {
     // For regular Wild cards, just move to next player's turn
     nextTurn();
@@ -491,8 +521,8 @@ function chooseColor(gameStateParam, color) {
     // Update the UI
     updateGameDisplay(gs);
     
-    // If it's AI's turn and no player is drawing cards, let them play
-    if (gs.currentPlayerIndex !== 0 && !gs.isDrawingCards) {
+    // If it's AI's turn, let them play after a delay
+    if (gs.currentPlayerIndex !== 0) {
       setTimeout(playAITurn, 1000);
     }
   }
