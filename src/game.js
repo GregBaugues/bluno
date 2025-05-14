@@ -302,13 +302,17 @@ function handleDrawCards(numCards) {
     // Update the UI to show the drawing state
     updateGameDisplay(gameState);
     
-    // Show a message indicating the player needs to draw cards
+    // Show a message indicating the player needs to draw cards and will lose their turn
     window.dispatchEvent(new CustomEvent('showDrawRequirement', { 
-      detail: { numCards: numCards }
+      detail: { 
+        numCards: numCards,
+        message: `Draw ${numCards} cards! Your turn will be skipped.`
+      }
     }));
     
     // Note: For human players, the isDrawingCards flag will be cleared in handleRequiredDraw
-    // when they finish drawing all required cards
+    // when they finish drawing all required cards.
+    // Also, handleRequiredDraw will advance to the next player once drawing is complete.
   }
   
   return nextPlayerIndex;
@@ -594,8 +598,16 @@ function handleRequiredDraw() {
     // Reset the drawing cards flag
     gameState.isDrawingCards = false;
     
-    // Show a message indicating all required cards have been drawn
-    window.dispatchEvent(new CustomEvent('drawRequirementComplete'));
+    // Determine who the next player will be
+    const nextPlayerIndex = getNextPlayerIndex();
+    const nextPlayerName = gameState.players[nextPlayerIndex].name;
+    
+    // Show a message indicating all required cards have been drawn and turn is skipped
+    window.dispatchEvent(new CustomEvent('drawRequirementComplete', {
+      detail: { 
+        message: `Cards drawn! Your turn is skipped. ${nextPlayerName}'s turn now.` 
+      }
+    }));
     
     // Restore the original player index if we temporarily changed it
     if (gameState.pendingDrawPlayerIndex !== null) {
@@ -603,16 +615,20 @@ function handleRequiredDraw() {
       gameState.pendingDrawPlayerIndex = null;
     }
     
-    // Move to next player's turn
+    // Skip the current player's turn by advancing to the next player
+    // This is the key part of enforcing the "skip turn after drawing" rule
     nextTurn();
     
-    // Update the UI
-    updateGameDisplay(gameState);
-    
-    // If it's AI's turn, let them play
-    if (gameState.currentPlayerIndex !== 0) {
-      setTimeout(playAITurn, 1000);
-    }
+    // Show a short delay to let the player see their drawn cards
+    setTimeout(() => {
+      // Update the UI
+      updateGameDisplay(gameState);
+      
+      // If it's AI's turn, let them play
+      if (gameState.currentPlayerIndex !== 0) {
+        setTimeout(playAITurn, 1000);
+      }
+    }, 1000);
     
     return true; // Handled the last required draw
   }
