@@ -1,6 +1,6 @@
 import { createDeck, shuffleDeck, dealCards } from './deck.js';
 import { createPlayers } from './players.js';
-import { renderGame, updateGameDisplay } from './ui.js';
+import { renderGame, updateGameDisplay, showWelcomeScreen } from './ui.js';
 import soundSystem from './sounds.js';
 
 // Game state
@@ -681,7 +681,8 @@ function handleGameEnd() {
   
   playAgainButton.addEventListener('click', () => {
     document.body.removeChild(victoryScreen);
-    startGame();
+    // Show welcome screen instead of directly starting a new game
+    showWelcomeScreen();
   });
   
   victoryScreen.appendChild(winnerMessage);
