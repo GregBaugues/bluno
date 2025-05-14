@@ -16,7 +16,8 @@ let gameState = {
   pendingDrawPlayerIndex: null, // Store next player index who will draw (for Wild Draw 4)
   pendingDrawCount: 0, // Number of cards to draw (for Wild Draw 4)
   requiredDraws: 0, // Number of cards player must draw (due to Draw 2 or Draw 4)
-  isDrawingCards: false // Flag to indicate whether a player is currently in the process of drawing cards
+  isDrawingCards: false, // Flag to indicate whether a player is currently in the process of drawing cards
+  winningPlayerIndex: undefined // Store the index of the player who won by playing their last card
 };
 
 // Create empty deck and discard pile for initial display
@@ -64,6 +65,7 @@ function startGame(numPlayers = 2) { // Player + 1 Bluey character by default, c
   // Set game as started
   gameState.isGameStarted = true;
   gameState.currentPlayerIndex = 0; // Human player goes first
+  gameState.winningPlayerIndex = undefined; // Reset winning player
   
   // Update UI
   updateGameDisplay(gameState);
@@ -156,6 +158,37 @@ function playCard(gameState, playerIndex, cardIndex) {
   const playedCard = player.hand.splice(cardIndex, 1)[0];
   gameState.discardPile.push(playedCard);
   
+  // Log the card play to console
+  console.log(`${player.name} plays ${playedCard.color} ${playedCard.value} ${playedCard.emoji}`);
+  
+  // Check win condition IMMEDIATELY after playing the card
+  // As soon as any player plays their last card, they win, regardless of card effects
+  if (player.hand.length === 0) {
+    // Store the winner and end the game immediately
+    gameState.winningPlayerIndex = playerIndex;
+    console.log(`${player.name} has played their last card and wins!`);
+    handleGameEnd();
+    return;
+  }
+  
+  // Update UI to show the played card
+  updateGameDisplay(gameState);
+  
+  // AI players need a pause after playing their card before continuing
+  if (player.isAI) {
+    // Add a 1 second pause for AI players after they play their card
+    setTimeout(() => {
+      continueAfterCardPlay(playedCard, false, player, playerIndex);
+    }, 1000);
+    return;
+  }
+  
+  // For human players, continue immediately
+  continueAfterCardPlay(playedCard, false, player, playerIndex);
+}
+
+// Helper function to continue game flow after a card is played
+function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
   // Special handling for wild cards played by human player
   if ((playedCard.value === 'Wild' || playedCard.value === 'Wild Draw 4') && 
       gameState.currentPlayerIndex === 0) {
@@ -174,13 +207,7 @@ function playCard(gameState, playerIndex, cardIndex) {
     return;
   } else {
     // Handle all other types of cards
-    const skipNextTurn = handleSpecialCard(playedCard);
-    
-    // Check if player has won
-    if (player.hand.length === 0) {
-      handleGameEnd();
-      return;
-    }
+    const cardSkipNextTurn = skipNextTurn || handleSpecialCard(playedCard);
     
     // Check for Uno - automatically call for everyone
     if (player.hand.length === 1 && !player.hasCalledUno) {
@@ -190,7 +217,7 @@ function playCard(gameState, playerIndex, cardIndex) {
     }
     
     // Move to next player's turn only if the special card didn't already handle it
-    if (!skipNextTurn) {
+    if (!cardSkipNextTurn) {
       nextTurn();
     }
     
@@ -268,11 +295,21 @@ function handleDrawCards(numCards) {
   const nextPlayerIndex = getNextPlayerIndex();
   const nextPlayer = gameState.players[nextPlayerIndex];
   
-  // Set drawing cards flag regardless of player type
-  gameState.isDrawingCards = true;
+  console.log(`handleDrawCards: ${numCards} cards for player ${nextPlayerIndex} (${nextPlayer.name})`);
+  
+  // Check if we're in an AI-to-AI drawing situation
+  const isAItoAIDrawing = gameState.players[gameState.currentPlayerIndex].isAI && nextPlayer.isAI;
+  
+  // Set drawing cards flag (if not AI-to-AI)
+  if (!isAItoAIDrawing) {
+    gameState.isDrawingCards = true;
+    console.log("Setting isDrawingCards to true");
+  }
   
   // If the next player is AI, draw cards automatically
   if (nextPlayer.isAI) {
+    console.log(`AI ${nextPlayer.name} is drawing ${numCards} cards automatically`);
+    
     // Draw multiple cards for AI
     for (let i = 0; i < numCards; i++) {
       drawSingleCard(nextPlayerIndex);
@@ -284,19 +321,32 @@ function handleDrawCards(numCards) {
     // Play a sound effect to indicate cards were drawn
     soundSystem.play('cardPlay');
     
-    // Immediately clear the drawing flag for AI players since they draw automatically
+    // Log the AI drawing for debugging
+    console.log(`AI ${nextPlayer.name} drew ${numCards} cards`);
+    
+    // Always make sure drawing flag is cleared for AI
     gameState.isDrawingCards = false;
+    
+    // For AI-to-AI interactions, add a small delay to ensure UI updates properly
+    if (isAItoAIDrawing) {
+      // Force a small delay to ensure the UI updates before continuing
+      return nextPlayerIndex;
+    }
   } else {
     // For human player, set a draw requirement state
+    console.log(`Setting requiredDraws=${numCards} for human player`);
     gameState.requiredDraws = numCards;
     
-    // Temporarily set the current player index to the human player to allow drawing
-    // This is necessary because the drawCard function checks if it's the player's turn
-    if (gameState.currentPlayerIndex !== 0) {
+    // Save the original player index - ONLY if we're not already handling a draw
+    // This prevents overwriting pendingDrawPlayerIndex if already set
+    if (gameState.currentPlayerIndex !== 0 && gameState.pendingDrawPlayerIndex === null) {
       // Remember the actual current player index to restore it later
       gameState.pendingDrawPlayerIndex = gameState.currentPlayerIndex;
+      console.log(`Saving currentPlayerIndex ${gameState.currentPlayerIndex} to pendingDrawPlayerIndex`);
+      
       // Temporarily set current player to human player
       gameState.currentPlayerIndex = 0;
+      console.log("Setting currentPlayerIndex to 0 (human) temporarily");
     }
     
     // Update the UI to show the drawing state
@@ -360,18 +410,25 @@ function handleSpecialCard(card) {
   switch (card.value) {
     case 'Skip':
       // Skip the next player
-      gameState.currentPlayerIndex = getNextPlayerIndex();
+      const skippedPlayerIndex = getNextPlayerIndex();
+      const skippedPlayerName = gameState.players[skippedPlayerIndex].name;
+      console.log(`${skippedPlayerName}'s turn is skipped`);
+      
+      gameState.currentPlayerIndex = skippedPlayerIndex;
       skipNextTurn = false; // Let normal turn advancement happen
       break;
       
     case 'Reverse':
       // Reverse direction
       gameState.direction *= -1;
+      console.log(`Direction reversed: now playing ${gameState.direction === 1 ? 'clockwise' : 'counter-clockwise'}`);
+      
       // Make sure UI updates when direction changes
       updateGameDisplay(gameState);
       // In a 2-player game, reverse acts like skip
       if (gameState.players.length === 2) {
         gameState.currentPlayerIndex = getNextPlayerIndex();
+        console.log("2-player game: Reverse acts like Skip");
       }
       skipNextTurn = false; // Let normal turn advancement happen
       break;
@@ -380,14 +437,33 @@ function handleSpecialCard(card) {
       // Next player draws 2 cards and skips their turn
       const nextPlayerIndex = handleDrawCards(2);
       
+      // Check for AI-to-AI drawing situation
+      const isCurrentPlayerAI = gameState.players[gameState.currentPlayerIndex].isAI;
+      const isNextPlayerAI = gameState.players[nextPlayerIndex].isAI;
+      const isAItoAIDrawing = isCurrentPlayerAI && isNextPlayerAI;
+      
       // Handle AI and human players differently:
-      if (gameState.players[nextPlayerIndex].isAI) {
+      if (isNextPlayerAI) {
         // For AI, skip their turn immediately since they've already drawn
         handleSkipNextPlayer(nextPlayerIndex);
         
-        // Since the AI has already drawn and been skipped,
-        // we can continue with the normal game flow
-        skipNextTurn = false;
+        // For AI-to-AI interactions, add a small delay to prevent freezing
+        if (isAItoAIDrawing) {
+          // Allow a small delay for UI updates
+          setTimeout(() => {
+            // Continue with the normal game flow after delay
+            updateGameDisplay(gameState);
+            
+            // Let the next AI player take their turn
+            if (gameState.currentPlayerIndex !== 0) {
+              setTimeout(playAITurn, 500);
+            }
+          }, 300);
+        }
+        
+        // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
+        // to avoid skipping two turns
+        skipNextTurn = true;
       } else {
         // For human players, we pause the game until they draw all required cards
         // Don't advance the turn yet - it will happen after they finish drawing
@@ -408,14 +484,33 @@ function handleSpecialCard(card) {
       // Next player draws 4 cards and loses turn
       const nextIdx = handleDrawCards(4);
       
+      // Check for AI-to-AI drawing situation
+      const isCurrentPlayerAI_WD4 = gameState.players[gameState.currentPlayerIndex].isAI;
+      const isNextPlayerAI_WD4 = gameState.players[nextIdx].isAI;
+      const isAItoAIDrawing_WD4 = isCurrentPlayerAI_WD4 && isNextPlayerAI_WD4;
+      
       // Handle AI and human players differently:
-      if (gameState.players[nextIdx].isAI) {
+      if (isNextPlayerAI_WD4) {
         // For AI, skip their turn immediately since they've already drawn
         handleSkipNextPlayer(nextIdx);
         
-        // Since the AI has already drawn and been skipped,
-        // we can continue with the normal game flow
-        skipNextTurn = false;
+        // For AI-to-AI interactions, add a small delay to prevent freezing
+        if (isAItoAIDrawing_WD4) {
+          // Allow a small delay for UI updates
+          setTimeout(() => {
+            // Continue with the normal game flow after delay
+            updateGameDisplay(gameState);
+            
+            // Let the next AI player take their turn
+            if (gameState.currentPlayerIndex !== 0) {
+              setTimeout(playAITurn, 500);
+            }
+          }, 300);
+        }
+        
+        // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
+        // to avoid skipping two turns
+        skipNextTurn = true;
       } else {
         // For human players, we pause the game until they draw all required cards
         // Don't advance the turn yet - it will happen after they finish drawing
@@ -495,26 +590,45 @@ function chooseColor(gameStateParam, color) {
   if (wasWildDraw4) {
     // Handle the draw 4 effect now that color has been chosen
     const nextPlayerIndex = gs.pendingDrawPlayerIndex || getNextPlayerIndex();
+    
+    // Check for AI-to-AI drawing situation for Wild Draw 4 color choice
+    const isCurrentPlayerAI_WD4_Color = gs.players[gs.currentPlayerIndex].isAI;
+    const isNextPlayerAI_WD4_Color = gs.players[nextPlayerIndex].isAI;
+    const isAItoAIDrawing_WD4_Color = isCurrentPlayerAI_WD4_Color && isNextPlayerAI_WD4_Color;
+    
+    // Have the next player draw 4 cards
     handleDrawCards(4);
     
     // Handle AI and human players differently:
     if (gs.players[nextPlayerIndex].isAI) {
+      console.log("Wild Draw 4 color chosen - AI player needs to be skipped");
+      
       // For AI players, skip their turn immediately
+      // IMPORTANT: We only need to call handleSkipNextPlayer OR nextTurn, not both
+      // handleSkipNextPlayer already sets the current player index to skip the next player
       handleSkipNextPlayer(nextPlayerIndex);
       
       // Update the UI immediately
       updateGameDisplay(gs);
       
-      // Move to the next player's turn since AI drawing is already complete
-      nextTurn();
-      
-      // Update the UI again after turn changes
-      updateGameDisplay(gs);
+      // For AI-to-AI interactions, ensure we don't freeze
+      if (isAItoAIDrawing_WD4_Color) {
+        // Reset drawing flags to ensure no freezing
+        gs.isDrawingCards = false;
+        
+        // Force an update to ensure the game doesn't freeze
+        setTimeout(() => updateGameDisplay(gs), 200);
+      }
       
       // If it's AI's turn, let them play after a delay
       if (gs.currentPlayerIndex !== 0) {
+        console.log("Starting next AI turn after Wild Draw 4 color choice");
         setTimeout(playAITurn, 1000);
+      } else {
+        console.log("Human player's turn after Wild Draw 4 color choice and skip");
       }
+    } else {
+      console.log("Human player needs to draw 4 cards from Wild Draw 4");
     }
     // If human player, we wait for them to draw all required cards before continuing
     // The turn will advance automatically when they finish drawing
@@ -542,6 +656,10 @@ function drawSingleCard(playerIndex) {
   // Draw a card from the deck
   const drawnCard = gameState.deck.pop();
   gameState.players[playerIndex].hand.push(drawnCard);
+  
+  // Log the card draw to console
+  const playerName = gameState.players[playerIndex].name;
+  console.log(`${playerName} draws a ${drawnCard.color} ${drawnCard.value} ${drawnCard.emoji}`);
   
   return drawnCard;
 }
@@ -598,7 +716,20 @@ function handleRequiredDraw() {
     // Reset the drawing cards flag
     gameState.isDrawingCards = false;
     
-    // Determine who the next player will be
+    // DEBUG: Before restoration
+    console.log(`Before index restoration - currentPlayerIndex: ${gameState.currentPlayerIndex}, pendingDrawPlayerIndex: ${gameState.pendingDrawPlayerIndex}`);
+    
+    // Restore the original player index if we temporarily changed it
+    // This must happen BEFORE we determine the next player
+    if (gameState.pendingDrawPlayerIndex !== null && gameState.pendingDrawPlayerIndex !== undefined) {
+      console.log(`Restoring player index from ${gameState.currentPlayerIndex} to ${gameState.pendingDrawPlayerIndex}`);
+      gameState.currentPlayerIndex = gameState.pendingDrawPlayerIndex;
+      gameState.pendingDrawPlayerIndex = null;
+    } else {
+      console.log("No player index to restore (pendingDrawPlayerIndex was null)");
+    }
+    
+    // Now that we've restored the current player index, determine who's next
     const nextPlayerIndex = getNextPlayerIndex();
     const nextPlayerName = gameState.players[nextPlayerIndex].name;
     
@@ -609,24 +740,29 @@ function handleRequiredDraw() {
       }
     }));
     
-    // Restore the original player index if we temporarily changed it
-    if (gameState.pendingDrawPlayerIndex !== null) {
-      gameState.currentPlayerIndex = gameState.pendingDrawPlayerIndex;
-      gameState.pendingDrawPlayerIndex = null;
-    }
+    // We need TWO turn advancements for Draw 2/Draw 4:
+    // 1. First advance from the player who played the card to you (already happened)
+    // 2. Second advance from you to the next player (needs to happen now)
     
-    // Skip the current player's turn by advancing to the next player
+    // SKIP: By default, after required draws, the person drawing should NOT play.
     // This is the key part of enforcing the "skip turn after drawing" rule
+    console.log(`Turn will now be skipped for ${gameState.players[gameState.currentPlayerIndex].name}`);
     nextTurn();
+    
+    console.log("After turn skip - Current player is now:", gameState.currentPlayerIndex, 
+                `(${gameState.players[gameState.currentPlayerIndex].name})`);
     
     // Show a short delay to let the player see their drawn cards
     setTimeout(() => {
       // Update the UI
       updateGameDisplay(gameState);
       
-      // If it's AI's turn, let them play
+      // If it's AI's turn, let them play (and make sure this isn't called prematurely)
       if (gameState.currentPlayerIndex !== 0) {
+        console.log(`Starting AI turn for ${gameState.players[gameState.currentPlayerIndex].name} after human finished drawing`);
         setTimeout(playAITurn, 1000);
+      } else {
+        console.log(`It's human player's turn (${gameState.players[0].name}) after the draw and skip cycle`);
       }
     }, 1000);
     
@@ -666,19 +802,31 @@ function drawCard() {
   
   // For required draws (Draw 2 or Draw 4 cases), handle properly
   if (gameState.requiredDraws > 0) {
+    // Calculate how many cards were originally required (before this draw)
+    const originalRequiredDraws = gameState.requiredDraws + 1;
+    // Calculate which card we're drawing in the sequence (for clear logging)
+    const currentDrawNumber = originalRequiredDraws - gameState.requiredDraws;
+    
+    console.log(`Drew card ${currentDrawNumber} of ${originalRequiredDraws} required draws`);
     const turnComplete = handleRequiredDraw();
+    
     if (!turnComplete) {
+      console.log(`Still need to draw ${gameState.requiredDraws} more cards`);
       // Return after drawing a required card - player needs to click again for next card
       return;
+    } else {
+      console.log("All required cards drawn - turn complete");
     }
   } else {
     // Normal draw case - update display and never auto-play drawn card
+    console.log("Normal draw (not required) - drew one card");
     updateGameDisplay(gameState);
     
     // Only move to next player's turn if the drawn card can't be played
     const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
     const player = gameState.players[gameState.currentPlayerIndex];
     if (!canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand)) {
+      console.log("Drawn card can't be played - moving to next player");
       // Move to next player's turn
       nextTurn();
       
@@ -687,8 +835,11 @@ function drawCard() {
       
       // If it's AI's turn, let them play
       if (gameState.currentPlayerIndex !== 0) {
+        console.log("Starting AI turn after human draw");
         setTimeout(playAITurn, 1000);
       }
+    } else {
+      console.log("Drawn card can be played - waiting for player to play it");
     }
     // If card is playable, player must choose to play it manually
   }
@@ -696,9 +847,30 @@ function drawCard() {
 
 // AI makes a turn
 function playAITurn() {
-  // If a player is currently drawing cards, don't allow AI turns
-  if (gameState.isDrawingCards) {
-    console.log("Waiting for player to finish drawing cards...");
+  console.log("playAITurn called. Current player:", gameState.currentPlayerIndex);
+  
+  // Safety check - this function should only be called for AI players
+  if (gameState.currentPlayerIndex === 0) {
+    console.error("ERROR: playAITurn called for human player (index 0)");
+    return;
+  }
+  
+  // If a human player is currently drawing cards, don't allow AI turns
+  // Only block when a human player is drawing, not when AI is drawing from another AI
+  if (gameState.isDrawingCards && gameState.requiredDraws > 0 && gameState.currentPlayerIndex === 0) {
+    console.log("Waiting for human player to finish drawing cards...");
+    return;
+  }
+  
+  // Reset drawing flag if it was mistakenly left on for AI players
+  if (gameState.isDrawingCards && gameState.currentPlayerIndex !== 0) {
+    console.log("Resetting drawing flag for AI player");
+    gameState.isDrawingCards = false;
+  }
+  
+  // Add an extra safety check for game state
+  if (!gameState.isGameStarted) {
+    console.error("ERROR: Attempted to play AI turn when game is not started");
     return;
   }
   
@@ -738,10 +910,16 @@ function playAITurn() {
 
 // Move to next player's turn
 function nextTurn() {
+  const previousPlayerIndex = gameState.currentPlayerIndex;
+  const previousPlayerName = gameState.players[previousPlayerIndex].name;
+  
   gameState.currentPlayerIndex = (gameState.currentPlayerIndex + gameState.direction) % gameState.players.length;
   if (gameState.currentPlayerIndex < 0) {
     gameState.currentPlayerIndex += gameState.players.length;
   }
+  
+  const nextPlayerName = gameState.players[gameState.currentPlayerIndex].name;
+  console.log(`Turn: ${previousPlayerName} → ${nextPlayerName}`);
   
   // Play your turn sound if it's the player's turn
   if (gameState.currentPlayerIndex === 0) {
@@ -787,7 +965,9 @@ function sayUno() {
 
 // Handle game end
 function handleGameEnd() {
-  const winnerIndex = gameState.currentPlayerIndex;
+  // Use the stored winning player index if available, otherwise use current player
+  const winnerIndex = gameState.winningPlayerIndex !== undefined ? 
+    gameState.winningPlayerIndex : gameState.currentPlayerIndex;
   const winnerName = gameState.players[winnerIndex].name;
   const isPlayerWinner = winnerIndex === 0;
   
@@ -897,5 +1077,6 @@ export {
   drawCard,
   sayUno,
   chooseColor,
-  initializeEmptyGame
+  initializeEmptyGame,
+  continueAfterCardPlay
 };
