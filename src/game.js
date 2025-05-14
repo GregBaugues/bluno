@@ -144,27 +144,29 @@ function playCard(gameState, playerIndex, cardIndex) {
     return;
   } else {
     // Handle all other types of cards
-    handleSpecialCard(playedCard);
+    const skipNextTurn = handleSpecialCard(playedCard);
+    
+    // Check if player has won
+    if (player.hand.length === 0) {
+      handleGameEnd();
+      return;
+    }
+    
+    // Check for Uno - automatically call for everyone
+    if (player.hand.length === 1 && !player.hasCalledUno) {
+      player.hasCalledUno = true;
+      // Play the UNO call sound
+      soundSystem.play('unoCall');
+    }
+    
+    // Move to next player's turn only if the special card didn't already handle it
+    if (!skipNextTurn) {
+      nextTurn();
+    }
+    
+    // Update the UI
+    updateGameDisplay(gameState);
   }
-  
-  // Check if player has won
-  if (player.hand.length === 0) {
-    handleGameEnd();
-    return;
-  }
-  
-  // Check for Uno - automatically call for everyone
-  if (player.hand.length === 1 && !player.hasCalledUno) {
-    player.hasCalledUno = true;
-    // Play the UNO call sound
-    soundSystem.play('unoCall');
-  }
-  
-  // Move to next player's turn
-  nextTurn();
-  
-  // Update the UI
-  updateGameDisplay(gameState);
   
   // If it's AI's turn, let them play
   if (gameState.currentPlayerIndex !== 0) {
@@ -245,6 +247,8 @@ function handleSkipNextPlayer(nextPlayerIndex) {
     // No change to currentPlayerIndex needed
   } else {
     // For 3+ player games, skip the next player's turn
+    // We need to move forward one more position in the current direction
+    // without changing the direction itself
     gameState.currentPlayerIndex = (nextPlayerIndex + gameState.direction) % gameState.players.length;
     if (gameState.currentPlayerIndex < 0) {
       gameState.currentPlayerIndex += gameState.players.length;
@@ -270,10 +274,14 @@ function handleSpecialCard(card) {
     gameState.currentColor = card.color;
   }
   
+  // Flag to indicate if this card handles its own turn advancement
+  let skipNextTurn = false;
+  
   switch (card.value) {
     case 'Skip':
       // Skip the next player
       gameState.currentPlayerIndex = getNextPlayerIndex();
+      skipNextTurn = false; // Let normal turn advancement happen
       break;
       
     case 'Reverse':
@@ -285,6 +293,7 @@ function handleSpecialCard(card) {
       if (gameState.players.length === 2) {
         gameState.currentPlayerIndex = getNextPlayerIndex();
       }
+      skipNextTurn = false; // Let normal turn advancement happen
       break;
       
     case 'Draw 2':
@@ -292,11 +301,13 @@ function handleSpecialCard(card) {
       const nextPlayerIndex = handleDrawCards(2);
       // Skip their turn
       handleSkipNextPlayer(nextPlayerIndex);
+      skipNextTurn = true; // Skip normal turn advancement
       break;
       
     case 'Wild':
       // Handle wild card color selection
       handleWildCardColor();
+      skipNextTurn = false; // Let normal turn advancement happen
       break;
       
     case 'Wild Draw 4':
@@ -308,13 +319,18 @@ function handleSpecialCard(card) {
       
       // Skip their turn
       handleSkipNextPlayer(nextIdx);
+      skipNextTurn = true; // Skip normal turn advancement
       break;
       
     default:
       // We already set the current color at the beginning of this function
       // for all non-wild cards, so no additional action is needed here
+      skipNextTurn = false; // Let normal turn advancement happen
       break;
   }
+  
+  // Return a flag indicating if we should skip the normal nextTurn() call
+  return skipNextTurn;
 }
 
 // Choose color for AI
