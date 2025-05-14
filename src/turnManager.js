@@ -72,13 +72,20 @@ function playCard(playerIndex, cardIndex) {
   });
   
   // Check win condition IMMEDIATELY after playing the card
-  if (checkWinCondition(player)) {
-    gameState.updateState({
-      winningPlayerIndex: playerIndex
-    });
-    
-    gameLog(`${player.name} has played their last card and wins!`);
-    eventBus.emit(GameEvents.GAME_ENDED, { winnerIndex: playerIndex });
+  // Ensure we give the UI a moment to properly remove the card from hand before checking win
+  setTimeout(() => {
+    if (checkWinCondition(player)) {
+      gameState.updateState({
+        winningPlayerIndex: playerIndex
+      });
+      
+      gameLog(`${player.name} has played their last card and wins!`);
+      eventBus.emit(GameEvents.GAME_ENDED, { winnerIndex: playerIndex });
+    }
+  }, 100);
+  
+  // If this was the last card, we know we'll win
+  if (player.hand.length === 0) {
     return true;
   }
   
