@@ -466,6 +466,26 @@ function renderDeckAndDiscardPile() {
   const deckBack = document.createElement('div');
   deckBack.className = 'card-back';
   deckBack.style.width = '120px';
+  
+  // Add a visual indicator if a player needs to draw cards
+  if (gameState.isDrawingCards && gameState.requiredDraws > 0) {
+    const drawIndicator = document.createElement('div');
+    drawIndicator.className = 'draw-indicator';
+    drawIndicator.textContent = `Draw ${gameState.requiredDraws} more`;
+    drawIndicator.style.position = 'absolute';
+    drawIndicator.style.top = '-30px';
+    drawIndicator.style.left = '0';
+    drawIndicator.style.width = '100%';
+    drawIndicator.style.padding = '5px';
+    drawIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+    drawIndicator.style.color = 'white';
+    drawIndicator.style.borderRadius = '5px';
+    drawIndicator.style.textAlign = 'center';
+    drawIndicator.style.fontWeight = 'bold';
+    drawIndicator.style.zIndex = '10';
+    drawIndicator.style.animation = 'pulse 1s infinite';
+    deckBack.appendChild(drawIndicator);
+  }
   deckBack.style.height = '168px';
   deckBack.style.borderRadius = '10px';
   deckBack.style.backgroundColor = '#ff5757';
@@ -1686,6 +1706,23 @@ function showErrorMessage(message) {
     errorContainer.style.display = 'none';
   }, 3000);
 }
+
+// Function to show a draw requirement message
+function showDrawRequirementMessage(numCards) {
+  // Create a message about drawing cards
+  const message = `You need to draw ${numCards} cards!`;
+  showErrorMessage(message);
+}
+
+// Add event listeners for drawing requirements
+window.addEventListener('showDrawRequirement', (event) => {
+  const numCards = event.detail.numCards;
+  showDrawRequirementMessage(numCards);
+});
+
+window.addEventListener('drawRequirementComplete', () => {
+  showErrorMessage('All required cards drawn! Next player\'s turn.');
+});
 
 export {
   renderGame,
