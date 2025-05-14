@@ -558,10 +558,13 @@ function renderDeckAndDiscardPile() {
   
   // Add click handler for drawing cards
   deckElement.onclick = () => {
-    if (gameState.currentPlayerIndex === 0) { // Only if it's the human player's turn
+    // Allow drawing when it's either:
+    // 1. The player's turn, OR
+    // 2. The player has required draws to make (from Draw 2 or Draw 4)
+    if (gameState.currentPlayerIndex === 0 || gameState.isDrawingCards) {
       if (gameState.requiredDraws > 0) {
         // If player needs to draw cards due to Draw 2 or Draw 4
-        drawCard(gameState);
+        drawCard();
         
         // Remove 'required-draw' and 'active-deck' classes when no more draws required
         if (gameState.requiredDraws === 0) {
@@ -571,7 +574,9 @@ function renderDeckAndDiscardPile() {
           // Remove any draw indicators
           const drawIndicators = document.querySelectorAll('.draw-indicator, .deck-reminder');
           drawIndicators.forEach(indicator => {
-            indicator.parentElement.removeChild(indicator);
+            if (indicator.parentElement) {
+              indicator.parentElement.removeChild(indicator);
+            }
           });
         }
       } else if (!gameState.waitingForColorChoice) {
