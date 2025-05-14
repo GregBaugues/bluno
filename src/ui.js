@@ -341,9 +341,12 @@ function renderOpponents() {
   const opponentsArea = document.getElementById('opponents-area');
   opponentsArea.innerHTML = '';
   
-  // Set up the layout - we're now handling Bluey and Bingo separately in fixed positions
+  // Reset Dad display flag since we're rebuilding the opponents
+  document.body.dataset.dadDisplayed = "false";
+  
+  // Set up the layout
   opponentsArea.style.display = 'flex'; 
-  opponentsArea.style.justifyContent = 'space-between'; // Changed from space-evenly to space-between
+  opponentsArea.style.justifyContent = 'space-evenly'; // Use space-evenly for even distribution
   opponentsArea.style.width = '100%';
   opponentsArea.style.maxWidth = '900px';
   opponentsArea.style.margin = '0 auto';
@@ -354,20 +357,30 @@ function renderOpponents() {
   const isFourPlayerGame = totalOpponents >= 3;
   
   // Define positions based on how many opponents we have
+  // Instead of using fixed position, we'll now apply styles differently
+  // based on the container justification which is space-evenly
   let positions;
-  if (isFourPlayerGame) {
-    // For 4-player games, spread them out (3 opponents)
+  if (totalOpponents === 1) {
+    // For 2-player games (1 opponent), center the opponent
+    // We'll handle this with a different approach
     positions = [
-      { left: '15%', top: '0' },  // Bluey (further left)
-      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '85%', top: '0' }   // Position for Coco or Bandit (far right)
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Unused slot
+    ];
+  } else if (isFourPlayerGame) {
+    // For 4-player games with 3 opponents, rely on space-evenly
+    positions = [
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Bandit
     ];
   } else {
-    // For 2-3 player games
+    // For 3-player games with 2 opponents
     positions = [
-      { left: '25%', top: '0' },  // Bluey (left)
-      { left: '50%', top: '0' },  // This slot for Bingo is skipped/hidden
-      { left: '75%', top: '0' }   // Bandit (right)
+      { id: 'opponent-bluey' },  // Bluey
+      { id: 'opponent-bingo' },  // Bingo slot (handled separately)
+      { id: 'opponent-bandit' }  // Bandit
     ];
   }
   
@@ -382,11 +395,17 @@ function renderOpponents() {
     opponentSlot.style.alignItems = 'center';
     opponentSlot.style.justifyContent = 'center';
     
-    // Apply fixed positioning based on the position array
+    // Apply styling to the slots
     opponentSlot.style.position = 'relative';
-    if (positions[i]) {
-      if (positions[i].left) opponentSlot.style.left = positions[i].left;
-      if (positions[i].top) opponentSlot.style.top = positions[i].top;
+    
+    // Set ID for the opponent slot for better identification
+    if (positions[i] && positions[i].id) {
+      opponentSlot.id = positions[i].id;
+    }
+    
+    // Special case for single opponent (center it)
+    if (totalOpponents === 1 && i === 0) {
+      opponentSlot.style.margin = '0 auto'; // Center the slot
     }
     
     // Check if this position has a player in the current game
@@ -427,9 +446,17 @@ function renderOpponents() {
         // Skip displaying Bingo in the opponent area, as it's handled separately
         opponent.style.visibility = 'hidden'; // Hide the opponent but keep the layout intact
       } else if (player.name === 'Dad') {
-        // For Dad, use the createCharacterDisplay function
-        const dadDisplay = createCharacterDisplay('Dad', 100);
-        characterImage.appendChild(dadDisplay);
+        // For Dad, use the createCharacterDisplay function and mark as displayed
+        if (i === 2) { // Only show Dad in third opponent slot (i=2)
+          const dadDisplay = createCharacterDisplay('Dad', 100);
+          characterImage.appendChild(dadDisplay);
+          
+          // Mark the player as Dad for deduplication in renderDad
+          document.body.dataset.dadDisplayed = "true";
+        } else {
+          // If Dad is not in the correct slot, hide him
+          opponent.style.visibility = 'hidden';
+        }
       } else {
         // For other characters (like Bandit), use getCharacterDisplay from images.js
         characterImage.innerHTML = getCharacterDisplay(player.name);
@@ -1364,7 +1391,8 @@ function renderDad() {
     dadDisplay = document.createElement('div');
     dadDisplay.id = 'dad-display';
     dadDisplay.style.position = 'absolute';
-    dadDisplay.style.right = '10%'; // Position at far right
+    dadDisplay.style.right = '16.67%'; // Position at far right
+    dadDisplay.style.transform = 'translateX(50%)'; // Adjust positioning
     dadDisplay.style.top = '0'; // Same top position as others
     dadDisplay.style.display = 'flex';
     dadDisplay.style.flexDirection = 'column';
@@ -1375,9 +1403,12 @@ function renderDad() {
     document.getElementById('game-container').appendChild(dadDisplay);
   }
   
-  // Only show Dad if game has 4 players
-  if (gameState.isGameStarted && gameState.players && gameState.players.length < 4) {
-    // Hide Dad's display completely when less than 4 players
+  // Only show Dad in special Dad section if not already shown in opponents area
+  // Check if Dad is already displayed somewhere else
+  const isDadDisplayed = document.body.dataset.dadDisplayed === "true";
+  
+  if (isDadDisplayed || (gameState.isGameStarted && gameState.players && gameState.players.length < 4)) {
+    // Hide Dad's display completely
     dadDisplay.innerHTML = '';
     dadDisplay.style.display = 'none';
     return;
