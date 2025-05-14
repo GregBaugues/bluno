@@ -107,12 +107,22 @@ function playCard(gameState, playerIndex, cardIndex) {
   
   // We no longer use implicit color choice
   
-  // Check if card can be played
-  if (!canPlayCard(card, topDiscard, gameState.currentColor)) {
+  // Check if card can be played (pass the player's hand for Wild Draw 4 validation)
+  if (!canPlayCard(card, topDiscard, gameState.currentColor, player.hand)) {
     // If human player tries to play an invalid card, trigger shake animation
     if (playerIndex === 0) {
-      // This will be handled in the UI layer
-      window.dispatchEvent(new CustomEvent('invalidCardPlay', { detail: { cardIndex } }));
+      // For Wild Draw 4, provide specific feedback if player has playable cards
+      if (card.value === 'Wild Draw 4') {
+        window.dispatchEvent(new CustomEvent('invalidCardPlay', { 
+          detail: { 
+            cardIndex, 
+            message: "You can't play Wild Draw 4 when you have cards matching the current color or value!" 
+          } 
+        }));
+      } else {
+        // This will be handled in the UI layer
+        window.dispatchEvent(new CustomEvent('invalidCardPlay', { detail: { cardIndex } }));
+      }
     }
     return; // Exit early, don't proceed with card play
   }
@@ -175,9 +185,29 @@ function playCard(gameState, playerIndex, cardIndex) {
 }
 
 // Check if a card can be played
-function canPlayCard(card, topDiscard, currentColor) {
-  // Wild cards can always be played
-  if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
+function canPlayCard(card, topDiscard, currentColor, playerHand) {
+  // Regular Wild cards can always be played
+  if (card.value === 'Wild') {
+    return true;
+  }
+  
+  // Wild Draw 4 can only be played if the player has no cards matching the current color or value
+  if (card.value === 'Wild Draw 4') {
+    // If playerHand is provided (for validation), check if player has playable cards
+    if (playerHand && topDiscard) {
+      // Check if player has any cards matching the current color or the value of the top card
+      const hasPlayableCard = playerHand.some(handCard => 
+        handCard !== card && (
+          handCard.color === currentColor || // Matching color
+          (handCard.value === topDiscard.value && handCard.value !== 'Wild' && handCard.value !== 'Wild Draw 4') // Matching value (excluding wilds)
+        )
+      );
+      
+      // Wild Draw 4 can only be played if player has no playable cards
+      return !hasPlayableCard;
+    }
+    
+    // If no hand is provided or no top discard (backward compatibility), allow the play
     return true;
   }
   
@@ -452,7 +482,7 @@ function playerHasLegalMoves(playerIndex) {
   
   // Check each card in hand to see if any can be played
   for (let i = 0; i < player.hand.length; i++) {
-    if (canPlayCard(player.hand[i], topDiscard, gameState.currentColor)) {
+    if (canPlayCard(player.hand[i], topDiscard, gameState.currentColor, player.hand)) {
       return true;
     }
   }
@@ -526,7 +556,8 @@ function drawCard() {
     
     // Only move to next player's turn if the drawn card can't be played
     const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-    if (!canPlayCard(drawnCard, topDiscard, gameState.currentColor)) {
+    const player = gameState.players[gameState.currentPlayerIndex];
+    if (!canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand)) {
       // Move to next player's turn
       nextTurn();
       
@@ -550,7 +581,7 @@ function playAITurn() {
   // Look for a card to play
   for (let i = 0; i < player.hand.length; i++) {
     const card = player.hand[i];
-    if (canPlayCard(card, topDiscard, gameState.currentColor)) {
+    if (canPlayCard(card, topDiscard, gameState.currentColor, player.hand)) {
       // Play the card
       setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, i), 500);
       return;
@@ -561,7 +592,7 @@ function playAITurn() {
   const drawnCard = drawSingleCard(gameState.currentPlayerIndex);
   
   // Check if drawn card can be played
-  if (canPlayCard(drawnCard, topDiscard, gameState.currentColor)) {
+  if (canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand)) {
     // Play the card
     setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, player.hand.length - 1), 500);
   } else {

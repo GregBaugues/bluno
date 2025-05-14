@@ -1639,6 +1639,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('invalidCardPlay', (event) => {
     // Get the card index from the event
     const cardIndex = event.detail.cardIndex;
+    const errorMessage = event.detail.message;
     
     // Find the card element in the player's hand
     const playerHand = document.getElementById('player-hand');
@@ -1649,6 +1650,11 @@ window.addEventListener('DOMContentLoaded', () => {
       // Add shake animation
       const cardElement = cardElements[cardIndex];
       cardElement.classList.add('shake');
+      
+      // Show error message if provided (specifically for Wild Draw 4 restriction)
+      if (errorMessage) {
+        showErrorMessage(errorMessage);
+      }
       
       // Remove the shake class after animation completes
       setTimeout(() => {
@@ -1672,12 +1678,51 @@ window.addEventListener('DOMContentLoaded', () => {
       }, 500);
     }
   });
+  
 });
+
+// Function to show an error message to the player
+function showErrorMessage(message) {
+  // Create or get the error message container
+  let errorContainer = document.getElementById('error-message-container');
+  
+  if (!errorContainer) {
+    errorContainer = document.createElement('div');
+    errorContainer.id = 'error-message-container';
+    applyStyles(errorContainer, {
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      backgroundColor: 'rgba(255, 0, 0, 0.8)',
+      color: 'white',
+      padding: '15px',
+      borderRadius: '8px',
+      maxWidth: '80%',
+      textAlign: 'center',
+      zIndex: '1000',
+      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+      fontSize: '20px',
+      fontWeight: 'bold'
+    });
+    document.body.appendChild(errorContainer);
+  }
+  
+  // Set the message
+  errorContainer.textContent = message;
+  
+  // Show and then hide after a delay
+  errorContainer.style.display = 'block';
+  setTimeout(() => {
+    errorContainer.style.display = 'none';
+  }, 3000);
+}
 
 export {
   renderGame,
   updateGameDisplay,
   showWelcomeScreen,
   renderBingo,
-  renderDad
+  renderDad,
+  showErrorMessage
 };
