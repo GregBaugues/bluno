@@ -89,17 +89,13 @@ function updateDirectionIndicator(direction) {
   const directionIndicator = document.getElementById('direction-indicator');
   if (!directionIndicator) return;
   
-  // Set the style for the direction indicator
+  // Set the style for the direction indicator - no background
   directionIndicator.style.width = '60px';
   directionIndicator.style.height = '60px';
-  directionIndicator.style.borderRadius = '50%';
-  directionIndicator.style.backgroundColor = 'white';
   directionIndicator.style.display = 'flex';
   directionIndicator.style.justifyContent = 'center';
   directionIndicator.style.alignItems = 'center';
-  directionIndicator.style.fontSize = '32px';
-  directionIndicator.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-  directionIndicator.style.border = '3px solid white';
+  directionIndicator.style.fontSize = '40px'; // Larger icon size
   directionIndicator.style.position = 'relative';
   directionIndicator.style.marginTop = '20px';
   
@@ -110,12 +106,16 @@ function updateDirectionIndicator(direction) {
     directionIndicator.title = 'Clockwise Direction';
     // Add animation for clockwise rotation
     directionIndicator.style.animation = 'rotate-clockwise 3s linear infinite';
+    // Add text shadow for visibility without background
+    directionIndicator.style.textShadow = '0 0 15px white, 0 0 10px white';
   } else {
     // Counter-clockwise
     directionIndicator.innerHTML = '🔄';
     directionIndicator.title = 'Counter-Clockwise Direction';
     // Add animation for counter-clockwise rotation
     directionIndicator.style.animation = 'rotate-counter-clockwise 3s linear infinite';
+    // Add text shadow for visibility without background
+    directionIndicator.style.textShadow = '0 0 15px white, 0 0 10px white';
   }
   
   // Make sure the animation style is defined
@@ -150,19 +150,14 @@ function updateNameTurnIndicator(playerName) {
     nameTurnIndicator = document.createElement('div');
     nameTurnIndicator.id = 'name-turn-indicator';
     
-    // Style the indicator
-    nameTurnIndicator.style.backgroundColor = 'white';
-    nameTurnIndicator.style.color = '#333';
+    // Style the indicator - no background
     nameTurnIndicator.style.padding = '10px 15px';
-    nameTurnIndicator.style.borderRadius = '15px';
     nameTurnIndicator.style.fontWeight = 'bold';
     nameTurnIndicator.style.fontSize = '18px';
     nameTurnIndicator.style.marginTop = '25px';
-    nameTurnIndicator.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
     nameTurnIndicator.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
     nameTurnIndicator.style.textAlign = 'center';
     nameTurnIndicator.style.minWidth = '130px';
-    nameTurnIndicator.style.border = '3px solid gold';
     nameTurnIndicator.style.position = 'relative';
     
     // Add a label above the indicator
@@ -191,39 +186,26 @@ function updateNameTurnIndicator(playerName) {
     // Use inner span for the actual player name for styling purposes
     nameTurnIndicator.innerHTML = `<div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-weight: bold; color: white; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); font-size: 14px; width: 100%; text-align: center;">Current Turn</div><span>${playerName}</span>`;
     
-    // Add pulsing animation
-    const animation = nameTurnIndicator.animate(
-      [
-        { boxShadow: '0 0 10px gold' },
-        { boxShadow: '0 0 20px gold' },
-        { boxShadow: '0 0 10px gold' }
-      ],
-      {
-        duration: 1500,
-        iterations: Infinity
-      }
-    );
-    
-    // Set background color based on player name
+    // Set color based on player name
     if (playerName === 'Bluey') {
-      nameTurnIndicator.style.backgroundColor = '#1E90FF'; // Bluey blue
       nameTurnIndicator.style.color = 'white';
+      nameTurnIndicator.style.textShadow = '0 0 10px #1E90FF, 0 0 15px #1E90FF';
     } else if (playerName === 'Bingo') {
-      nameTurnIndicator.style.backgroundColor = '#FF6B6B'; // Bingo red/orange
       nameTurnIndicator.style.color = 'white';
+      nameTurnIndicator.style.textShadow = '0 0 10px #FF6B6B, 0 0 15px #FF6B6B';
     } else if (playerName === 'Dad') {
-      nameTurnIndicator.style.backgroundColor = '#5F4B32'; // Dad brown
       nameTurnIndicator.style.color = 'white';
+      nameTurnIndicator.style.textShadow = '0 0 10px #5F4B32, 0 0 15px #5F4B32';
     } else if (playerName === 'Bandit') {
-      nameTurnIndicator.style.backgroundColor = '#4169E1'; // Bandit blue
       nameTurnIndicator.style.color = 'white';
+      nameTurnIndicator.style.textShadow = '0 0 10px #4169E1, 0 0 15px #4169E1';
     } else if (playerName === 'Julia') {
-      nameTurnIndicator.style.backgroundColor = '#FFCC66'; // Julia's color (golden yellow)
       nameTurnIndicator.style.color = '#333';
+      nameTurnIndicator.style.textShadow = '0 0 10px #FFCC66, 0 0 15px #FFCC66';
     } else {
       // Default fallback
-      nameTurnIndicator.style.backgroundColor = 'white';
       nameTurnIndicator.style.color = '#333';
+      nameTurnIndicator.style.textShadow = '0 0 10px white, 0 0 15px white';
     }
   } else {
     // No current player, hide the indicator
@@ -672,6 +654,12 @@ function renderDeckAndDiscardPile() {
     // Add a subtle glow effect to the top discard card
     cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
     
+    // Add data attribute for card value (for CSS targeting)
+    cardElement.setAttribute('data-value', topCard.value);
+    
+    // Add color class to the card
+    cardElement.classList.add(topCard.color);
+    
     discardPileElement.appendChild(cardElement);
     
     // Show the current color if it's a wild card
@@ -754,6 +742,12 @@ function renderPlayerHand() {
   // Generate card elements
   playerHand.forEach((card, index) => {
     const cardElement = createCardElement(card);
+    
+    // Add data attribute for card value (for CSS targeting)
+    cardElement.setAttribute('data-value', card.value);
+    
+    // Add color class to the card
+    cardElement.classList.add(card.color);
     
     // Add active class if it's the player's turn and the card is playable
     if (gameState.currentPlayerIndex === 0 && !gameState.waitingForColorChoice && isCardPlayable(card)) {
@@ -925,6 +919,7 @@ function createCardElement(card, isDiscardPile = false) {
   cardElement.style.justifyContent = 'center';
   cardElement.style.alignItems = 'center';
   cardElement.style.transition = 'transform 0.2s';
+  cardElement.style.overflow = 'hidden';
   
   // Color-specific styling
   const colorMap = {
@@ -934,57 +929,148 @@ function createCardElement(card, isDiscardPile = false) {
     'yellow': '#ffee3e'
   };
   
+  // Create card background with color
   if (card.value === 'Wild' || card.value === 'Wild Draw 4') {
-    // Special styling for wild cards
-    cardElement.style.background = 'linear-gradient(135deg, #ff3b3b 0%, #4a7af5 50%, #47c83e 75%, #ffee3e 100%)';
+    // Special styling for wild cards - black background with colored sections
+    cardElement.style.backgroundColor = '#333';
+    
+    // Create a colorful pattern for wild cards
+    const wildPattern = document.createElement('div');
+    wildPattern.style.position = 'absolute';
+    wildPattern.style.top = '0';
+    wildPattern.style.left = '0';
+    wildPattern.style.right = '0';
+    wildPattern.style.bottom = '0';
+    wildPattern.style.zIndex = '0';
+    
+    // Create quadrants for the wild card
+    const colors = ['#ff3b3b', '#4a7af5', '#47c83e', '#ffee3e'];
+    
+    const tl = document.createElement('div');
+    tl.style.position = 'absolute';
+    tl.style.top = '0';
+    tl.style.left = '0';
+    tl.style.width = '50%';
+    tl.style.height = '50%';
+    tl.style.backgroundColor = colors[0];
+    
+    const tr = document.createElement('div');
+    tr.style.position = 'absolute';
+    tr.style.top = '0';
+    tr.style.right = '0';
+    tr.style.width = '50%';
+    tr.style.height = '50%';
+    tr.style.backgroundColor = colors[1];
+    
+    const bl = document.createElement('div');
+    bl.style.position = 'absolute';
+    bl.style.bottom = '0';
+    bl.style.left = '0';
+    bl.style.width = '50%';
+    bl.style.height = '50%';
+    bl.style.backgroundColor = colors[2];
+    
+    const br = document.createElement('div');
+    br.style.position = 'absolute';
+    br.style.bottom = '0';
+    br.style.right = '0';
+    br.style.width = '50%';
+    br.style.height = '50%';
+    br.style.backgroundColor = colors[3];
+    
+    wildPattern.appendChild(tl);
+    wildPattern.appendChild(tr);
+    wildPattern.appendChild(bl);
+    wildPattern.appendChild(br);
+    
+    cardElement.appendChild(wildPattern);
   } else {
     cardElement.style.backgroundColor = colorMap[card.color.toLowerCase()];
   }
   
-  // Add value and emoji to card
-  const cardContent = document.createElement('div');
-  cardContent.className = 'card-content';
-  cardContent.style.fontSize = '40px';
-  cardContent.style.display = 'flex';
-  cardContent.style.flexDirection = 'column';
-  cardContent.style.alignItems = 'center';
-  cardContent.style.justifyContent = 'center';
-  cardContent.style.height = '100%';
-  cardContent.style.width = '100%';
+  // Create center emoji container (without white oval background)
+  const centerCircle = document.createElement('div');
+  centerCircle.style.position = 'absolute';
+  centerCircle.style.width = isDiscardPile ? '100px' : '55px';
+  centerCircle.style.height = isDiscardPile ? '100px' : '55px';
+  centerCircle.style.display = 'flex';
+  centerCircle.style.justifyContent = 'center';
+  centerCircle.style.alignItems = 'center';
+  centerCircle.style.zIndex = '1';
   
-  // Add card value to top-left and bottom-right corners
+  // Add emoji for card value with larger size
+  const emoji = document.createElement('div');
+  emoji.textContent = card.emoji;
+  emoji.style.fontSize = isDiscardPile ? '80px' : '40px';
+  emoji.style.lineHeight = '1';
+  emoji.style.textShadow = '0 0 3px rgba(0, 0, 0, 0.3)';
+  
+  centerCircle.appendChild(emoji);
+  cardElement.appendChild(centerCircle);
+  
+  // Add card value to top-left and bottom-right corners with better styling
   const topValue = document.createElement('div');
   topValue.className = 'card-corner top-left';
-  topValue.textContent = card.value;
+  
+  // For special cards, use shortened display text
+  let displayValue = card.value;
+  if (card.value === 'Skip') displayValue = 'S';
+  if (card.value === 'Reverse') displayValue = 'R'; 
+  if (card.value === 'Draw 2') displayValue = '+2';
+  if (card.value === 'Wild') displayValue = 'W';
+  if (card.value === 'Wild Draw 4') displayValue = 'W4';
+  
+  topValue.textContent = displayValue;
   topValue.style.position = 'absolute';
-  topValue.style.top = isDiscardPile ? '10px' : '5px';
-  topValue.style.left = isDiscardPile ? '10px' : '5px';
-  topValue.style.fontSize = isDiscardPile ? '28px' : '16px';
+  topValue.style.top = isDiscardPile ? '5px' : '3px';
+  topValue.style.left = isDiscardPile ? '5px' : '3px';
+  topValue.style.fontSize = isDiscardPile ? '18px' : '12px';
   topValue.style.fontWeight = 'bold';
   topValue.style.color = 'white';
+  topValue.style.zIndex = '2';
+  topValue.style.padding = '2px';
+  topValue.style.display = 'flex';
+  topValue.style.justifyContent = 'center';
+  topValue.style.alignItems = 'center';
   
   const bottomValue = document.createElement('div');
   bottomValue.className = 'card-corner bottom-right';
-  bottomValue.textContent = card.value;
+  bottomValue.textContent = displayValue;
   bottomValue.style.position = 'absolute';
-  bottomValue.style.bottom = isDiscardPile ? '10px' : '5px';
-  bottomValue.style.right = isDiscardPile ? '10px' : '5px';
-  bottomValue.style.fontSize = isDiscardPile ? '28px' : '16px';
+  bottomValue.style.bottom = isDiscardPile ? '5px' : '3px';
+  bottomValue.style.right = isDiscardPile ? '5px' : '3px';
+  bottomValue.style.fontSize = isDiscardPile ? '18px' : '12px';
   bottomValue.style.fontWeight = 'bold';
   bottomValue.style.color = 'white';
   bottomValue.style.transform = 'rotate(180deg)';
+  bottomValue.style.zIndex = '2';
+  bottomValue.style.padding = '2px';
+  bottomValue.style.display = 'flex';
+  bottomValue.style.justifyContent = 'center';
+  bottomValue.style.alignItems = 'center';
+  
+  // Handle text color for yellow cards
+  if (card.color === 'yellow') {
+    topValue.style.color = 'black';
+    bottomValue.style.color = 'black';
+  }
   
   cardElement.appendChild(topValue);
   cardElement.appendChild(bottomValue);
   
-  // Add emoji for card value
-  const emoji = document.createElement('div');
-  emoji.textContent = card.emoji;
-  emoji.style.fontSize = isDiscardPile ? '80px' : '40px';
-  emoji.style.textAlign = 'center';
-  
-  cardContent.appendChild(emoji);
-  cardElement.appendChild(cardContent);
+  // Add small diagonal stripes pattern in the background for visual texture
+  if (card.color !== 'wild') {
+    const stripesPattern = document.createElement('div');
+    stripesPattern.style.position = 'absolute';
+    stripesPattern.style.top = '0';
+    stripesPattern.style.left = '0';
+    stripesPattern.style.right = '0';
+    stripesPattern.style.bottom = '0';
+    stripesPattern.style.opacity = '0.2';
+    stripesPattern.style.backgroundImage = 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255, 255, 255, 0.5) 10px, rgba(255, 255, 255, 0.5) 20px)';
+    stripesPattern.style.zIndex = '0';
+    cardElement.appendChild(stripesPattern);
+  }
   
   // Add hover effect for playable cards (handled in renderPlayerHand)
   cardElement.onmouseenter = () => {
@@ -998,6 +1084,107 @@ function createCardElement(card, isDiscardPile = false) {
     cardElement.style.transform = 'translateY(0)';
     cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
   };
+  
+  // Add diagonal stripe overlay for Skip cards
+  if (card.value === 'Skip') {
+    const skipLine = document.createElement('div');
+    skipLine.style.position = 'absolute';
+    skipLine.style.width = '150%';
+    skipLine.style.height = '10px';
+    skipLine.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+    skipLine.style.transform = 'rotate(-45deg)';
+    skipLine.style.top = '50%';
+    skipLine.style.left = '-25%';
+    skipLine.style.zIndex = '1';
+    skipLine.style.borderTop = '2px solid black';
+    skipLine.style.borderBottom = '2px solid black';
+    cardElement.appendChild(skipLine);
+  }
+  
+  // Add arrows for Reverse cards
+  if (card.value === 'Reverse') {
+    // First arrow pointing right
+    const arrowUp = document.createElement('div');
+    arrowUp.style.position = 'absolute';
+    arrowUp.style.top = '30%';
+    arrowUp.style.width = '60%';
+    arrowUp.style.height = '10px';
+    arrowUp.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+    arrowUp.style.zIndex = '1';
+    arrowUp.style.border = '1px solid black';
+    cardElement.appendChild(arrowUp);
+    
+    // Arrowhead up
+    const arrowheadUp = document.createElement('div');
+    arrowheadUp.style.position = 'absolute';
+    arrowheadUp.style.right = isDiscardPile ? '30px' : '15px';
+    arrowheadUp.style.top = '25%';
+    arrowheadUp.style.width = '0';
+    arrowheadUp.style.height = '0';
+    arrowheadUp.style.borderTop = '10px solid transparent';
+    arrowheadUp.style.borderBottom = '10px solid transparent';
+    arrowheadUp.style.borderLeft = isDiscardPile ? '20px solid rgba(255, 255, 255, 0.8)' : '12px solid rgba(255, 255, 255, 0.8)';
+    arrowheadUp.style.zIndex = '1';
+    cardElement.appendChild(arrowheadUp);
+    
+    // Second arrow pointing left
+    const arrowDown = document.createElement('div');
+    arrowDown.style.position = 'absolute';
+    arrowDown.style.bottom = '30%';
+    arrowDown.style.width = '60%';
+    arrowDown.style.height = '10px';
+    arrowDown.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+    arrowDown.style.zIndex = '1';
+    arrowDown.style.border = '1px solid black';
+    cardElement.appendChild(arrowDown);
+    
+    // Arrowhead down
+    const arrowheadDown = document.createElement('div');
+    arrowheadDown.style.position = 'absolute';
+    arrowheadDown.style.left = isDiscardPile ? '30px' : '15px';
+    arrowheadDown.style.bottom = '25%';
+    arrowheadDown.style.width = '0';
+    arrowheadDown.style.height = '0';
+    arrowheadDown.style.borderTop = '10px solid transparent';
+    arrowheadDown.style.borderBottom = '10px solid transparent';
+    arrowheadDown.style.borderRight = isDiscardPile ? '20px solid rgba(255, 255, 255, 0.8)' : '12px solid rgba(255, 255, 255, 0.8)';
+    arrowheadDown.style.zIndex = '1';
+    cardElement.appendChild(arrowheadDown);
+  }
+  
+  // For Draw 2 cards, add a +2 indicator
+  if (card.value === 'Draw 2') {
+    const drawIndicator = document.createElement('div');
+    drawIndicator.style.position = 'absolute';
+    drawIndicator.style.top = '10px';
+    drawIndicator.style.right = '30%';
+    drawIndicator.style.fontSize = isDiscardPile ? '28px' : '16px';
+    drawIndicator.style.fontWeight = 'bold';
+    drawIndicator.style.color = 'white';
+    drawIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    drawIndicator.style.padding = isDiscardPile ? '5px 10px' : '3px 6px';
+    drawIndicator.style.borderRadius = '50%';
+    drawIndicator.style.zIndex = '2';
+    drawIndicator.textContent = '+2';
+    cardElement.appendChild(drawIndicator);
+  }
+  
+  // For Wild Draw 4 cards, add a +4 indicator
+  if (card.value === 'Wild Draw 4') {
+    const drawIndicator = document.createElement('div');
+    drawIndicator.style.position = 'absolute';
+    drawIndicator.style.top = '10px';
+    drawIndicator.style.right = '30%';
+    drawIndicator.style.fontSize = isDiscardPile ? '28px' : '16px';
+    drawIndicator.style.fontWeight = 'bold';
+    drawIndicator.style.color = 'white';
+    drawIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    drawIndicator.style.padding = isDiscardPile ? '5px 10px' : '3px 6px';
+    drawIndicator.style.borderRadius = '50%';
+    drawIndicator.style.zIndex = '2';
+    drawIndicator.textContent = '+4';
+    cardElement.appendChild(drawIndicator);
+  }
   
   return cardElement;
 }
@@ -1416,6 +1603,44 @@ window.addEventListener('DOMContentLoaded', () => {
   if (window.navigator.standalone) {
     document.body.classList.add('standalone');
   }
+  
+  // Add event listener for invalid card play
+  window.addEventListener('invalidCardPlay', (event) => {
+    // Get the card index from the event
+    const cardIndex = event.detail.cardIndex;
+    
+    // Find the card element in the player's hand
+    const playerHand = document.getElementById('player-hand');
+    const cardsContainer = playerHand.querySelector('.player-cards');
+    const cardElements = cardsContainer.querySelectorAll('.card');
+    
+    if (cardElements[cardIndex]) {
+      // Add shake animation
+      const cardElement = cardElements[cardIndex];
+      cardElement.classList.add('shake');
+      
+      // Remove the shake class after animation completes
+      setTimeout(() => {
+        cardElement.classList.remove('shake');
+      }, 500);
+    }
+  });
+  
+  // Add event listener for invalid draw (when player has playable cards)
+  window.addEventListener('invalidDraw', () => {
+    // Find the deck element
+    const deckElement = document.getElementById('deck');
+    
+    if (deckElement) {
+      // Add shake animation
+      deckElement.classList.add('shake');
+      
+      // Remove the shake class after animation completes
+      setTimeout(() => {
+        deckElement.classList.remove('shake');
+      }, 500);
+    }
+  });
 });
 
 export {

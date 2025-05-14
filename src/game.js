@@ -108,58 +108,67 @@ function playCard(gameState, playerIndex, cardIndex) {
   // We no longer use implicit color choice
   
   // Check if card can be played
-  if (canPlayCard(card, topDiscard, gameState.currentColor)) {
-    // Play the card play sound
-    soundSystem.play('cardPlay');
+  if (!canPlayCard(card, topDiscard, gameState.currentColor)) {
+    // If human player tries to play an invalid card, trigger shake animation
+    if (playerIndex === 0) {
+      // This will be handled in the UI layer
+      window.dispatchEvent(new CustomEvent('invalidCardPlay', { detail: { cardIndex } }));
+    }
+    return; // Exit early, don't proceed with card play
+  }
+  
+  // Card is valid, proceed with playing it
+  
+  // Play the card play sound
+  soundSystem.play('cardPlay');
+  
+  // Move card from hand to discard pile
+  const playedCard = player.hand.splice(cardIndex, 1)[0];
+  gameState.discardPile.push(playedCard);
+  
+  // Special handling for wild cards played by human player
+  if ((playedCard.value === 'Wild' || playedCard.value === 'Wild Draw 4') && 
+      gameState.currentPlayerIndex === 0) {
+    // Set waiting for color choice flag
+    gameState.waitingForColorChoice = true;
     
-    // Move card from hand to discard pile
-    const playedCard = player.hand.splice(cardIndex, 1)[0];
-    gameState.discardPile.push(playedCard);
-    
-    // Special handling for wild cards played by human player
-    if ((playedCard.value === 'Wild' || playedCard.value === 'Wild Draw 4') && 
-        gameState.currentPlayerIndex === 0) {
-      // Set waiting for color choice flag
-      gameState.waitingForColorChoice = true;
-      
-      // For Wild Draw 4, set up the pending draw action for the next player
-      if (playedCard.value === 'Wild Draw 4') {
-        // Store the next player index who will draw
-        gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
-        gameState.pendingDrawCount = 4;
-      }
-      
-      // Show color choice UI
-      updateGameDisplay(gameState);
-      return;
-    } else {
-      // Handle all other types of cards
-      handleSpecialCard(playedCard);
+    // For Wild Draw 4, set up the pending draw action for the next player
+    if (playedCard.value === 'Wild Draw 4') {
+      // Store the next player index who will draw
+      gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
+      gameState.pendingDrawCount = 4;
     }
     
-    // Check if player has won
-    if (player.hand.length === 0) {
-      handleGameEnd();
-      return;
-    }
-    
-    // Check for Uno - automatically call for everyone
-    if (player.hand.length === 1 && !player.hasCalledUno) {
-      player.hasCalledUno = true;
-      // Play the UNO call sound
-      soundSystem.play('unoCall');
-    }
-    
-    // Move to next player's turn
-    nextTurn();
-    
-    // Update the UI
+    // Show color choice UI
     updateGameDisplay(gameState);
-    
-    // If it's AI's turn, let them play
-    if (gameState.currentPlayerIndex !== 0) {
-      setTimeout(playAITurn, 1000);
-    }
+    return;
+  } else {
+    // Handle all other types of cards
+    handleSpecialCard(playedCard);
+  }
+  
+  // Check if player has won
+  if (player.hand.length === 0) {
+    handleGameEnd();
+    return;
+  }
+  
+  // Check for Uno - automatically call for everyone
+  if (player.hand.length === 1 && !player.hasCalledUno) {
+    player.hasCalledUno = true;
+    // Play the UNO call sound
+    soundSystem.play('unoCall');
+  }
+  
+  // Move to next player's turn
+  nextTurn();
+  
+  // Update the UI
+  updateGameDisplay(gameState);
+  
+  // If it's AI's turn, let them play
+  if (gameState.currentPlayerIndex !== 0) {
+    setTimeout(playAITurn, 1000);
   }
 }
 
@@ -474,6 +483,8 @@ function drawCard() {
   
   // Check if player has legal moves and there are no required draws
   if (gameState.requiredDraws === 0 && playerHasLegalMoves(0)) {
+    // Trigger shake animation on the deck to indicate player should play a card
+    window.dispatchEvent(new CustomEvent('invalidDraw'));
     return; // Don't allow drawing if player has legal moves
   }
   

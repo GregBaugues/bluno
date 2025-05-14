@@ -460,10 +460,10 @@ body {
   transform: scale(0.95);
 }
 
-/* Removed playable card highlighting */
-
-.card.shake {
+.card.shake, #deck.shake {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6) !important;
+  border-color: #ff3b3b !important;
 }
 
 @keyframes shake {
@@ -472,14 +472,101 @@ body {
   20%, 40%, 60%, 80% { transform: translateX(8px); }
 }
 
-/* UNO Card Colors */
+/* UNO Card Colors - Updated with vibrant colors */
 .card.red { background-color: #ff3b3b; color: white; }
-.card.blue { background-color: #0066cc; color: white; }
-.card.green { background-color: #3cb043; color: white; }
-.card.yellow { background-color: #ffcc00; color: black; }
+.card.blue { background-color: #4a7af5; color: white; }
+.card.green { background-color: #47c83e; color: white; }
+.card.yellow { background-color: #ffee3e; color: black; }
 .card.wild { 
-  background: black;
+  background-color: #333;
   color: white;
+}
+
+/* Card corner styles */
+.card-corner {
+  position: absolute;
+  font-weight: bold;
+  z-index: 5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.top-left {
+  top: 3px;
+  left: 3px;
+}
+
+.bottom-right {
+  bottom: 3px;
+  right: 3px;
+  transform: rotate(180deg);
+}
+
+/* Card special effects */
+.card[data-value="Skip"] .card-emoji {
+  position: relative;
+  z-index: 3;
+}
+
+.card[data-value="Reverse"] .card-emoji {
+  position: relative;
+  z-index: 3;
+}
+
+/* Wild card quadrants */
+.wild-quadrant {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+}
+
+.wild-quadrant-tl {
+  top: 0;
+  left: 0;
+  background-color: #ff3b3b;
+}
+
+.wild-quadrant-tr {
+  top: 0;
+  right: 0;
+  background-color: #4a7af5;
+}
+
+.wild-quadrant-bl {
+  bottom: 0;
+  left: 0;
+  background-color: #47c83e;
+}
+
+.wild-quadrant-br {
+  bottom: 0;
+  right: 0;
+  background-color: #ffee3e;
+}
+
+/* Center circle design */
+.card-center-circle {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+/* Playable card highlighting */
+.playable-card {
+  box-shadow: 0 0 15px gold, 0 8px 15px rgba(0, 0, 0, 0.3);
+  animation: pulse-playable 1.5s infinite alternate;
+}
+
+@keyframes pulse-playable {
+  0% { box-shadow: 0 0 15px gold, 0 8px 15px rgba(0, 0, 0, 0.3); }
+  100% { box-shadow: 0 0 25px gold, 0 8px 15px rgba(0, 0, 0, 0.3); }
 }
 
 /* Card inner oval design */
@@ -779,9 +866,19 @@ button:disabled {
   }
 }
 
-/* Turn indicator - hidden, we don't need it anymore */
+/* Turn indicator styling */
 .turn-indicator {
   display: none;
+}
+
+/* Name-based turn indicator styling */
+#name-turn-indicator {
+  color: #333;
+  font-weight: bold;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  padding: 10px 15px;
+  font-size: 22px;
+  text-align: center;
 }
 
 @keyframes pulse-turn {
