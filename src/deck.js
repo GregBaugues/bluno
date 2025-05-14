@@ -1,106 +1,173 @@
-// Card colors
-const colors = ['red', 'blue', 'green', 'yellow'];
+// Card deck management for Bluey Uno
+import { 
+  CARD_COLORS, 
+  CARD_VALUES, 
+  EMOJI_MAP 
+} from './constants.js';
+import { shuffleArray } from './utils.js';
 
-// Card values
-const numberValues = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-const specialValues = ['Skip', 'Reverse', 'Draw 2'];
-const wildValues = ['Wild', 'Wild Draw 4'];
+/**
+ * Creates a card object
+ * @param {string} color - The card color
+ * @param {string} value - The card value
+ * @returns {Object} A card object
+ */
+function createCard(color, value) {
+  return {
+    color,
+    value,
+    emoji: EMOJI_MAP[value]
+  };
+}
 
-// Emoji mapping for cards based on the image
-const emojiMap = {
-  // Numbers - using the emoji faces from the image
-  '0': '😶', // Neutral face for zero
-  '1': '😬', // Grimacing face (teeth showing)
-  '2': '😁', // Grinning face with smiling eyes
-  '3': '😍', // Heart eyes
-  '4': '😇', // Angel face with halo
-  '5': '😎', // Sunglasses face
-  '6': '🙂', // Slightly smiling face
-  '7': '😊', // Smiling face with smiling eyes
-  '8': '😘', // Face blowing a kiss
-  '9': '😠', // Angry face
+/**
+ * Creates numeric cards for a specific color
+ * @param {string} color - Color to create cards for
+ * @returns {Array} Array of number cards
+ */
+function createNumberCards(color) {
+  const cards = [];
   
-  // Special cards based on the image
-  'Skip': '🙅‍♀️', // Girl crossing arms (Skip)
-  'Reverse': '👉', // Pointing hand for Reverse (the card shows two hands pointing)
-  'Draw 2': '👯‍♀️', // Two dancers for Draw 2
-  'Wild': '👍', // Thumbs up for Wild
-  'Wild Draw 4': '💩', // Keeping the important poopey head for Draw 4!
-};
+  // Add one '0' card
+  cards.push(createCard(color, '0'));
+  
+  // Add two of each number 1-9
+  for (const number of CARD_VALUES.NUMBERS.slice(1)) {
+    cards.push(createCard(color, number));
+    cards.push(createCard(color, number));
+  }
+  
+  return cards;
+}
 
-// Create a deck of Uno cards
-function createDeck() {
-  const deck = [];
+/**
+ * Creates special cards for a specific color
+ * @param {string} color - Color to create cards for
+ * @returns {Array} Array of special cards
+ */
+function createSpecialCards(color) {
+  const cards = [];
   
-  // Add number cards
-  colors.forEach(color => {
-    // One 0 card per color
-    deck.push({
-      color,
-      value: '0',
-      emoji: emojiMap['0']
-    });
-    
-    // Two of each number 1-9 per color
-    numberValues.slice(1).forEach(value => {
-      for (let i = 0; i < 2; i++) {
-        deck.push({
-          color,
-          value,
-          emoji: emojiMap[value]
-        });
-      }
-    });
-    
-    // Two of each special card per color
-    specialValues.forEach(value => {
-      for (let i = 0; i < 2; i++) {
-        deck.push({
-          color,
-          value,
-          emoji: emojiMap[value]
-        });
-      }
-    });
-  });
+  // Add two of each special card
+  for (const specialValue of Object.values(CARD_VALUES.SPECIAL)) {
+    cards.push(createCard(color, specialValue));
+    cards.push(createCard(color, specialValue));
+  }
   
-  // Add wild cards (4 of each)
-  wildValues.forEach(value => {
+  return cards;
+}
+
+/**
+ * Creates wild cards
+ * @returns {Array} Array of wild cards
+ */
+function createWildCards() {
+  const cards = [];
+  
+  // Add four of each wild card type
+  for (const wildValue of Object.values(CARD_VALUES.WILD)) {
     for (let i = 0; i < 4; i++) {
-      deck.push({
-        color: 'wild',
-        value,
-        emoji: emojiMap[value]
-      });
+      cards.push(createCard('wild', wildValue));
     }
-  });
+  }
+  
+  return cards;
+}
+
+/**
+ * Creates a complete Uno deck
+ * @returns {Array} Array of card objects
+ */
+function createDeck() {
+  let deck = [];
+  
+  // Create cards for each color
+  for (const color of Object.values(CARD_COLORS).filter(c => c !== CARD_COLORS.WILD)) {
+    // Add all number cards for this color
+    deck = [...deck, ...createNumberCards(color)];
+    
+    // Add all special cards for this color
+    deck = [...deck, ...createSpecialCards(color)];
+  }
+  
+  // Add wild cards
+  deck = [...deck, ...createWildCards()];
   
   return deck;
 }
 
-// Shuffle the deck using Fisher-Yates algorithm
+/**
+ * Shuffles the deck
+ * @param {Array} deck - The deck to shuffle
+ * @returns {Array} A new shuffled deck
+ */
 function shuffleDeck(deck) {
-  const shuffled = [...deck];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
+  return shuffleArray(deck);
 }
 
-// Deal cards to players
+/**
+ * Deal cards to players
+ * @param {Array} players - Array of player objects
+ * @param {Array} deck - The deck to deal from
+ * @param {number} cardsPerPlayer - Number of cards per player
+ */
 function dealCards(players, deck, cardsPerPlayer) {
-  console.log(`Dealing ${cardsPerPlayer} cards to each player`);
+  // Deal cards one at a time to each player
   for (let i = 0; i < cardsPerPlayer; i++) {
     players.forEach(player => {
-      player.hand.push(deck.pop());
+      if (deck.length > 0) {
+        player.hand.push(deck.pop());
+      }
     });
   }
+}
+
+/**
+ * Generates a valid initial card for the discard pile
+ * (avoiding special cards at the start of the game)
+ * @param {Array} deck - The deck to get a card from
+ * @returns {Object} The initial card
+ */
+function getInitialCard(deck) {
+  // Find the first non-special card in the deck
+  const validCardIndex = deck.findIndex(card => 
+    !Object.values(CARD_VALUES.SPECIAL).includes(card.value) && 
+    !Object.values(CARD_VALUES.WILD).includes(card.value)
+  );
+  
+  if (validCardIndex !== -1) {
+    // Remove and return the found card
+    return deck.splice(validCardIndex, 1)[0];
+  }
+  
+  // Fallback: Just use the top card (this should be rare with a proper shuffled deck)
+  return deck.pop();
+}
+
+/**
+ * Reshuffles the discard pile into the deck
+ * @param {Array} deck - Current deck (likely empty or nearly empty)
+ * @param {Array} discardPile - Current discard pile
+ * @returns {Object} Object containing the updated deck and discard pile
+ */
+function reshuffleDeck(deck, discardPile) {
+  // Keep the top card of the discard pile
+  const topCard = discardPile.pop();
+  
+  // Move all other cards to the deck and shuffle
+  const newDeck = shuffleDeck([...discardPile]);
+  
+  // Return updated deck and discard pile
+  return {
+    deck: newDeck,
+    discardPile: [topCard]
+  };
 }
 
 export {
   createDeck,
   shuffleDeck,
   dealCards,
-  colors
+  getInitialCard,
+  reshuffleDeck
 };
