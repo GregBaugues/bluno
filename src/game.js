@@ -127,24 +127,13 @@ function playCard(gameState, playerIndex, cardIndex) {
     gameState.discardPile[gameState.discardPile.length - 1] : 
     null;
   
-  // We no longer use implicit color choice
   
   // Check if card can be played (pass the player's hand for Wild Draw 4 validation)
   if (!canPlayCard(card, topDiscard, gameState.currentColor, player.hand)) {
     // If human player tries to play an invalid card, trigger shake animation
     if (playerIndex === 0) {
       // For Wild Draw 4, provide specific feedback if player has playable cards
-      if (card.value === 'Wild Draw 4') {
-        window.dispatchEvent(new CustomEvent('invalidCardPlay', { 
-          detail: { 
-            cardIndex, 
-            message: "You can't play Wild Draw 4 when you have cards matching the current color or value!" 
-          } 
-        }));
-      } else {
-        // This will be handled in the UI layer
         window.dispatchEvent(new CustomEvent('invalidCardPlay', { detail: { cardIndex } }));
-      }
     }
     return; // Exit early, don't proceed with card play
   }
@@ -161,6 +150,9 @@ function playCard(gameState, playerIndex, cardIndex) {
   // Log the card play to console
   console.log(`${player.name} plays ${playedCard.color} ${playedCard.value} ${playedCard.emoji}`);
   
+  // Update UI to show the played card
+  updateGameDisplay(gameState);
+
   // Check win condition IMMEDIATELY after playing the card
   // As soon as any player plays their last card, they win, regardless of card effects
   if (player.hand.length === 0) {
@@ -170,9 +162,6 @@ function playCard(gameState, playerIndex, cardIndex) {
     handleGameEnd();
     return;
   }
-  
-  // Update UI to show the played card
-  updateGameDisplay(gameState);
   
   // AI players need a pause after playing their card before continuing
   if (player.isAI) {
