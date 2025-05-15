@@ -682,10 +682,12 @@ function renderDeckAndDiscardPile() {
       // Add color class to the card
       cardElement.classList.add(card.color);
       
-      // Calculate offset - move each card 30px to the right of the previous one
-      const offsetX = index * 30;
+      // Calculate offset - move each card 40px to the right of the previous one for better visibility
+      const offsetX = index * 40;
       cardElement.style.position = 'absolute';
       cardElement.style.left = `${offsetX}px`;
+      // Add a slight vertical offset to create a cascade effect
+      cardElement.style.top = `${index * 5}px`;
       cardElement.style.setProperty('--index', index); // Set CSS variable for responsive adjustments
       cardElement.style.zIndex = index + 1; // Ensure proper stacking order
       

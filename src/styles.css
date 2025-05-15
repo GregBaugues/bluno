@@ -219,11 +219,13 @@ body {
   justify-content: flex-start; /* Changed from center to left-align */
   align-items: center;
   position: relative;
-  padding: 10px 20px;
+  padding: 20px 20px; /* Increased vertical padding */
   /* Middle section */
   grid-row: 2;
   width: 100%;
   height: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 #deck, #discard-pile {
@@ -231,8 +233,8 @@ body {
   height: 168px; /* Reduced by 20% from 210px */
   border-radius: 15px;
   position: relative;
-  margin-top: 20px; /* Add space from top of the container */
-  margin-bottom: 20px; /* Add space from bottom of the container */
+  margin-top: 30px; /* Increased space from top of the container */
+  margin-bottom: 30px; /* Increased space from bottom of the container */
 }
 
 #deck {
@@ -372,9 +374,13 @@ body {
 }
 
 .discard-cards-container {
-  min-width: 400px;
+  min-width: 450px;
   height: 210px;
   position: relative;
+  overflow: visible;
+  /* Make sure container is big enough for offset cards */
+  padding-right: 50px;
+  padding-bottom: 20px;
 }
 
 /* Card stacking effect in discard pile */
@@ -925,12 +931,23 @@ button:disabled {
 /* Small screens */
 @media (max-width: 600px) {
   .discard-cards-container {
-    min-width: 250px;
+    min-width: 300px;
   }
   
   .discard-cards-container .card {
     /* Reduce offset for smaller screens */
-    left: calc(var(--index) * 20px) !important;
+    left: calc(var(--index) * 25px) !important;
+    /* Reduce vertical offset for smaller screens */
+    top: calc(var(--index) * 3px) !important;
+  }
+  
+  #game-area {
+    padding: 15px 10px;
+  }
+  
+  #deck, #discard-pile {
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
 }
 
