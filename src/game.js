@@ -148,6 +148,11 @@ function playCard(gameState, playerIndex, cardIndex) {
   const playedCard = player.hand.splice(cardIndex, 1)[0];
   gameState.discardPile.push(playedCard);
   
+  // Trim discard pile to keep only the 10 most recent cards when it exceeds 10 cards
+  if (gameState.discardPile.length > 10) {
+    gameState.discardPile = gameState.discardPile.slice(-10);
+  }
+  
   // Log the card play to console
   console.log(`${player.name} plays ${playedCard.color} ${playedCard.value} ${playedCard.emoji}`);
   

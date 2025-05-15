@@ -655,22 +655,50 @@ function renderDeckAndDiscardPile() {
   discardPileElement.innerHTML = '';
   
   if (gameState.discardPile.length > 0) {
+    // Get up to 10 most recent cards from discard pile
+    const visibleCardCount = Math.min(gameState.discardPile.length, 10);
+    const visibleCards = gameState.discardPile.slice(-visibleCardCount);
+    
+    // Create a container for the offset cards
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'discard-cards-container';
+    cardsContainer.style.position = 'relative';
+    cardsContainer.style.width = '100%';
+    cardsContainer.style.height = '100%';
+    cardsContainer.style.display = 'flex';
+    cardsContainer.style.alignItems = 'center';
+    
+    // Add cards with offset
+    visibleCards.forEach((card, index) => {
+      const isTopCard = index === visibleCards.length - 1;
+      const cardElement = createCardElement(card, isTopCard);
+      
+      // Add data attribute for card value (for CSS targeting)
+      cardElement.setAttribute('data-value', card.value);
+      
+      // Add color class to the card
+      cardElement.classList.add(card.color);
+      
+      // Calculate offset - move each card 30px to the right of the previous one
+      const offsetX = index * 30;
+      cardElement.style.position = 'absolute';
+      cardElement.style.left = `${offsetX}px`;
+      cardElement.style.setProperty('--index', index); // Set CSS variable for responsive adjustments
+      cardElement.style.zIndex = index + 1; // Ensure proper stacking order
+      
+      // Make the top card slightly larger and add glow
+      if (isTopCard) {
+        cardElement.style.transform = 'scale(1.05)';
+        cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
+      }
+      
+      cardsContainer.appendChild(cardElement);
+    });
+    
+    discardPileElement.appendChild(cardsContainer);
+    
+    // Show the current color based on the top card
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
-    // Pass true as second argument to create a larger card for the discard pile
-    const cardElement = createCardElement(topCard, true);
-    
-    // Add a subtle glow effect to the top discard card
-    cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
-    
-    // Add data attribute for card value (for CSS targeting)
-    cardElement.setAttribute('data-value', topCard.value);
-    
-    // Add color class to the card
-    cardElement.classList.add(topCard.color);
-    
-    discardPileElement.appendChild(cardElement);
-    
-    // Show the current color if it's a wild card
     if ((topCard.value === 'Wild' || topCard.value === 'Wild Draw 4') && gameState.currentColor) {
       updateColorIndicator(gameState.currentColor);
     } else {

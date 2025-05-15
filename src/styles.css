@@ -47,6 +47,9 @@ body {
   flex-direction: column;
   overflow: hidden;
   position: relative; /* For absolute positioning of side elements */
+  /* Explicitly define the three sections with flex */
+  display: grid;
+  grid-template-rows: 33.33% 33.33% 33.33%;
 }
 
 /* Side indicators container */
@@ -65,12 +68,13 @@ body {
 #opponents-area {
   display: flex;
   justify-content: space-evenly;
-  height: 30%;
+  height: 100%;
   padding: 10px 20px;
-  margin-bottom: 10px;
   width: 100%;
   max-width: 900px;
-  margin: 0 auto 10px auto;
+  margin: 0 auto;
+  /* Top section */
+  grid-row: 1;
 }
 
 .opponent-slot {
@@ -211,20 +215,33 @@ body {
 }
 
 #game-area {
-  flex: 0.8;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start; /* Changed from center to left-align */
   align-items: center;
   position: relative;
-  padding: 10px 0;
+  padding: 10px 20px;
+  /* Middle section */
+  grid-row: 2;
+  width: 100%;
+  height: 100%;
 }
 
 #deck, #discard-pile {
   width: 140px;
   height: 210px;
   border-radius: 15px;
-  margin: 0 30px;
   position: relative;
+}
+
+#deck {
+  margin-right: 30px;
+  z-index: 10;
+}
+
+#discard-pile {
+  display: flex;
+  align-items: center;
+  min-width: 400px; /* Space for card history */
 }
 
 #deck {
@@ -352,6 +369,18 @@ body {
   z-index: -1;
 }
 
+.discard-cards-container {
+  min-width: 400px;
+  height: 210px;
+  position: relative;
+}
+
+/* Card stacking effect in discard pile */
+.discard-cards-container .card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: absolute;
+}
+
 /* Side color indicator */
 #color-indicator {
   width: 70px;
@@ -405,7 +434,7 @@ body {
 }
 
 #player-hand {
-  height: 40%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -424,7 +453,8 @@ body {
   min-height: 200px; /* Reduced from 250px */
   width: 98%; /* Increased from 95% */
   max-width: 1200px;
-  margin-top: 15px; /* Reduced from 20px */
+  /* Bottom section */
+  grid-row: 3;
 }
 
 #player-hand::-webkit-scrollbar {
@@ -833,25 +863,38 @@ button:disabled {
 
 /* Landscape orientation specific tweaks */
 @media (orientation: landscape) {
+  #game-container {
+    grid-template-rows: 28% 36% 36%;
+  }
+  
   #opponents-area {
-    height: 28%;
+    height: 100%;
   }
   
   #game-area {
-    flex: 0.8;
+    width: 100%;
+    height: 100%;
   }
   
   #player-hand {
-    height: 36%;
+    height: 100%;
   }
   
   #controls {
     height: 20%;
   }
+  
+  .discard-cards-container {
+    min-width: 450px;
+  }
 }
 
 /* Portrait orientation */
 @media (orientation: portrait) {
+  #game-container {
+    grid-template-rows: 30% 35% 35%;
+  }
+  
   .character-image {
     width: 90px;
     height: 90px;
@@ -863,6 +906,10 @@ button:disabled {
     height: 180px;
   }
   
+  .discard-cards-container {
+    min-width: 350px;
+  }
+  
   button {
     height: 90px;
     width: 90px;
@@ -870,6 +917,18 @@ button:disabled {
   
   button::before {
     font-size: 45px;
+  }
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+  .discard-cards-container {
+    min-width: 250px;
+  }
+  
+  .discard-cards-container .card {
+    /* Reduce offset for smaller screens */
+    left: calc(var(--index) * 20px) !important;
   }
 }
 
