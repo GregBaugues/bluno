@@ -334,7 +334,7 @@ function handleDrawCards(numCards) {
     
     // Save the original player index - ONLY if we're not already handling a draw
     // This prevents overwriting pendingDrawPlayerIndex if already set
-    if (gameState.currentPlayerIndex !== 0 && gameState.pendingDrawPlayerIndex === null) {
+    if (gameState.pendingDrawPlayerIndex === null) {
       // Remember the actual current player index to restore it later
       gameState.pendingDrawPlayerIndex = gameState.currentPlayerIndex;
       console.log(`Saving currentPlayerIndex ${gameState.currentPlayerIndex} to pendingDrawPlayerIndex`);
@@ -604,7 +604,8 @@ function chooseColor(gameStateParam, color) {
     }
     
     // Get the next player who will draw
-    const nextPlayerIndex = gs.pendingDrawPlayerIndex;
+    // For a Wild Draw 4 played on the human player, the next player should be the human (index 0)
+    const nextPlayerIndex = getNextPlayerIndex();
     console.log(`After Wild Draw 4 color choice, next player (${gs.players[nextPlayerIndex].name}) will draw 4 cards`);
     
     // Check if the next player is AI or human
@@ -653,6 +654,9 @@ function drawSingleCard(playerIndex) {
   if (gameState.deck.length === 0) {
     reshuffleDeck();
   }
+  
+  // Log who we are drawing for
+  console.log(`drawSingleCard for player: ${gameState.players[playerIndex].name}`);
   
   // Draw a card from the deck
   const drawnCard = gameState.deck.pop();
@@ -756,12 +760,23 @@ function handleRequiredDraw() {
     // For Wild Draw 4, after the player finishes drawing, their turn is skipped
     console.log(`Turn will now be skipped for ${gameState.players[gameState.currentPlayerIndex].name}`);
     
-    // For Wild Draw 4, we only need one advancement
-    // We've already restored currentPlayerIndex to the person who played the card
-    // Now we just need to skip the player who drew cards
-    nextTurn(); // Skip the player who drew cards and move to the next player in sequence
+    // For Wild Draw 4, we need to ensure that:
+    // 1. We restore currentPlayerIndex to the person who played the Wild Draw 4 card
+    // 2. Then we skip over the human player (index 0) who just drew the cards
+    // 3. This should result in the next player after the human player getting a turn
     
-    console.log("After turn skip - Current player is now:", gameState.currentPlayerIndex, 
+    // We've already restored currentPlayerIndex to the person who played the card
+    // Now we need to advance the turn past the human player who drew cards
+    
+    // First, calculate the player index after the human player (who should get the turn)
+    const humanPlayerIndex = 0;
+    const nextAfterHumanIndex = (humanPlayerIndex + gameState.direction) % gameState.players.length;
+    const nextPlayerIndex = nextAfterHumanIndex < 0 ? nextAfterHumanIndex + gameState.players.length : nextAfterHumanIndex;
+    
+    // Skip directly to the player after the human player
+    gameState.currentPlayerIndex = nextPlayerIndex;
+    
+    console.log("After Wild Draw 4 turn skip - Current player is now:", gameState.currentPlayerIndex, 
                 `(${gameState.players[gameState.currentPlayerIndex].name})`);
     
     // Show a short delay to let the player see their drawn cards
@@ -786,11 +801,15 @@ function handleRequiredDraw() {
 
 // Player draws a card
 function drawCard() {
+  console.log(`drawCard called - requiredDraws: ${gameState.requiredDraws}`);
+  
   // Always allow drawing if the player has required draws
   if (gameState.requiredDraws > 0) {
     // This is fine, we want to allow drawing when required
+    console.log(`Allowing draw due to requiredDraws: ${gameState.requiredDraws}`);
   } else if (gameState.currentPlayerIndex !== 0) {
     // Otherwise only human player can use this function when it's their turn
+    console.log(`Blocking draw - not human player's turn`);
     return;
   }
   
@@ -809,8 +828,13 @@ function drawCard() {
   // Visual feedback - animate the deck
   animateDeckDraw();
   
+  // Determine which player should be drawing the cards
+  // If there are required draws, the cards should go to the human player (index 0)
+  // regardless of who the current player is
+  const playerIndexForDraw = (gameState.requiredDraws > 0) ? 0 : gameState.currentPlayerIndex;
+  
   // Draw ONE CARD AT A TIME - always just one card per click
-  const drawnCard = drawSingleCard(gameState.currentPlayerIndex);
+  const drawnCard = drawSingleCard(playerIndexForDraw);
   
   // For required draws (Draw 2 or Draw 4 cases), handle properly
   if (gameState.requiredDraws > 0) {
@@ -819,7 +843,7 @@ function drawCard() {
     // Calculate which card we're drawing in the sequence (for clear logging)
     const currentDrawNumber = originalRequiredDraws - gameState.requiredDraws;
     
-    console.log(`Drew card ${currentDrawNumber} of ${originalRequiredDraws} required draws`);
+    console.log(`Drew card ${currentDrawNumber} of ${originalRequiredDraws} required draws for player ${playerIndexForDraw} (${gameState.players[playerIndexForDraw].name})`);
     const turnComplete = handleRequiredDraw();
     
     if (!turnComplete) {
