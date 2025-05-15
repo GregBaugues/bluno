@@ -23,8 +23,9 @@ module.exports = {
   clearMocks: true,
   // Indicates whether the coverage information should be collected while executing the test
   collectCoverage: false,
-  // Setup file config for Babel
+  // Updated test pattern to include simplified tests
   testMatch: [
+    "**/tests/*.test.js",
     "**/tests/unit/**/*.test.js"
   ]
 };
