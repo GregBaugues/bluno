@@ -771,10 +771,10 @@ function handleRequiredDraw() {
     // First, calculate the player index after the human player (who should get the turn)
     const humanPlayerIndex = 0;
     const nextAfterHumanIndex = (humanPlayerIndex + gameState.direction) % gameState.players.length;
-    const nextPlayerIndex = nextAfterHumanIndex < 0 ? nextAfterHumanIndex + gameState.players.length : nextAfterHumanIndex;
+    const nextAfterHumanPlayerIndex = nextAfterHumanIndex < 0 ? nextAfterHumanIndex + gameState.players.length : nextAfterHumanIndex;
     
     // Skip directly to the player after the human player
-    gameState.currentPlayerIndex = nextPlayerIndex;
+    gameState.currentPlayerIndex = nextAfterHumanPlayerIndex;
     
     console.log("After Wild Draw 4 turn skip - Current player is now:", gameState.currentPlayerIndex, 
                 `(${gameState.players[gameState.currentPlayerIndex].name})`);
