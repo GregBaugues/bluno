@@ -667,6 +667,8 @@ function renderDeckAndDiscardPile() {
     cardsContainer.style.height = '100%';
     cardsContainer.style.display = 'flex';
     cardsContainer.style.alignItems = 'center';
+    cardsContainer.style.justifyContent = 'flex-start';
+    cardsContainer.style.overflow = 'visible';
     
     // Add cards with offset
     visibleCards.forEach((card, index) => {
