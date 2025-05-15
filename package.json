@@ -4,19 +4,11 @@
   "description": "Bluey-themed Uno game for a 4-year-old",
   "scripts": {
     "start": "parcel index.html",
-    "build": "parcel build index.html",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "build": "parcel build index.html"
   },
   "devDependencies": {
-    "@babel/core": "^7.23.3",
-    "@babel/preset-env": "^7.23.3",
     "@parcel/packager-raw-url": "^2.15.0",
     "@parcel/transformer-webmanifest": "^2.15.0",
-    "babel-jest": "^29.7.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
-    "parcel": "^2.15.0",
-    "puppeteer": "^24.8.2"
+    "parcel": "^2.15.0"
   }
 }

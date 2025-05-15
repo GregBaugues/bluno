@@ -89,15 +89,15 @@ function updateDirectionIndicator(direction) {
   const directionIndicator = document.getElementById('direction-indicator');
   if (!directionIndicator) return;
   
-  // Set the style for the direction indicator - no background
-  directionIndicator.style.width = '60px';
-  directionIndicator.style.height = '60px';
+  // Set the style for the direction indicator - smaller to match color indicator
+  directionIndicator.style.width = '40px'; // Reduced size
+  directionIndicator.style.height = '40px'; // Reduced size
   directionIndicator.style.display = 'flex';
   directionIndicator.style.justifyContent = 'center';
   directionIndicator.style.alignItems = 'center';
-  directionIndicator.style.fontSize = '40px'; // Larger icon size
+  directionIndicator.style.fontSize = '30px'; // Smaller icon size
   directionIndicator.style.position = 'relative';
-  directionIndicator.style.marginTop = '20px';
+  directionIndicator.style.marginTop = '10px'; // Less margin
   
   // Set the emoji based on direction
   if (direction === 1) {
@@ -154,10 +154,10 @@ function updateNameTurnIndicator(playerName) {
     nameTurnIndicator.style.padding = '10px 15px';
     nameTurnIndicator.style.fontWeight = 'bold';
     nameTurnIndicator.style.fontSize = '18px';
-    nameTurnIndicator.style.marginTop = '25px';
+    nameTurnIndicator.style.marginTop = '15px'; // Reduced margin
     nameTurnIndicator.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
     nameTurnIndicator.style.textAlign = 'center';
-    nameTurnIndicator.style.minWidth = '130px';
+    nameTurnIndicator.style.minWidth = '100px'; // Smaller width
     nameTurnIndicator.style.position = 'relative';
     
     // Add a label above the indicator
@@ -373,7 +373,7 @@ function renderOpponents() {
     positions = [
       { id: 'opponent-bluey' },  // Bluey
       { id: 'opponent-bingo' },  // Bingo slot (handled separately)
-      { id: 'opponent-bandit' }  // Bandit
+      { id: 'opponent-bandit' }  // Bandit/Dad
     ];
   } else {
     // For 3-player games with 2 opponents
@@ -408,77 +408,58 @@ function renderOpponents() {
       opponentSlot.style.margin = '0 auto'; // Center the slot
     }
     
-    // Check if this position has a player in the current game
-    const playerIndex = i + 1; // +1 because human is index 0
-    
-    if (playerIndex < gameState.players.length) {
-      // This is an active player
-      const player = gameState.players[playerIndex];
-      const opponent = document.createElement('div');
-      opponent.className = 'opponent';
+    // We only display Bluey in the main renderOpponents function
+    // Bingo and Dad/Bandit are handled in their own functions
+    if (i === 0) { // Position 0 is for Bluey
+      const playerIndex = 1; // Bluey is index 1 (human is index 0)
       
-      // Add highlight for current player
-      if (gameState.currentPlayerIndex === playerIndex) {
-        opponent.classList.add('current-player');
-      }
-      
-      // Create UNO indicator if needed
-      if (player.hand.length === 1 && player.hasCalledUno) {
-        const unoIndicator = document.createElement('div');
-        unoIndicator.className = 'uno-indicator';
-        unoIndicator.textContent = 'UNO!';
-        opponent.appendChild(unoIndicator);
-      }
-      
-      // Create and add the image with badge for all characters
-      const characterImage = document.createElement('div');
-      characterImage.className = 'character-image';
-      characterImage.style.width = '100px';
-      characterImage.style.height = '100px';
-      characterImage.style.position = 'relative';
-      
-      // Add the character display inside this container
-      if (player.name === 'Bluey') {
-        // For Bluey, use the createCharacterDisplay function
-        const blueyDisplay = createCharacterDisplay('Bluey', 100);
-        characterImage.appendChild(blueyDisplay);
-      } else if (player.name === 'Bingo') {
-        // Skip displaying Bingo in the opponent area, as it's handled separately
-        opponent.style.visibility = 'hidden'; // Hide the opponent but keep the layout intact
-      } else if (player.name === 'Dad') {
-        // For Dad, use the createCharacterDisplay function and mark as displayed
-        if (i === 2) { // Only show Dad in third opponent slot (i=2)
-          const dadDisplay = createCharacterDisplay('Dad', 100);
-          characterImage.appendChild(dadDisplay);
-          
-          // Mark the player as Dad for deduplication in renderDad
-          document.body.dataset.dadDisplayed = "true";
-        } else {
-          // If Dad is not in the correct slot, hide him
-          opponent.style.visibility = 'hidden';
+      if (gameState.players && playerIndex < gameState.players.length) {
+        // This is the Bluey player
+        const player = gameState.players[playerIndex];
+        const opponent = document.createElement('div');
+        opponent.className = 'opponent';
+        
+        // Add highlight for current player
+        if (gameState.currentPlayerIndex === playerIndex) {
+          opponent.classList.add('current-player');
         }
-      } else {
-        // For other characters (like Bandit), use getCharacterDisplay from images.js
-        characterImage.innerHTML = getCharacterDisplay(player.name);
+        
+        // Create UNO indicator if needed
+        if (player.hand.length === 1 && player.hasCalledUno) {
+          const unoIndicator = document.createElement('div');
+          unoIndicator.className = 'uno-indicator';
+          unoIndicator.textContent = 'UNO!';
+          opponent.appendChild(unoIndicator);
+        }
+        
+        // Create and add the image for Bluey
+        const characterImage = document.createElement('div');
+        characterImage.className = 'character-image';
+        characterImage.style.width = '80px'; // Reduce size to 80px
+        characterImage.style.height = '80px'; // Reduce size to 80px
+        characterImage.style.position = 'relative';
+        
+        // For Bluey, use the createCharacterDisplay function
+        const blueyDisplay = createCharacterDisplay('Bluey', 80); // Reduce size to 80px
+        characterImage.appendChild(blueyDisplay);
+        
+        opponent.appendChild(characterImage);
+        
+        // Add cards container to show visual representation of cards
+        opponent.appendChild(createCardsContainer(player));
+        
+        // Add the opponent to the slot
+        opponentSlot.appendChild(opponent);
       }
-      
-      // Card badges have been removed from all character images
-      
-      opponent.appendChild(characterImage);
-      
-      // Add character name
-      opponent.appendChild(createNameBadge(player.name, false));
-      
-      // Add cards container to show visual representation of cards
-      opponent.appendChild(createCardsContainer(player));
-      
-      // Add the opponent to the slot
-      opponentSlot.appendChild(opponent);
     }
     
     // Add the slot to the area regardless of whether it contains a player
     opponentsArea.appendChild(opponentSlot);
   }
+  
+  // Call renderBingo and renderDad to fill in their slots
+  renderBingo();
+  renderDad();
 }
 
 // Render the deck and discard pile
@@ -492,7 +473,7 @@ function renderDeckAndDiscardPile() {
   // Create better deck back design
   const deckBack = document.createElement('div');
   deckBack.className = 'card-back';
-  deckBack.style.width = '120px';
+  deckBack.style.width = '96px'; /* Reduced by 20% from 120px */
   
   // Add a small visual indicator on the deck if a player needs to draw cards
   if (gameState.isDrawingCards && gameState.requiredDraws > 0) {
@@ -512,7 +493,7 @@ function renderDeckAndDiscardPile() {
     drawIndicator.style.zIndex = '10';
     deckBack.appendChild(drawIndicator);
   }
-  deckBack.style.height = '168px';
+  deckBack.style.height = '134px'; /* Reduced by 20% from 168px */
   deckBack.style.borderRadius = '10px';
   deckBack.style.backgroundColor = '#ff5757';
   deckBack.style.border = '3px solid white';
@@ -655,22 +636,54 @@ function renderDeckAndDiscardPile() {
   discardPileElement.innerHTML = '';
   
   if (gameState.discardPile.length > 0) {
+    // Get up to 10 most recent cards from discard pile
+    const visibleCardCount = Math.min(gameState.discardPile.length, 10);
+    const visibleCards = gameState.discardPile.slice(-visibleCardCount);
+    
+    // Create a container for the offset cards
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'discard-cards-container';
+    cardsContainer.style.position = 'relative';
+    cardsContainer.style.width = '100%';
+    cardsContainer.style.height = '100%';
+    cardsContainer.style.display = 'flex';
+    cardsContainer.style.alignItems = 'center';
+    cardsContainer.style.justifyContent = 'flex-start';
+    cardsContainer.style.overflow = 'visible';
+    
+    // Add cards with offset
+    visibleCards.forEach((card, index) => {
+      const isTopCard = index === visibleCards.length - 1;
+      // Use true for all cards to make them all the same size
+      const cardElement = createCardElement(card, true);
+      
+      // Add data attribute for card value (for CSS targeting)
+      cardElement.setAttribute('data-value', card.value);
+      
+      // Add color class to the card
+      cardElement.classList.add(card.color);
+      
+      // Calculate offset - move each card 40px to the right of the previous one for better visibility
+      const offsetX = index * 40;
+      cardElement.style.position = 'absolute';
+      cardElement.style.left = `${offsetX}px`;
+      // No vertical offset - keep cards on the same level
+      cardElement.style.top = '0';
+      cardElement.style.setProperty('--index', index); // Set CSS variable for responsive adjustments
+      cardElement.style.zIndex = index + 1; // Ensure proper stacking order
+      
+      // Add glow only to the top card
+      if (isTopCard) {
+        cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
+      }
+      
+      cardsContainer.appendChild(cardElement);
+    });
+    
+    discardPileElement.appendChild(cardsContainer);
+    
+    // Show the current color based on the top card
     const topCard = gameState.discardPile[gameState.discardPile.length - 1];
-    // Pass true as second argument to create a larger card for the discard pile
-    const cardElement = createCardElement(topCard, true);
-    
-    // Add a subtle glow effect to the top discard card
-    cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
-    
-    // Add data attribute for card value (for CSS targeting)
-    cardElement.setAttribute('data-value', topCard.value);
-    
-    // Add color class to the card
-    cardElement.classList.add(topCard.color);
-    
-    discardPileElement.appendChild(cardElement);
-    
-    // Show the current color if it's a wild card
     if ((topCard.value === 'Wild' || topCard.value === 'Wild Draw 4') && gameState.currentColor) {
       updateColorIndicator(gameState.currentColor);
     } else {
@@ -680,8 +693,8 @@ function renderDeckAndDiscardPile() {
     // Show empty placeholder for discard pile
     const emptyPile = document.createElement('div');
     emptyPile.className = 'empty-discard';
-    emptyPile.style.width = '120px';
-    emptyPile.style.height = '168px';
+    emptyPile.style.width = '96px'; /* Reduced by 20% from 120px */
+    emptyPile.style.height = '134px'; /* Reduced by 20% from 168px */
     emptyPile.style.borderRadius = '10px';
     emptyPile.style.border = '3px dashed rgba(255, 255, 255, 0.5)';
     emptyPile.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
@@ -716,13 +729,13 @@ function updateColorIndicator(color) {
   
   const cssColor = colorMap[color.toLowerCase()] || '#ffffff';
   
-  // Style the indicator
+  // Style the indicator - make it half the size
   indicator.style.backgroundColor = cssColor;
-  indicator.style.width = '30px';
-  indicator.style.height = '150px';
-  indicator.style.borderRadius = '15px';
-  indicator.style.boxShadow = `0 0 20px ${cssColor}88`;
-  indicator.style.border = '3px solid white';
+  indicator.style.width = '15px'; // Half the previous width
+  indicator.style.height = '75px'; // Half the previous height
+  indicator.style.borderRadius = '8px'; // Adjusted for smaller size
+  indicator.style.boxShadow = `0 0 15px ${cssColor}88`; // Slightly smaller shadow
+  indicator.style.border = '2px solid white'; // Thinner border for smaller indicator
   
   // Make sure we also update the direction indicator with the current game direction
   updateDirectionIndicator(gameState.direction);
@@ -915,9 +928,9 @@ function createCardElement(card, isDiscardPile = false) {
   const cardElement = document.createElement('div');
   cardElement.className = 'card';
   
-  // Base card styling - much larger size for discard pile
-  cardElement.style.width = isDiscardPile ? '140px' : '80px';
-  cardElement.style.height = isDiscardPile ? '196px' : '112px';
+  // Base card styling - reduced size by 20% for all cards
+  cardElement.style.width = isDiscardPile ? '112px' : '64px'; /* Reduced by 20% */
+  cardElement.style.height = isDiscardPile ? '157px' : '90px'; /* Reduced by 20% */
   cardElement.style.borderRadius = '10px';
   cardElement.style.border = '3px solid white';
   cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
@@ -1306,34 +1319,39 @@ function renderJulia() {
 
 // Render Bingo, positioned inline with Bluey
 function renderBingo() {
-  const bingoDisplay = document.getElementById('bingo-display');
-  if (!bingoDisplay) return;
+  // Get the opponent slot for Bingo
+  const bingoSlot = document.getElementById('opponent-bingo');
+  if (!bingoSlot) return;
   
-  // Only show Bingo if game has at least 3 players (or we're not in a game yet)
-  if (gameState.isGameStarted && gameState.players && gameState.players.length < 3) {
-    // Hide Bingo's display completely when less than 3 players
+  // Get the bingo display for cleanup
+  const bingoDisplay = document.getElementById('bingo-display');
+  if (bingoDisplay) {
+    // First, make sure to clean up the standalone bingo display to avoid duplicates
     bingoDisplay.innerHTML = '';
     bingoDisplay.style.display = 'none';
+  }
+  
+  // Only populate Bingo slot if game has at least 3 players (or we're not in a game yet)
+  if (gameState.isGameStarted && gameState.players && gameState.players.length < 3) {
+    // Hide Bingo completely when less than 3 players
+    bingoSlot.innerHTML = '';
+    bingoSlot.style.visibility = 'hidden';
     return;
   } else {
     // Make sure it's visible
-    bingoDisplay.style.display = 'flex';
+    bingoSlot.style.visibility = 'visible';
   }
   
   // Clear previous content
-  bingoDisplay.innerHTML = '';
+  bingoSlot.innerHTML = '';
   
-  // Create Bingo's container with a colored circle and initial - use 100px to match Bluey's size
-  const bingoContainer = createCharacterDisplay('Bingo', 100);
-  
-  // Create Bingo's name badge - use false to match Bluey's style
-  const bingoName = createNameBadge('Bingo', false);
-  
-  // Create a div to hold Bingo's image and name (similar to opponent structure)
+  // Create a div to hold Bingo's image and cards (standard opponent structure)
   const bingoOpponent = document.createElement('div');
   bingoOpponent.className = 'opponent';
-  bingoOpponent.appendChild(bingoContainer);
-  bingoOpponent.appendChild(bingoName);
+  
+  // Create Bingo's container with a colored circle and initial - use 80px to match other opponents
+  const bingoContainer = createCharacterDisplay('Bingo', 80);
+  bingoOpponent.appendChild(bingoContainer);  // No name badge
   
   // Get Bingo's player data if game is started
   if (gameState.isGameStarted && gameState.players && gameState.players.length >= 3) {
@@ -1360,62 +1378,49 @@ function renderBingo() {
     }
   }
   
-  // Add the opponent to the display
-  bingoDisplay.appendChild(bingoOpponent);
+  // Add the opponent to the slot
+  bingoSlot.appendChild(bingoOpponent);
 }
 
 // Render Dad at the right position
 function renderDad() {
-  // Check for an existing dad-display div, create one if it doesn't exist
-  let dadDisplay = document.getElementById('dad-display');
-  if (!dadDisplay) {
-    dadDisplay = document.createElement('div');
-    dadDisplay.id = 'dad-display';
-    dadDisplay.style.position = 'absolute';
-    dadDisplay.style.right = '16.67%'; // Position at far right
-    dadDisplay.style.transform = 'translateX(50%)'; // Adjust positioning
-    dadDisplay.style.top = '0'; // Same top position as others
-    dadDisplay.style.display = 'flex';
-    dadDisplay.style.flexDirection = 'column';
-    dadDisplay.style.alignItems = 'center';
-    dadDisplay.style.zIndex = '100';
-    
-    // Add to the game container
-    document.getElementById('game-container').appendChild(dadDisplay);
-  }
+  // Get the opponent slot for Dad
+  const dadSlot = document.getElementById('opponent-bandit');
+  if (!dadSlot) return;
   
-  // Only show Dad in special Dad section if not already shown in opponents area
-  // Check if Dad is already displayed somewhere else
-  const isDadDisplayed = document.body.dataset.dadDisplayed === "true";
-  
-  if (isDadDisplayed || (gameState.isGameStarted && gameState.players && gameState.players.length < 4)) {
-    // Hide Dad's display completely
+  // Get the dad display for cleanup
+  const dadDisplay = document.getElementById('dad-display');
+  if (dadDisplay) {
+    // First, make sure to clean up the standalone dad display to avoid duplicates
     dadDisplay.innerHTML = '';
     dadDisplay.style.display = 'none';
+  }
+  
+  // Only populate Dad slot if game has 4 players (or we're not in a game yet)
+  if (gameState.isGameStarted && gameState.players && gameState.players.length < 4) {
+    // Hide Dad completely when less than 4 players
+    dadSlot.innerHTML = '';
+    dadSlot.style.visibility = 'hidden';
     return;
   } else {
     // Make sure it's visible
-    dadDisplay.style.display = 'flex';
+    dadSlot.style.visibility = 'visible';
   }
   
   // Clear previous content
-  dadDisplay.innerHTML = '';
+  dadSlot.innerHTML = '';
   
-  // Create Dad's container
-  const dadContainer = createCharacterDisplay('Dad', 100);
-  
-  // Create Dad's name badge
-  const dadName = createNameBadge('Dad', false);
-  
-  // Create a div to hold Dad's image and name
+  // Create a div to hold Dad's image and cards (standard opponent structure)
   const dadOpponent = document.createElement('div');
   dadOpponent.className = 'opponent';
-  dadOpponent.appendChild(dadContainer);
-  dadOpponent.appendChild(dadName);
+  
+  // Create Dad's container with a colored circle and initial - use 80px to match other opponents
+  const dadContainer = createCharacterDisplay('Dad', 80);
+  dadOpponent.appendChild(dadContainer);  // No name badge
   
   // Get Dad's player data if game is started
   if (gameState.isGameStarted && gameState.players && gameState.players.length >= 4) {
-    // Find Dad in the players array (typically index 3)
+    // Find Dad in the players array
     const dadPlayer = gameState.players.find(player => player.name === 'Dad');
     
     if (dadPlayer) {
@@ -1438,8 +1443,11 @@ function renderDad() {
     }
   }
   
-  // Add the opponent to the display
-  dadDisplay.appendChild(dadOpponent);
+  // Add the opponent to the slot
+  dadSlot.appendChild(dadOpponent);
+  
+  // Mark Dad as displayed to prevent duplication
+  document.body.dataset.dadDisplayed = "true";
 }
 
 // Show welcome screen on first load
@@ -1602,11 +1610,9 @@ window.addEventListener('DOMContentLoaded', () => {
   initializeEmptyGame();
   renderGame();
   
-  // Render Julia and Bingo characters
+  // Render Julia character
   renderJulia();
-  renderBingo();
-  // Initialize Coco for 4-player game support
-  renderDad();
+  // Bingo and Dad are now rendered as part of the renderOpponents function
   
   // Add welcome screen
   showWelcomeScreen();
