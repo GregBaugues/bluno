@@ -28,11 +28,15 @@
       border-radius: 50%;
       border: 3px solid white;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      position: absolute;
+      top: 0;
+      left: 0;
     }
     
     /* Hide character images until they're loaded */
     body:not(.images-loaded) .character-img {
-      display: none;
+      opacity: 0;
+      visibility: hidden;
     }
     
     /* Fallback styles */
@@ -60,7 +64,9 @@
     
     /* Hide fallbacks when images are loaded */
     body.images-loaded .character-fallback {
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
     }
   </style>
   
@@ -133,10 +139,21 @@
     // Force images-loaded after timeout - no matter what
     function enforceImagesLoaded() {
       console.log('Forcing images-loaded state after timeout');
-      document.body.classList.add('images-loaded');
       
-      // Try to reload any images that failed
+      // Ensure all character images are properly positioned before showing them
+      document.querySelectorAll('.character-img').forEach(img => {
+        img.style.position = 'absolute';
+        img.style.top = '0';
+        img.style.left = '0';
+      });
+      
+      // First, try to reload any images that failed
       retryFailedImages();
+      
+      // Then, add the images-loaded class to show images and hide fallbacks
+      setTimeout(() => {
+        document.body.classList.add('images-loaded');
+      }, 100); // Small delay to ensure everything is ready
     }
     
     // Retry loading any failed images
@@ -172,7 +189,18 @@
       
       if (allLoaded) {
         console.log('All character images loaded successfully!');
-        document.body.classList.add('images-loaded');
+        
+        // Ensure all character images are properly positioned before showing them
+        document.querySelectorAll('.character-img').forEach(img => {
+          img.style.position = 'absolute';
+          img.style.top = '0';
+          img.style.left = '0';
+        });
+        
+        // Small delay to ensure all DOM operations are complete
+        setTimeout(() => {
+          document.body.classList.add('images-loaded');
+        }, 50);
         
         // Clear timeout if it exists
         if (loadingTimeout) {
@@ -206,9 +234,9 @@
       document.getElementById('julia-img').onerror = () => handleImageError('julia');
       document.getElementById('coco-img').onerror = () => handleImageError('coco');
       
-      // Set a timeout to force images-loaded state after 5 seconds
+      // Set a timeout to force images-loaded state after 2 seconds
       // This helps with race conditions or permanent failures
-      loadingTimeout = setTimeout(enforceImagesLoaded, 5000);
+      loadingTimeout = setTimeout(enforceImagesLoaded, 2000);
     });
   </script>
   
