@@ -937,8 +937,8 @@ button:disabled {
   .discard-cards-container .card {
     /* Reduce offset for smaller screens */
     left: calc(var(--index) * 25px) !important;
-    /* Reduce vertical offset for smaller screens */
-    top: calc(var(--index) * 3px) !important;
+    /* No vertical offset */
+    top: 0 !important;
   }
   
   #game-area {

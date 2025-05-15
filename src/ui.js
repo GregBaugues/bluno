@@ -686,8 +686,8 @@ function renderDeckAndDiscardPile() {
       const offsetX = index * 40;
       cardElement.style.position = 'absolute';
       cardElement.style.left = `${offsetX}px`;
-      // Add a slight vertical offset to create a cascade effect
-      cardElement.style.top = `${index * 5}px`;
+      // No vertical offset - keep cards on the same level
+      cardElement.style.top = '0';
       cardElement.style.setProperty('--index', index); // Set CSS variable for responsive adjustments
       cardElement.style.zIndex = index + 1; // Ensure proper stacking order
       
