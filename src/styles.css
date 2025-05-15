@@ -356,7 +356,7 @@ body {
 
 #discard-pile {
   background-color: rgba(255, 240, 245, 0.7); /* Light pink */
-  border: 3px dashed #ff66a5; /* Pink border */
+  border: none; /* Removed dashed border */
   position: relative;
 }
 
