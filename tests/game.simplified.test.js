@@ -5,6 +5,14 @@
  * rather than implementation details.
  */
 
+// Mock the sound system to avoid AudioContext errors
+jest.mock('../src/sounds.js', () => ({
+  initialize: jest.fn(),
+  play: jest.fn(),
+  toggle: jest.fn(),
+  enabled: true
+}));
+
 // Import game components
 import { startGame, drawCard, playCard, chooseColor } from '../src/game.js';
 import gameState from '../src/gameState.js';
