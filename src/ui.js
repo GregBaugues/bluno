@@ -466,8 +466,7 @@ function renderOpponents() {
       
       opponent.appendChild(characterImage);
       
-      // Add character name
-      opponent.appendChild(createNameBadge(player.name, false));
+      // Remove character name - only show avatar
       
       // Add cards container to show visual representation of cards
       opponent.appendChild(createCardsContainer(player));
@@ -1358,14 +1357,10 @@ function renderBingo() {
   // Create Bingo's container with a colored circle and initial - use 100px to match Bluey's size
   const bingoContainer = createCharacterDisplay('Bingo', 100);
   
-  // Create Bingo's name badge - use false to match Bluey's style
-  const bingoName = createNameBadge('Bingo', false);
-  
-  // Create a div to hold Bingo's image and name (similar to opponent structure)
+  // Create a div to hold Bingo's image (similar to opponent structure)
   const bingoOpponent = document.createElement('div');
   bingoOpponent.className = 'opponent';
-  bingoOpponent.appendChild(bingoContainer);
-  bingoOpponent.appendChild(bingoName);
+  bingoOpponent.appendChild(bingoContainer);  // Remove name badge
   
   // Get Bingo's player data if game is started
   if (gameState.isGameStarted && gameState.players && gameState.players.length >= 3) {
@@ -1436,14 +1431,10 @@ function renderDad() {
   // Create Dad's container
   const dadContainer = createCharacterDisplay('Dad', 100);
   
-  // Create Dad's name badge
-  const dadName = createNameBadge('Dad', false);
-  
-  // Create a div to hold Dad's image and name
+  // Create a div to hold Dad's image
   const dadOpponent = document.createElement('div');
   dadOpponent.className = 'opponent';
-  dadOpponent.appendChild(dadContainer);
-  dadOpponent.appendChild(dadName);
+  dadOpponent.appendChild(dadContainer);  // Remove name badge
   
   // Get Dad's player data if game is started
   if (gameState.isGameStarted && gameState.players && gameState.players.length >= 4) {

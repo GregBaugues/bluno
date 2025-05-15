@@ -69,7 +69,7 @@ body {
   display: flex;
   justify-content: space-evenly;
   height: 100%;
-  padding: 10px 20px;
+  padding: 5px 20px 0 20px; /* Reduced padding to prevent overflowing */
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
@@ -93,21 +93,21 @@ body {
   align-items: center;
   justify-content: flex-start;
   position: relative;
-  padding-bottom: 10px;
+  padding-bottom: 0; /* Removed padding to make layout more compact */
   width: 100%;
 }
 
 .character-image {
-  width: 140px;
-  height: 140px;
+  width: 100px; /* Reduced size */
+  height: 100px; /* Reduced size */
   border-radius: 50%;
   background-color: #ffffff;
-  margin-bottom: 10px;
+  margin-bottom: 5px; /* Reduced margin */
   border: 5px solid transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 50px;
+  font-size: 40px; /* Reduced font size */
   font-weight: bold;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
   overflow: hidden; /* Keep images inside the circle */
@@ -203,7 +203,7 @@ body {
 
 .opponent-cards {
   position: relative;
-  margin: 10px auto 5px auto;
+  margin: 2px auto 0 auto; /* Reduced margin to move cards closer to avatar */
   width: 100%;
   max-width: 300px;
   min-height: 60px;
