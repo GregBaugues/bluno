@@ -59,9 +59,15 @@ function playCard(playerIndex, cardIndex) {
   
   gameLog(`${player.name} plays ${playedCard.color} ${playedCard.value} ${playedCard.emoji}`);
   
+  // Trim discard pile to keep only the 10 most recent cards when it exceeds 10 cards
+  let trimmedDiscardPile = updatedDiscardPile;
+  if (updatedDiscardPile.length > 10) {
+    trimmedDiscardPile = updatedDiscardPile.slice(-10);
+  }
+  
   // Update game state with the played card
   gameState.updateState({
-    discardPile: updatedDiscardPile
+    discardPile: trimmedDiscardPile
   });
   
   // Emit event for card played
