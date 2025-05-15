@@ -321,10 +321,11 @@
       // Create a placeholder for Bingo display
       const bingoDisplay = document.createElement('div');
       bingoDisplay.id = 'bingo-display';
-      bingoDisplay.style.position = 'absolute';
-      bingoDisplay.style.left = '50%'; // Center horizontally
-      bingoDisplay.style.transform = 'translateX(-50%)'; // Center perfectly
-      bingoDisplay.style.top = '0'; // Same top position as Bluey
+      bingoDisplay.style.position = 'relative';
+      bingoDisplay.style.left = 'auto';
+      bingoDisplay.style.transform = 'none';
+      bingoDisplay.style.top = 'auto';
+      bingoDisplay.style.margin = '0 auto'; // Center in flex container
       bingoDisplay.style.display = 'flex';
       bingoDisplay.style.flexDirection = 'column';
       bingoDisplay.style.alignItems = 'center';

@@ -55,19 +55,20 @@ body {
 /* Side indicators container */
 #side-indicators {
   position: absolute;
-  right: 15px;
+  right: 5px; /* Closer to the edge */
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
+  gap: 10px; /* Reduced gap between indicators */
   z-index: 100;
 }
 
 #opponents-area {
   display: flex;
   justify-content: space-evenly;
+  align-items: flex-start; /* Ensure all items start from the top */
   height: 100%;
   padding: 5px 20px 0 20px; /* Reduced padding to prevent overflowing */
   width: 100%;
@@ -94,22 +95,24 @@ body {
   justify-content: flex-start;
   position: relative;
   padding-bottom: 0; /* Removed padding to make layout more compact */
+  margin: 0; /* No margin */
   width: 100%;
+  gap: 0; /* No gap between elements */
 }
 
 .character-image {
-  width: 100px; /* Reduced size */
-  height: 100px; /* Reduced size */
+  width: 80px; /* Further reduced size */
+  height: 80px; /* Further reduced size */
   border-radius: 50%;
   background-color: #ffffff;
-  margin-bottom: 5px; /* Reduced margin */
-  border: 5px solid transparent;
+  margin-bottom: 0; /* Eliminated margin completely */
+  border: 3px solid transparent; /* Thinner border */
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 40px; /* Reduced font size */
+  font-size: 32px; /* Reduced font size */
   font-weight: bold;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Smaller shadow */
   overflow: hidden; /* Keep images inside the circle */
   position: relative;
 }
@@ -203,10 +206,10 @@ body {
 
 .opponent-cards {
   position: relative;
-  margin: 2px auto 0 auto; /* Reduced margin to move cards closer to avatar */
+  margin: 0 auto; /* Reduced by 70% - virtually eliminated margin */
   width: 100%;
   max-width: 300px;
-  min-height: 60px;
+  min-height: 40px; /* Reduced height */
   display: flex;
   justify-content: center;
   align-items: center;
