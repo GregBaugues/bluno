@@ -1,23 +1,7 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Overview
 
 This is a Bluey-themed Uno card game designed for young children (specifically a 4-year-old) to play against Bluey cartoon characters. The game is built with vanilla JavaScript, HTML5, and CSS3, using Parcel as a bundler.
 
-## Build and Run Commands
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm start
-
-# Build for production
-npm run build
-```
 
 ## Game Architecture
 
@@ -70,3 +54,6 @@ The game is structured around several core modules that work together:
 - The AI logic is simple and rule-based, focusing on matching cards when possible
 - Touch events are used for card selection and game interactions, making it tablet/mobile friendly
 - Responsive CSS adjusts the layout for different screen orientations and sizes
+
+Do not run npm start. The server is already running.
+Use the puppeteer tool (via MCP) to test the game.
