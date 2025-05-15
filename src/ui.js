@@ -492,7 +492,7 @@ function renderDeckAndDiscardPile() {
   // Create better deck back design
   const deckBack = document.createElement('div');
   deckBack.className = 'card-back';
-  deckBack.style.width = '120px';
+  deckBack.style.width = '96px'; /* Reduced by 20% from 120px */
   
   // Add a small visual indicator on the deck if a player needs to draw cards
   if (gameState.isDrawingCards && gameState.requiredDraws > 0) {
@@ -512,7 +512,7 @@ function renderDeckAndDiscardPile() {
     drawIndicator.style.zIndex = '10';
     deckBack.appendChild(drawIndicator);
   }
-  deckBack.style.height = '168px';
+  deckBack.style.height = '134px'; /* Reduced by 20% from 168px */
   deckBack.style.borderRadius = '10px';
   deckBack.style.backgroundColor = '#ff5757';
   deckBack.style.border = '3px solid white';
@@ -673,7 +673,8 @@ function renderDeckAndDiscardPile() {
     // Add cards with offset
     visibleCards.forEach((card, index) => {
       const isTopCard = index === visibleCards.length - 1;
-      const cardElement = createCardElement(card, isTopCard);
+      // Use true for all cards to make them all the same size
+      const cardElement = createCardElement(card, true);
       
       // Add data attribute for card value (for CSS targeting)
       cardElement.setAttribute('data-value', card.value);
@@ -688,9 +689,8 @@ function renderDeckAndDiscardPile() {
       cardElement.style.setProperty('--index', index); // Set CSS variable for responsive adjustments
       cardElement.style.zIndex = index + 1; // Ensure proper stacking order
       
-      // Make the top card slightly larger and add glow
+      // Add glow only to the top card
       if (isTopCard) {
-        cardElement.style.transform = 'scale(1.05)';
         cardElement.style.boxShadow = `0 0 15px rgba(255, 255, 255, 0.7), 0 4px 8px rgba(0, 0, 0, 0.3)`;
       }
       
@@ -710,8 +710,8 @@ function renderDeckAndDiscardPile() {
     // Show empty placeholder for discard pile
     const emptyPile = document.createElement('div');
     emptyPile.className = 'empty-discard';
-    emptyPile.style.width = '120px';
-    emptyPile.style.height = '168px';
+    emptyPile.style.width = '96px'; /* Reduced by 20% from 120px */
+    emptyPile.style.height = '134px'; /* Reduced by 20% from 168px */
     emptyPile.style.borderRadius = '10px';
     emptyPile.style.border = '3px dashed rgba(255, 255, 255, 0.5)';
     emptyPile.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
@@ -945,9 +945,9 @@ function createCardElement(card, isDiscardPile = false) {
   const cardElement = document.createElement('div');
   cardElement.className = 'card';
   
-  // Base card styling - much larger size for discard pile
-  cardElement.style.width = isDiscardPile ? '140px' : '80px';
-  cardElement.style.height = isDiscardPile ? '196px' : '112px';
+  // Base card styling - reduced size by 20% for all cards
+  cardElement.style.width = isDiscardPile ? '112px' : '64px'; /* Reduced by 20% */
+  cardElement.style.height = isDiscardPile ? '157px' : '90px'; /* Reduced by 20% */
   cardElement.style.borderRadius = '10px';
   cardElement.style.border = '3px solid white';
   cardElement.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';

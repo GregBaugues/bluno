@@ -227,10 +227,12 @@ body {
 }
 
 #deck, #discard-pile {
-  width: 140px;
-  height: 210px;
+  width: 112px; /* Reduced by 20% from 140px */
+  height: 168px; /* Reduced by 20% from 210px */
   border-radius: 15px;
   position: relative;
+  margin-top: 20px; /* Add space from top of the container */
+  margin-bottom: 20px; /* Add space from bottom of the container */
 }
 
 #deck {
