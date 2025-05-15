@@ -355,23 +355,12 @@ body {
 }
 
 #discard-pile {
-  background-color: rgba(255, 240, 245, 0.7); /* Light pink */
-  border: none; /* Removed dashed border */
+  background-color: transparent; /* Completely transparent */
+  border: none; /* No border */
   position: relative;
 }
 
-#discard-pile::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50L20 20M50 50L80 80M50 50L80 20M50 50L20 80' stroke='%23ff66a5' stroke-width='2'/%3E%3C/svg%3E");
-  background-size: 30px 30px;
-  opacity: 0.2;
-  z-index: -1;
-}
+/* Removed ::before element with the X pattern */
 
 .discard-cards-container {
   min-width: 450px;
