@@ -1,239 +1,199 @@
-# Bluey Uno Testing Plan
+# Testing the Bluey Uno Game
 
-This document outlines a testing plan for the Bluey Uno game, which can be executed via Puppeteer to ensure the application still works correctly after refactoring.
+This document provides detailed instructions for testing the Bluey Uno game, with a specific focus on using Puppeteer for automated testing.
 
-## Automated Testing with Puppeteer
+## Table of Contents
 
-The following test scenarios should be executed using Puppeteer to verify core game functionality:
+1. [Game Overview](#game-overview)
+2. [Testing Environment Setup](#testing-environment-setup)
+3. [Key Game Elements and Selectors](#key-game-elements-and-selectors)
+4. [Basic Game Testing Procedures](#basic-game-testing-procedures)
+5. [Testing Special Card Actions](#testing-special-card-actions)
+6. [Known Limitations with Puppeteer](#known-limitations-with-puppeteer)
+7. [Example Test Scripts](#example-test-scripts)
 
-### Basic Game Flow Tests
+## Game Overview
 
-1. **Game Initialization**
-   - Navigate to the game URL
-   - Verify welcome screen appears
-   - Verify player count options (2-4) are visible
+Bluey Uno is a digital adaptation of the classic Uno card game, themed with characters from the Bluey cartoon. The game allows players to:
+- Play against 1-3 AI opponents (Bluey characters)
+- Play and match cards by color or number
+- Use special action cards (Skip, Reverse, Draw 2, Wild, Wild Draw 4)
+- Win by playing all cards in their hand
 
-2. **Game Setup**
-   - Click on player count selection (e.g., 2 players)
-   - Verify game starts with correct number of players
-   - Verify player's cards are shown
-   - Verify discard pile shows a card
-   - Verify deck is visible
+## Testing Environment Setup
 
-3. **Core Gameplay**
-   - Verify it's the player's turn initially
-   - Test playing a valid card:
-     - Find a playable card in the player's hand (matching color or value)
-     - Click the card to play it
-     - Verify the card moves to the discard pile
-     - Verify turn passes to the AI
+The game runs on a local server (typically localhost:1234). Before testing:
 
-   - Test drawing a card:
-     - Wait for player's turn
-     - Click on the deck
-     - Verify a new card is added to the player's hand
+1. Ensure the development server is running
+2. Verify the game is accessible at http://localhost:1234
 
-4. **Special Card Effects**
-   - Test "Skip" card:
-     - Play a Skip card (if available)
-     - Verify opponent's turn is skipped
-   
-   - Test "Reverse" card:
-     - Play a Reverse card (if available)
-     - Verify direction indicator changes
-     - Verify turn order is reversed
+## Key Game Elements and Selectors
 
-   - Test "Wild" card:
-     - Play a Wild card (if available)
-     - Verify color selection UI appears
-     - Select a color
-     - Verify current color changes
+### Welcome Screen
+- Welcome screen container: `.welcome-screen`
+- Player count buttons are direct `button` elements in the welcome screen
+  - To select 2 players, click the first button: `button`
 
-   - Test "Draw 2" card:
-     - Play a Draw 2 card (if available)
-     - Verify opponent draws 2 cards
-     - Verify opponent's turn is skipped
+### Game Board
+- Game container: `#game-container`
+- Opponents area: `#opponents-area`
+- Bluey character: `#opponent-bluey .opponent`
+- Deck: `#deck`
+- Discard pile: `#discard-pile`
+- Player's hand: `#player-hand`
+- Player's cards: `.player-cards .card`
+  - First card: `.player-cards .card:first-child`
+  - Specific card: `.player-cards .card:nth-child(2)` (for the second card)
+  - Last card: `.player-cards .card:last-child`
+- Current color indicator: `#color-indicator`
+- Direction indicator: `#direction-indicator`
 
-5. **Game Completion**
-   - Continue playing until a player has one card left
-   - Verify "UNO" indicator appears
-   - Play final card (or verify AI winning)
-   - Verify winner announcement appears
-   - Verify option to play again is shown
+### Special UI Elements
+- Color choice UI (after playing Wild cards): `#color-choice`
+- Color buttons: 
+  - Red color button: `.color-button[data-color="red"]`
+  - Blue color button: `.color-button[data-color="blue"]`
+  - Green color button: `.color-button[data-color="green"]`
+  - Yellow color button: `.color-button[data-color="yellow"]`
 
-## Test Script for Puppeteer
+## Basic Game Testing Procedures
 
-The following test script can be executed by Claude using Puppeteer to verify the game works correctly:
+### Starting a New Game
 
 ```javascript
-// Test script for Bluey Uno using Puppeteer
-async function testBlueyUno() {
-  console.log("Starting Bluey Uno test...");
-  
-  // Test 1: Navigate to game and verify welcome screen
-  await page.goto('http://haihai.ngrok.io');
-  await page.waitForSelector('.welcome-screen', { timeout: 5000 });
-  console.log("✅ Welcome screen loaded successfully");
-  
-  // Take screenshot of welcome screen
-  await page.setViewport({ width: 1024, height: 768 }); // iPad Mini in landscape
-  await page.screenshot({ path: 'welcome_screen.png' });
-  
-  // Test 2: Start a 2-player game
-  const playerButtons = await page.$$('.welcome-screen button');
-  if (playerButtons && playerButtons.length > 0) {
-    await playerButtons[0].click(); // Select 2 players
-    await page.waitForSelector('#player-hand', { timeout: 5000 });
-    console.log("✅ Game started successfully with 2 players");
-  } else {
-    console.error("❌ Player selection buttons not found");
-    return;
-  }
-  
-  // Take screenshot of game board
-  await page.screenshot({ path: 'game_board.png' });
-  
-  // Test 3: Play a card
-  await page.waitForTimeout(1000); // Wait for animations
-  
-  // Find a playable card
-  const cards = await page.$$('.card.playable-card');
-  if (cards && cards.length > 0) {
-    console.log(`Found ${cards.length} playable cards`);
-    await cards[0].click();
-    await page.waitForTimeout(1000); // Wait for card play animation
-    console.log("✅ Successfully played a card");
-  } else {
-    console.log("No playable cards found, will try to draw");
-  }
-  
-  // Take screenshot after playing a card
-  await page.screenshot({ path: 'after_card_play.png' });
-  
-  // Test 4: Draw a card if it's the player's turn
-  await page.waitForTimeout(2000); // Wait for AI turn
-  
-  // Check if it's player's turn
-  const isTurn = await page.evaluate(() => {
-    return window.gameState && window.gameState.currentPlayerIndex === 0;
-  });
-  
-  if (isTurn) {
-    const deck = await page.$('#deck');
-    if (deck) {
-      await deck.click();
-      await page.waitForTimeout(1000); // Wait for draw animation
-      console.log("✅ Successfully drew a card");
-    } else {
-      console.error("❌ Deck not found");
-    }
-  } else {
-    console.log("Not player's turn, skipping draw test");
-  }
-  
-  // Take screenshot after drawing a card
-  await page.screenshot({ path: 'after_draw.png' });
-  
-  // Test 5: Wild card color selection
-  // Play a few more rounds to try to get a wild card
-  for (let i = 0; i < 5; i++) {
-    await page.waitForTimeout(2000); // Wait for AI turn
-    
-    // Check if color selection is showing
-    const colorChoice = await page.$('#color-choice[style*="display: block"]');
-    if (colorChoice) {
-      const colorButtons = await page.$$('#color-buttons button');
-      if (colorButtons && colorButtons.length > 0) {
-        await colorButtons[0].click(); // Select first color
-        await page.waitForTimeout(1000);
-        console.log("✅ Successfully selected color for wild card");
-        break; // Exit the loop
-      }
-    }
-    
-    // Try to play a card if it's our turn
-    const isPlayerTurn = await page.evaluate(() => {
-      return window.gameState && window.gameState.currentPlayerIndex === 0;
-    });
-    
-    if (isPlayerTurn) {
-      const playableCards = await page.$$('.card.playable-card');
-      // Try to find a wild card
-      let wildCardFound = false;
-      for (const card of playableCards) {
-        const isWild = await page.evaluate(el => {
-          return el.getAttribute('data-value') === 'Wild' || 
-                 el.getAttribute('data-value') === 'Wild Draw 4';
-        }, card);
-        
-        if (isWild) {
-          await card.click();
-          console.log("Found and played a wild card");
-          wildCardFound = true;
-          break;
-        }
-      }
-      
-      // If no wild card, just play any card or draw
-      if (!wildCardFound && playableCards.length > 0) {
-        await playableCards[0].click();
-      } else if (!wildCardFound) {
-        const deck = await page.$('#deck');
-        if (deck) await deck.click();
-      }
-    }
-  }
-  
-  // Take final screenshot
-  await page.screenshot({ path: 'game_progress.png' });
-  
-  console.log("Bluey Uno test completed!");
-}
+// Navigate to the game
+await puppeteer.navigate('http://localhost:1234');
 
-// Execute the test
-testBlueyUno();
+// Take a screenshot of the welcome screen
+await puppeteer.screenshot({ name: 'welcome-screen' });
+
+// Click the first button to start a 2-player game
+await puppeteer.click('button');
+
+// Take a screenshot to verify the game started
+await puppeteer.screenshot({ name: 'game-started' });
 ```
 
-## Puppeteer Test Execution Guide
+### Playing a Card
 
-1. **Set up Puppeteer**:
-   ```javascript
-   await mcp__puppeteer__puppeteer_navigate({ url: 'http://haihai.ngrok.io' });
-   await mcp__puppeteer__puppeteer_evaluate({ script: '/* test script code here */' });
-   ```
+```javascript
+// Click on the first card in player's hand
+await puppeteer.click('.player-cards .card:first-child');
 
-2. **Analyze Results**:
-   - Check for any console errors
-   - Review the screenshots to verify UI elements
-   - Ensure proper game flow
+// Take a screenshot to verify if the card was played
+await puppeteer.screenshot({ name: 'after-card-play' });
+```
 
-3. **Report Findings**:
-   - Document successful test cases
-   - Note any functionality issues
-   - Highlight any regressions after refactoring
+### Drawing a Card
 
-## Manual Testing Checklist
+```javascript
+// Click on the deck to draw a card
+await puppeteer.click('#deck');
 
-In addition to automated testing, the following elements should be manually verified:
+// Take a screenshot to verify the card was drawn
+await puppeteer.screenshot({ name: 'after-card-draw' });
+```
 
-- [ ] Game starts with correct number of players (test 2, 3, and 4 player modes)
-- [ ] Player's cards are displayed correctly
-- [ ] AI opponents are shown with correct characters
-- [ ] Cards can be played according to Uno rules
-- [ ] Special card effects work correctly
-- [ ] Direction changes are indicated properly
-- [ ] Winning conditions are detected correctly
-- [ ] Sound effects play at appropriate times
-- [ ] Game flow handles edge cases (empty deck, etc.)
+## Testing Special Card Actions
 
-## Regression Testing Priority
+### Testing Wild Card Color Selection
 
-Focus testing efforts on:
+```javascript
+// Click on a Wild card in player's hand
+// Note: This may not work consistently due to Puppeteer limitations
+await puppeteer.click('.player-cards .card[data-value="Wild"]');
 
-1. Game initialization and UI rendering
-2. Card playing mechanics
-3. Special card effects (particularly Wild and Draw cards)
-4. Turn management
-5. Win condition detection
+// Take a screenshot to see if color choice UI appeared
+await puppeteer.screenshot({ name: 'wild-card-color-choice' });
 
-These areas were heavily refactored and should be carefully verified to ensure no functionality was lost.
+// Try to select red color
+await puppeteer.click('.color-button[data-color="red"]');
+
+// Take a screenshot to verify color selection
+await puppeteer.screenshot({ name: 'after-color-selection' });
+```
+
+### Testing Draw 2 Card Effect
+
+```javascript
+// First player must play a Draw 2 card
+// Then check if the player is required to draw cards
+await puppeteer.screenshot({ name: 'draw-requirement' });
+
+// Click on deck to draw required cards
+await puppeteer.click('#deck');
+await puppeteer.click('#deck');
+
+// Take screenshot to verify drawing completed
+await puppeteer.screenshot({ name: 'after-drawing-required-cards' });
+```
+
+## Known Limitations with Puppeteer
+
+When testing the Bluey Uno game with Puppeteer, be aware of these limitations:
+
+1. **JavaScript Evaluation Issues**
+   - The `puppeteer_evaluate` function often fails with undefined errors
+   - This prevents checking game state or element properties programmatically
+
+2. **Interaction Challenges**
+   - Card playing doesn't always work as expected
+   - Wild card color selection UI may not appear or respond correctly
+   - The game may not provide visual feedback for invalid moves
+
+3. **Game State Visibility**
+   - It's difficult to determine whose turn it is
+   - Can't easily determine if actions were successful
+   - Must rely on visual inspection of screenshots
+
+4. **Timing Issues**
+   - AI moves happen after delays
+   - Without JavaScript evaluation, we can't effectively wait for specific game states
+
+## Best Practices for Testing with Puppeteer
+
+1. **Keep Tests Simple**
+   - Focus on basic navigation and UI verification
+   - Use screenshots liberally to verify game state visually
+
+2. **Use Direct Selectors**
+   - Prefer direct and specific CSS selectors
+   - Avoid complex selectors that may not work consistently
+
+3. **Step-by-Step Testing**
+   - Break testing into small, sequential steps
+   - Take screenshots after each step to verify results
+
+4. **Manual Verification**
+   - Have a human verify screenshots for correct game behavior
+   - Don't rely solely on automated assertions
+
+## Example Test Scripts
+
+### Basic Game Flow Test
+
+```javascript
+// Start the game
+await puppeteer.navigate('http://localhost:1234');
+await puppeteer.screenshot({ name: '01-welcome-screen' });
+await puppeteer.click('button'); // Click first button (2 players)
+await puppeteer.screenshot({ name: '02-game-started' });
+
+// Try playing a card
+await puppeteer.click('.player-cards .card:first-child');
+await puppeteer.screenshot({ name: '03-after-card-play' });
+
+// Try drawing a card
+await puppeteer.click('#deck');
+await puppeteer.screenshot({ name: '04-after-drawing-card' });
+```
+
+### Complete Game Test Script
+
+For a more complex test, see the attached test script that attempts to play a complete game, but be aware of the limitations mentioned above.
+
+## Conclusion
+
+Testing the Bluey Uno game with Puppeteer presents several challenges. Focus on basic interface testing, use screenshots for verification, and be prepared for inconsistent behavior with more complex game interactions.
+
+For reliable testing, consider supplementing Puppeteer tests with manual testing or unit tests that directly interact with the game's JavaScript functions.
