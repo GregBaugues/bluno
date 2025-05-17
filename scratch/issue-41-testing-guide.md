@@ -50,3 +50,6 @@ Claude sometimes has difficulty testing the Bluey Uno app using Puppeteer. We ne
 ## Implementation Plan
 
 Let's start by creating a comprehensive TESTING.md file that covers all aspects of testing the Bluey Uno game with Puppeteer. The file will be structured in a way that makes it easy for Claude to understand and use Puppeteer effectively to test the game.
+
+## Pull Request
+[PR #43: Draft comprehensive TESTING.md guide for Puppeteer testing](https://github.com/GregBaugues/bluno/pull/43)
