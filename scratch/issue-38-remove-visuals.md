@@ -34,3 +34,6 @@ The special Draw 2 and Wild Draw 4 cards still work correctly, but without the a
 
 ## Status
 Implementation completed. The extraneous visual indicators have been successfully removed as requested.
+
+## Pull Request
+https://github.com/GregBaugues/bluno/pull/40
