@@ -475,24 +475,7 @@ function renderDeckAndDiscardPile() {
   deckBack.className = 'card-back';
   deckBack.style.width = '96px'; /* Reduced by 20% from 120px */
   
-  // Add a small visual indicator on the deck if a player needs to draw cards
-  if (gameState.isDrawingCards && gameState.requiredDraws > 0) {
-    const drawIndicator = document.createElement('div');
-    drawIndicator.className = 'draw-indicator';
-    drawIndicator.textContent = `Draw ${gameState.requiredDraws} more`;
-    drawIndicator.style.position = 'absolute';
-    drawIndicator.style.top = '-30px';
-    drawIndicator.style.left = '0';
-    drawIndicator.style.width = '100%';
-    drawIndicator.style.padding = '5px';
-    drawIndicator.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
-    drawIndicator.style.color = 'white';
-    drawIndicator.style.borderRadius = '5px';
-    drawIndicator.style.textAlign = 'center';
-    drawIndicator.style.fontWeight = 'bold';
-    drawIndicator.style.zIndex = '10';
-    deckBack.appendChild(drawIndicator);
-  }
+  // Draw indicators removed per issue #38
   deckBack.style.height = '134px'; /* Reduced by 20% from 168px */
   deckBack.style.borderRadius = '10px';
   deckBack.style.backgroundColor = '#ff5757';
@@ -550,14 +533,6 @@ function renderDeckAndDiscardPile() {
         if (gameState.requiredDraws === 0) {
           deckElement.classList.remove('required-draw');
           deckElement.classList.remove('active-deck');
-          
-          // Remove any draw indicators
-          const drawIndicators = document.querySelectorAll('.draw-indicator, .deck-reminder');
-          drawIndicators.forEach(indicator => {
-            if (indicator.parentElement) {
-              indicator.parentElement.removeChild(indicator);
-            }
-          });
         }
       } else if (!gameState.waitingForColorChoice) {
         // Regular draw
@@ -579,56 +554,7 @@ function renderDeckAndDiscardPile() {
     if (gameState.requiredDraws > 0) {
       deckElement.classList.add('required-draw');
       deckElement.classList.add('active-deck');
-      
-      // We no longer need the large screen-covering indicator
-      // Just rely on the small indicator on the deck
-      
-      // Add a reminder text directly on the deck
-      const deckReminder = document.createElement('div');
-      deckReminder.className = 'deck-reminder';
-      
-      if (gameState.requiredDraws === 1) {
-        deckReminder.textContent = `Tap to draw your last required card`;
-      } else {
-        deckReminder.textContent = `Tap to draw 1 card (${gameState.requiredDraws} more to go)`;
-      }
-      
-      deckReminder.style.position = 'absolute';
-      deckReminder.style.bottom = '-45px';
-      deckReminder.style.left = '50%';
-      deckReminder.style.transform = 'translateX(-50%)';
-      deckReminder.style.backgroundColor = '#ff3b3b';
-      deckReminder.style.color = 'white';
-      deckReminder.style.padding = '5px 15px';
-      deckReminder.style.borderRadius = '15px';
-      deckReminder.style.fontSize = '16px';
-      deckReminder.style.fontWeight = 'bold';
-      deckReminder.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-      deckReminder.style.whiteSpace = 'nowrap';
-      deckReminder.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
-      deckElement.appendChild(deckReminder);
-      
-      // Also add a counter directly on the deck
-      const deckCounter = document.createElement('div');
-      deckCounter.className = 'deck-reminder';
-      deckCounter.textContent = gameState.requiredDraws.toString();
-      deckCounter.style.position = 'absolute';
-      deckCounter.style.top = '10px';
-      deckCounter.style.right = '10px';
-      deckCounter.style.backgroundColor = 'white';
-      deckCounter.style.color = '#ff3b3b';
-      deckCounter.style.width = '30px';
-      deckCounter.style.height = '30px';
-      deckCounter.style.borderRadius = '50%';
-      deckCounter.style.fontSize = '18px';
-      deckCounter.style.fontWeight = 'bold';
-      deckCounter.style.display = 'flex';
-      deckCounter.style.justifyContent = 'center';
-      deckCounter.style.alignItems = 'center';
-      deckCounter.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.3)';
-      deckCounter.style.border = '2px solid #ff3b3b';
-      deckCounter.style.fontFamily = "'Comic Sans MS', 'Comic Sans', cursive, sans-serif";
-      deckElement.appendChild(deckCounter);
+      // Visual indicators removed per issue #38
     }
   }
   
@@ -1173,39 +1099,7 @@ function createCardElement(card, isDiscardPile = false) {
     cardElement.appendChild(arrowheadDown);
   }
   
-  // For Draw 2 cards, add a +2 indicator
-  if (card.value === 'Draw 2') {
-    const drawIndicator = document.createElement('div');
-    drawIndicator.style.position = 'absolute';
-    drawIndicator.style.top = '10px';
-    drawIndicator.style.right = '30%';
-    drawIndicator.style.fontSize = isDiscardPile ? '28px' : '16px';
-    drawIndicator.style.fontWeight = 'bold';
-    drawIndicator.style.color = 'white';
-    drawIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-    drawIndicator.style.padding = isDiscardPile ? '5px 10px' : '3px 6px';
-    drawIndicator.style.borderRadius = '50%';
-    drawIndicator.style.zIndex = '2';
-    drawIndicator.textContent = '+2';
-    cardElement.appendChild(drawIndicator);
-  }
-  
-  // For Wild Draw 4 cards, add a +4 indicator
-  if (card.value === 'Wild Draw 4') {
-    const drawIndicator = document.createElement('div');
-    drawIndicator.style.position = 'absolute';
-    drawIndicator.style.top = '10px';
-    drawIndicator.style.right = '30%';
-    drawIndicator.style.fontSize = isDiscardPile ? '28px' : '16px';
-    drawIndicator.style.fontWeight = 'bold';
-    drawIndicator.style.color = 'white';
-    drawIndicator.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-    drawIndicator.style.padding = isDiscardPile ? '5px 10px' : '3px 6px';
-    drawIndicator.style.borderRadius = '50%';
-    drawIndicator.style.zIndex = '2';
-    drawIndicator.textContent = '+4';
-    cardElement.appendChild(drawIndicator);
-  }
+  // +2 and +4 indicators removed per issue #38
   
   return cardElement;
 }
@@ -1705,25 +1599,16 @@ function showErrorMessage(message) {
   }, 3000);
 }
 
-// Function to show a draw requirement message
-function showDrawRequirementMessage(numCards, customMessage = null) {
-  // Create a message about drawing cards
-  const message = customMessage || `You need to draw ${numCards} cards!`;
-  showErrorMessage(message);
-}
+// Draw requirement messages removed per issue #38
 
-// Add event listeners for drawing requirements
+// Event listeners for drawing requirements removed
+// (keeping empty commented handlers to document the available events)
 window.addEventListener('showDrawRequirement', (event) => {
-  const numCards = event.detail.numCards;
-  const customMessage = event.detail.message;
-  showDrawRequirementMessage(numCards, customMessage);
+  // Visual notifications removed per issue #38
 });
 
 window.addEventListener('drawRequirementComplete', (event) => {
-  const message = event.detail && event.detail.message ? 
-    event.detail.message : 
-    'All required cards drawn! Next player\'s turn.';
-  showErrorMessage(message);
+  // Visual notifications removed per issue #38
 });
 
 export {
