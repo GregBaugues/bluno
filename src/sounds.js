@@ -209,7 +209,7 @@ class SoundSystem {
           // Fallback to creating a new audio element with the full path
           else {
             console.log('Preloaded Bingo sound not found, using fallback');
-            const fallbackAudio = new Audio('public/bingo.mp3');
+            const fallbackAudio = new Audio('public/audio/bingo.mp3');
             fallbackAudio.volume = 0.5;
             fallbackAudio.play().catch(error => {
               console.error('Fallback Bingo sound failed:', error);
@@ -264,7 +264,7 @@ class SoundSystem {
           // Fallback to creating a new audio element with the full path
           else {
             console.log('Preloaded Bluey sound not found, using fallback');
-            const fallbackAudio = new Audio('public/bluey.mp3');
+            const fallbackAudio = new Audio('public/audio/bluey.mp3');
             fallbackAudio.volume = 0.5;
             fallbackAudio.play().catch(error => {
               console.error('Fallback Bluey sound failed:', error);
@@ -319,7 +319,7 @@ class SoundSystem {
           // Fallback to creating a new audio element with the full path
           else {
             console.log('Preloaded Dad sound not found, using fallback');
-            const fallbackAudio = new Audio('public/dad.mp3');
+            const fallbackAudio = new Audio('public/audio/dad.mp3');
             fallbackAudio.volume = 0.5;
             fallbackAudio.play().catch(error => {
               console.error('Fallback Dad sound failed:', error);

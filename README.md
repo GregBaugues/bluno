@@ -53,4 +53,15 @@ This game is built using:
 - JavaScript
 - Parcel bundler
 
+## Repository Structure
+
+- `/src/` - Source code files
+- `/public/` - Public assets
+  - `/public/images/` - Character and UI images
+  - `/public/audio/` - Sound files
+- `/tests/` - Test files and scripts
+- `/screenshots/` - Game screenshots for documentation
+- `/claude/` - Documentation files for Claude AI
+- `CLAUDE.md` - Instructions for Claude AI
+
 Enjoy playing Uno with Bluey and friends!
