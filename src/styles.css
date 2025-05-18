@@ -41,8 +41,8 @@ body {
 #game-container {
   width: 100%;
   height: 100%;
-  background-color: #ffc0dc; /* Slightly darker pink for the game container */
-  padding: 15px;
+  background-color: #ffc0dc; /* Back to simple background */
+  padding: 10px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -70,7 +70,7 @@ body {
   justify-content: space-evenly;
   align-items: flex-start; /* Ensure all items start from the top */
   height: 100%;
-  padding: 5px 20px 0 20px; /* Reduced padding to prevent overflowing */
+  padding: 5px 20px 0 20px; /* Reduced padding */
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
@@ -101,19 +101,19 @@ body {
 }
 
 .character-image {
-  width: 80px; /* Further reduced size */
-  height: 80px; /* Further reduced size */
+  width: 80px; /* Back to original size */
+  height: 80px;
   border-radius: 50%;
   background-color: #ffffff;
-  margin-bottom: 0; /* Eliminated margin completely */
-  border: 3px solid transparent; /* Thinner border */
+  margin-bottom: 0; 
+  border: 3px solid transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 32px; /* Reduced font size */
+  font-size: 32px;
   font-weight: bold;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Smaller shadow */
-  overflow: hidden; /* Keep images inside the circle */
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
   position: relative;
 }
 
@@ -249,25 +249,25 @@ body {
 
 #game-area {
   display: flex;
-  justify-content: flex-start; /* Changed from center to left-align */
+  justify-content: flex-start; /* Back to original */
   align-items: center;
   position: relative;
-  padding: 20px 20px; /* Increased vertical padding */
+  padding: 10px 20px; /* Less padding */
   /* Middle section */
   grid-row: 2;
   width: 100%;
   height: 100%;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 #deck, #discard-pile {
-  width: 112px; /* Reduced by 20% from 140px */
-  height: 168px; /* Reduced by 20% from 210px */
+  width: 112px; /* Back to original size */
+  height: 168px; /* Back to original size */
   border-radius: 15px;
   position: relative;
-  margin-top: 30px; /* Increased space from top of the container */
-  margin-bottom: 30px; /* Increased space from bottom of the container */
+  margin-top: 15px; 
+  margin-bottom: 15px;
 }
 
 #deck {
@@ -470,36 +470,28 @@ body {
   align-items: center;
   overflow-x: auto;
   position: relative;
-  padding: 20px 15px;
+  padding: 15px 10px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  background-color: rgba(255, 255, 255, 0.4);
-  border-radius: 25px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
   margin: 0 15px;
-  box-shadow: inset 0 0 20px rgba(255, 105, 180, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2);
-  border: 3px dashed rgba(255, 105, 180, 0.5);
+  box-shadow: inset 0 0 15px rgba(255, 105, 180, 0.2);
+  border: 2px dashed rgba(255, 105, 180, 0.3);
   
-  /* Enhanced design for player hand area */
-  min-height: 210px;
-  width: 98%;
+  /* Enhance scrollable area to use more space */
+  min-height: 200px; /* Reduced from 250px */
+  width: 98%; /* Increased from 95% */
   max-width: 1200px;
   
   /* Bottom section */
   grid-row: 3;
-  
-  /* Add a subtle animation to draw attention */
-  animation: glow-player-hand 3s infinite alternate;
 }
 
 #player-hand::-webkit-scrollbar {
   display: none;
 }
 
-/* Animation for player hand area */
-@keyframes glow-player-hand {
-  0% { box-shadow: inset 0 0 20px rgba(255, 105, 180, 0.3), 0 5px 15px rgba(0, 0, 0, 0.2); }
-  100% { box-shadow: inset 0 0 30px rgba(255, 105, 180, 0.5), 0 8px 20px rgba(0, 0, 0, 0.3); }
-}
 
 .player-hand-container {
   position: relative;
@@ -507,38 +499,36 @@ body {
 }
 
 .card {
-  width: 110px; /* Larger for better visibility */
-  height: 165px; /* Larger for better visibility */
-  border-radius: 20px; /* More rounded corners for kid-friendly look */
+  width: 105px; /* Slightly larger for better visibility */
+  height: 158px; /* Slightly larger for better visibility */
+  border-radius: 15px; /* More rounded corners for kid-friendly look */
   background-color: white;
-  margin: 0 -12px 0 0; /* Overlapping cards */
+  margin: 0 -10px 0 0; /* Overlapping cards */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 30px; /* Larger font for better readability */
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(255, 255, 255, 0.5) inset; /* Enhanced shadow for 3D effect */
+  font-size: 28px; /* Larger font for better readability */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Stronger shadow for 3D effect */
   cursor: pointer;
   position: relative;
-  border: 6px solid white; /* Thicker border */
+  border: 5px solid white; /* Slightly thicker border */
   transform: scale(1);
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   overflow: hidden;
   z-index: 1; /* Base z-index */
 }
 
-/* Add enhanced hover effect for better interactivity */
+/* Add simple hover effect for better interactivity */
 .card:hover {
-  transform: translateY(-10px) rotate(2deg);
-  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 255, 255, 0.8) inset;
-  border-color: #ffee3e; /* Yellow border highlight */
-  z-index: 10; /* Bring hovered card to front */
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+  z-index: 5; /* Bring hovered card to front */
 }
 
 .card:active {
-  transform: scale(0.95) rotate(-2deg);
+  transform: scale(0.95);
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
 .card.shake, #deck.shake {
