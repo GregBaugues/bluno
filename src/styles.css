@@ -651,26 +651,21 @@ body {
   z-index: 2;
 }
 
-/* Playable card highlighting - enhanced to be more obvious for kids */
+/* Playable card highlighting - subtle but clear indicator for kids */
 .playable-card {
   box-shadow: 0 0 20px gold, 0 10px 20px rgba(0, 0, 0, 0.4);
-  animation: pulse-playable 1.2s infinite alternate;
   border-color: gold !important; /* Gold border to make it obvious */
   z-index: 5; /* Bring playable cards forward */
 }
 
-.playable-card::after {
-  content: '👈';
-  position: absolute;
-  top: -15px;
-  right: -15px;
-  font-size: 24px;
-  animation: bounce 0.8s infinite alternate;
+/* Subtle glow effect without movement */
+@keyframes glow-playable {
+  0% { box-shadow: 0 0 15px gold, 0 8px 16px rgba(0, 0, 0, 0.4); }
+  100% { box-shadow: 0 0 25px gold, 0 8px 16px rgba(0, 0, 0, 0.4); }
 }
 
-@keyframes pulse-playable {
-  0% { box-shadow: 0 0 20px gold, 0 10px 20px rgba(0, 0, 0, 0.4); transform: translateY(0); }
-  100% { box-shadow: 0 0 30px gold, 0 15px 25px rgba(0, 0, 0, 0.5); transform: translateY(-5px); }
+.playable-card {
+  animation: glow-playable 1.5s infinite alternate;
 }
 
 /* Card inner oval design */
