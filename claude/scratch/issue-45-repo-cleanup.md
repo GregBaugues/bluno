@@ -61,7 +61,10 @@ Breaking down the cleanup tasks into smaller, manageable steps:
   - run_wild_draw_four_test.js
   - run_wild_draw_four_test.sh
 
-### 5. Remove Unnecessary Files
+### 5. Move Scratch Directory
+- Move the entire scratch directory into the claude directory
+
+### 6. Remove Unnecessary Files
 - Remove the following files:
   - index.html.bak (backup file)
   - TESTING.md.part13 (partial file)
@@ -77,4 +80,4 @@ Breaking down the cleanup tasks into smaller, manageable steps:
 - Update README.md to reflect the new organization structure
 
 ## PR Link
-(To be added once PR is created)
+https://github.com/GregBaugues/bluno/pull/46
