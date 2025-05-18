@@ -138,9 +138,9 @@ export const SOUNDS = Object.freeze({
   },
   UNO_CALL: { type: 'synthesized' },
   WIN: { type: 'synthesized' },
-  BINGO: { type: 'sample', file: 'bingo.mp3', elementId: 'bingo-sound-preload' },
-  BLUEY: { type: 'sample', file: 'bluey.mp3', elementId: 'bluey-sound-preload' },
-  DAD: { type: 'sample', file: 'dad.mp3', elementId: 'dad-sound-preload' }
+  BINGO: { type: 'sample', file: 'audio/bingo.mp3', elementId: 'bingo-sound-preload' },
+  BLUEY: { type: 'sample', file: 'audio/bluey.mp3', elementId: 'bluey-sound-preload' },
+  DAD: { type: 'sample', file: 'audio/dad.mp3', elementId: 'dad-sound-preload' }
 });
 
 // UI style constants
