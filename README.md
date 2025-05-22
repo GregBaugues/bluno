@@ -41,8 +41,8 @@ A Bluey-themed Uno card game built for young children (specifically a 4-year-old
 
 1. Clone the repository:
    ```
-   git clone https://github.com/GregBaugues/bluey-uno.git
-   cd bluey-uno
+   git clone https://github.com/GregBaugues/bluno.git
+   cd bluno
    ```
 
 2. Install dependencies:
