@@ -125,6 +125,20 @@ The game is built with a modular architecture to maintain separation of concerns
 - **JavaScript** - Game logic and interactivity
 - **Parcel** - Bundling and development server
 
+### Code Quality
+
+The project uses ESLint for code quality and consistency:
+
+```bash
+# Run linting (if configured)
+npx eslint src/
+```
+
+**ESLint Configuration:**
+- Unused imports detection
+- Import/export validation
+- Modern JavaScript standards enforcement
+
 ### Testing
 
 The project uses Puppeteer for automated testing. Comprehensive testing documentation and examples can be found in `/claude/TESTING.md`. 
