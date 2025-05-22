@@ -13,6 +13,8 @@ A Bluey-themed Uno card game built for young children (specifically a 4-year-old
 - Character sounds and animations
 - Mobile/tablet-friendly design with touch controls
 - Responsive layout for different screen sizes
+- Card animations and visual feedback when cards are played
+- Enhanced visual design with better card and UI elements
 
 ## How to Play
 
@@ -70,8 +72,9 @@ The game is built with a modular architecture to maintain separation of concerns
 
 2. **Game Logic** (`game.js`)
    - Manages the core game state and flow
+   - Handles turn management and game flow
    - Processes card plays and special card effects
-   - Contains main game loop
+   - Contains AI logic for computer players
 
 3. **Player System** (`players.js`, `playerManager.js`)
    - Manages player creation and state
@@ -82,6 +85,7 @@ The game is built with a modular architecture to maintain separation of concerns
    - Renders the game interface based on game state
    - Handles user interactions and animations
    - Updates display in response to game events
+   - Manages animations and visual feedback
 
 5. **Sound System** (`sounds.js`)
    - Uses Web Audio API for game sounds
@@ -123,11 +127,52 @@ The game is built with a modular architecture to maintain separation of concerns
 
 ### Testing
 
-The project uses Puppeteer for automated testing. Testing documentation and examples can be found in `/claude/TESTING.md`. Key testing approaches include:
+The project uses Puppeteer for automated testing. Comprehensive testing documentation and examples can be found in `/claude/TESTING.md`. 
+
+#### Available Test Commands
+
+```bash
+# Run specific wild draw four test
+npm run test:wild-draw-four
+```
+
+#### Testing Approach
+
+Key testing methodologies include:
 
 - Screenshot-based testing for visual verification
 - DOM interaction testing via click events
-- Game state verification
+- Game state verification through automated gameplay
+- Selector-based element targeting for UI interactions
+- Visual comparison between different game states
+- Automated testing of special card mechanics (Wild Draw 4, etc.)
+
+### Recent Visual Enhancements
+
+The latest version includes several visual and UX improvements:
+
+1. **Card Animation and Feedback:**
+   - Playful animations when cards are played
+   - Visual effects for the discard pile
+   - Celebratory effects for special cards
+
+2. **Enhanced Player Turn Indication:**
+   - More prominent turn indicators
+   - Improved visual cues for the current player
+
+3. **Card Design Enhancement:**
+   - Larger, more colorful cards with rounded corners
+   - Gradient colors and improved emoji visuals
+   - Better hover and active states
+
+4. **Welcome Screen Improvement:**
+   - Enhanced visual design with animations
+   - Improved button interactions
+
+5. **Game Feedback Messages:**
+   - Better visual indicators for playable cards
+   - Enhanced UNO indicator with animations
+   - Clearer feedback for game actions
 
 ### Adding Character Images
 
