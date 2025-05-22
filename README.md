@@ -60,6 +60,33 @@ A Bluey-themed Uno card game built for young children (specifically a 4-year-old
    http://localhost:1234
    ```
 
+### Build Process
+
+To create a production build:
+
+```bash
+# Build for production
+npm run build
+```
+
+This creates optimized files in the `dist/` directory:
+- Minified and bundled JavaScript
+- Optimized CSS and assets
+- Production-ready HTML
+
+### Available Scripts
+
+```bash
+# Development server with hot reloading
+npm start
+
+# Production build
+npm run build
+
+# Run specific wild draw four test
+npm run test:wild-draw-four
+```
+
 ## Project Architecture
 
 The game is built with a modular architecture to maintain separation of concerns:
