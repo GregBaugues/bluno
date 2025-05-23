@@ -980,6 +980,215 @@ button:disabled {
   }
 }
 
+/* iPhone landscape mode optimizations */
+@media (orientation: landscape) and (max-height: 450px) {
+  /* iPhone-specific grid layout - tighter spacing for shorter screens */
+  #game-container {
+    grid-template-rows: 25% 38% 37%;
+    padding: 5px;
+  }
+  
+  /* Smaller character images for iPhone */
+  .character-image {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 24px !important;
+  }
+  
+  /* Smaller character names and card counts */
+  .character-name {
+    font-size: 18px !important;
+    margin-bottom: 3px !important;
+  }
+  
+  .card-count {
+    font-size: 16px !important;
+    padding: 3px 8px !important;
+  }
+  
+  /* Smaller opponent areas */
+  #opponents-area {
+    padding: 3px 15px 0 15px !important;
+  }
+  
+  .opponent {
+    gap: 0 !important;
+  }
+  
+  /* Smaller cards for iPhone */
+  .card {
+    width: 85px !important;
+    height: 128px !important;
+    font-size: 22px !important;
+    margin: 0 -8px 0 0 !important;
+  }
+  
+  /* Smaller deck and discard pile */
+  #deck, #discard-pile {
+    width: 90px !important;
+    height: 135px !important;
+    margin-top: 8px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  /* Adjust deck styling for smaller size */
+  .uno-logo {
+    font-size: 28px !important;
+    padding: 3px 10px !important;
+  }
+  
+  .deck-count {
+    font-size: 14px !important;
+    bottom: 6px !important;
+    right: 6px !important;
+    padding: 2px 6px !important;
+  }
+  
+  /* Smaller discard area */
+  .discard-cards-container {
+    min-width: 280px !important;
+    height: 150px !important;
+    padding-right: 30px !important;
+    padding-bottom: 15px !important;
+  }
+  
+  /* Tighter game area */
+  #game-area {
+    padding: 5px 15px !important;
+    margin-top: 3px !important;
+    margin-bottom: 3px !important;
+  }
+  
+  #deck {
+    margin-right: 20px !important;
+  }
+  
+  /* Smaller player hand area */
+  #player-hand {
+    min-height: 140px !important;
+    padding: 8px 5px !important;
+    margin: 0 10px !important;
+  }
+  
+  /* Smaller side indicators */
+  #side-indicators {
+    right: 3px !important;
+    gap: 6px !important;
+  }
+  
+  #color-indicator {
+    width: 50px !important;
+    height: 50px !important;
+    border: 3px solid white !important;
+  }
+  
+  /* Smaller card emojis and styling */
+  .card-emoji {
+    font-size: 45px !important;
+  }
+  
+  .card[data-value="Skip"] .card-emoji,
+  .card[data-value="Reverse"] .card-emoji,
+  .card[data-value="Draw 2"] .card-emoji,
+  .card[data-value="Wild"] .card-emoji {
+    font-size: 55px !important;
+  }
+  
+  .card[data-value="Wild Draw 4"] .card-emoji {
+    font-size: 60px !important;
+  }
+  
+  /* Smaller card corners */
+  .card-corner {
+    font-size: 20px !important;
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .card[data-value="0"] .card-corner,
+  .card[data-value="1"] .card-corner,
+  .card[data-value="2"] .card-corner,
+  .card[data-value="3"] .card-corner,
+  .card[data-value="4"] .card-corner,
+  .card[data-value="5"] .card-corner,
+  .card[data-value="6"] .card-corner,
+  .card[data-value="7"] .card-corner,
+  .card[data-value="8"] .card-corner,
+  .card[data-value="9"] .card-corner {
+    font-size: 26px !important;
+  }
+  
+  /* Smaller buttons */
+  button {
+    min-width: 70px !important;
+    height: 70px !important;
+    width: 70px !important;
+  }
+  
+  button::before {
+    font-size: 35px !important;
+  }
+  
+  /* Smaller UNO indicator */
+  .uno-indicator {
+    top: -15px !important;
+    right: -15px !important;
+    padding: 6px 10px !important;
+    font-size: 18px !important;
+  }
+  
+  /* Smaller current player indicator */
+  .opponent.current-player::before {
+    top: -20px !important;
+    font-size: 20px !important;
+  }
+  
+  /* Compact color choice dialog */
+  #color-choice {
+    padding: 20px !important;
+  }
+  
+  #color-choice h2 {
+    font-size: 24px !important;
+    margin-bottom: 15px !important;
+  }
+  
+  #color-choice button {
+    width: 80px !important;
+    height: 80px !important;
+    margin: 0 8px !important;
+  }
+  
+  /* Smaller fallback character styling */
+  .character-fallback {
+    font-size: 40px !important;
+  }
+  
+  /* Adjust Julia and Bingo displays for iPhone */
+  #julia-display {
+    top: 280px !important;
+    left: 25px !important;
+  }
+  
+  #julia-display > div:first-child,
+  #bingo-display > div:first-child {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  #julia-display .character-fallback,
+  #bingo-display .character-fallback {
+    font-size: 40px !important;
+  }
+  
+  #julia-display > div:last-child,
+  #bingo-display > div:last-child {
+    font-size: 16px !important;
+    padding: 5px 10px !important;
+    margin-top: 5px !important;
+  }
+}
+
 /* Small screens */
 @media (max-width: 600px) {
   .discard-cards-container {
