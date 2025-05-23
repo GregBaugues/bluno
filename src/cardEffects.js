@@ -2,6 +2,7 @@
 import { CARD_VALUES } from './constants.js';
 import { getNextPlayerIndex, gameLog } from './utils.js';
 import { chooseAIColor } from './gameRules.js';
+import { playAITurn } from './aiPlayer.js';
 
 /**
  * Handle Skip card effect
@@ -55,10 +56,9 @@ function handleReverseCard(gameState, updateGameDisplay) {
  * @param {Function} handleDrawCards - Function to handle drawing cards
  * @param {Function} handleSkipNextPlayer - Function to skip next player
  * @param {Function} updateGameDisplay - Function to update the UI
- * @param {Function} playAITurn - Function to trigger AI turn
  * @returns {Object} Effect result with skipNextTurn flag
  */
-function handleDraw2Card(gameState, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, playAITurn) {
+function handleDraw2Card(gameState, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, dependencies) {
   // Next player draws 2 cards and skips their turn
   const nextPlayerIndex = handleDrawCards(2);
   
@@ -81,7 +81,13 @@ function handleDraw2Card(gameState, handleDrawCards, handleSkipNextPlayer, updat
         
         // Let the next AI player take their turn
         if (gameState.currentPlayerIndex !== 0) {
-          setTimeout(playAITurn, 500);
+          const aiDependencies = {
+            playCard: dependencies.playCard,
+            drawSingleCard: dependencies.drawSingleCard,
+            nextTurn: dependencies.nextTurn,
+            updateGameDisplay: dependencies.updateGameDisplay
+          };
+          setTimeout(() => playAITurn(gameState, aiDependencies), 500);
         }
       }, 300);
     }
@@ -120,10 +126,9 @@ function handleWildCard(gameState) {
  * @param {Function} handleDrawCards - Function to handle drawing cards
  * @param {Function} handleSkipNextPlayer - Function to skip next player
  * @param {Function} updateGameDisplay - Function to update the UI
- * @param {Function} playAITurn - Function to trigger AI turn
  * @returns {Object} Effect result with skipNextTurn flag
  */
-function handleWildDraw4Card(gameState, getNextPlayerIndexFn, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, playAITurn) {
+function handleWildDraw4Card(gameState, getNextPlayerIndexFn, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, dependencies) {
   // For Wild Draw 4, the player who played it MUST choose color first
   // For human players, we already handle this in continueAfterCardPlay
   // For AI players, we need to handle the color selection here
@@ -161,7 +166,13 @@ function handleWildDraw4Card(gameState, getNextPlayerIndexFn, handleDrawCards, h
           
           // Let the next AI player take their turn
           if (gameState.currentPlayerIndex !== 0) {
-            setTimeout(playAITurn, 500);
+            const aiDependencies = {
+              playCard: dependencies.playCard,
+              drawSingleCard: dependencies.drawSingleCard,
+              nextTurn: dependencies.nextTurn,
+              updateGameDisplay: dependencies.updateGameDisplay
+            };
+            setTimeout(() => playAITurn(gameState, aiDependencies), 500);
           }
         }, 300);
       }
@@ -215,7 +226,7 @@ export function handleSpecialCard(card, gameState, dependencies) {
       break;
       
     case 'Draw 2':
-      result = handleDraw2Card(gameState, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, playAITurn);
+      result = handleDraw2Card(gameState, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, dependencies);
       break;
       
     case 'Wild':
@@ -223,7 +234,7 @@ export function handleSpecialCard(card, gameState, dependencies) {
       break;
       
     case 'Wild Draw 4':
-      result = handleWildDraw4Card(gameState, getNextPlayerIndexFn, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, playAITurn);
+      result = handleWildDraw4Card(gameState, getNextPlayerIndexFn, handleDrawCards, handleSkipNextPlayer, updateGameDisplay, dependencies);
       break;
       
     default:

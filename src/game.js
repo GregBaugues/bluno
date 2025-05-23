@@ -3,6 +3,7 @@ import { createPlayers } from './players.js';
 import { renderGame, updateGameDisplay, showWelcomeScreen } from './ui.js';
 import { canPlayCard, playerHasLegalMoves, chooseAIColor } from './gameRules.js';
 import { handleSpecialCard } from './cardEffects.js';
+import { playAITurn } from './aiPlayer.js';
 import { getNextPlayerIndex } from './utils.js';
 import soundSystem from './sounds.js';
 
@@ -78,7 +79,13 @@ function startGame(numPlayers = 2) { // Player + 1 Bluey character by default, c
   
   // If it's not the player's turn (index 0), let AI make a move
   if (gameState.currentPlayerIndex !== 0) {
-    setTimeout(playAITurn, 1000);
+    const aiDependencies = {
+      playCard,
+      drawSingleCard,
+      nextTurn,
+      updateGameDisplay
+    };
+    setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
   }
 }
 
@@ -219,7 +226,9 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
       handleDrawCards,
       handleSkipNextPlayer,
       updateGameDisplay,
-      playAITurn
+      playCard,
+      drawSingleCard,
+      nextTurn
     };
     const cardSkipNextTurn = skipNextTurn || handleSpecialCard(playedCard, gameState, specialCardDependencies);
     
@@ -241,7 +250,13 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
   
   // If it's AI's turn, let them play
   if (gameState.currentPlayerIndex !== 0) {
-    setTimeout(playAITurn, 1000);
+    const aiDependencies = {
+      playCard,
+      drawSingleCard,
+      nextTurn,
+      updateGameDisplay
+    };
+    setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
   }
 }
 
@@ -420,7 +435,13 @@ function chooseColor(gameStateParam, color) {
       // If it's AI's turn, let them play after a delay
       if (gs.currentPlayerIndex !== 0) {
         console.log("Starting next AI turn after Wild Draw 4 color choice and skip");
-        setTimeout(playAITurn, 1000);
+        const aiDependencies = {
+          playCard,
+          drawSingleCard,
+          nextTurn,
+          updateGameDisplay
+        };
+        setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
       } 
     } else {
       console.log("Human player needs to draw 4 cards from Wild Draw 4");
@@ -436,7 +457,13 @@ function chooseColor(gameStateParam, color) {
     
     // If it's AI's turn, let them play after a delay
     if (gs.currentPlayerIndex !== 0) {
-      setTimeout(playAITurn, 1000);
+      const aiDependencies = {
+        playCard,
+        drawSingleCard,
+        nextTurn,
+        updateGameDisplay
+      };
+      setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
     }
   }
 }
@@ -586,7 +613,13 @@ function handleRequiredDraw() {
       }
       
       console.log(`Starting AI turn for ${gameState.players[gameState.currentPlayerIndex].name} after human finished drawing`);
-      setTimeout(playAITurn, 1000);
+      const aiDependencies = {
+        playCard,
+        drawSingleCard,
+        nextTurn,
+        updateGameDisplay
+      };
+      setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
     }, 1000);
     
     return true; // Handled the last required draw
@@ -669,7 +702,13 @@ function drawCard() {
       // If it's AI's turn, let them play
       if (gameState.currentPlayerIndex !== 0) {
         console.log("Starting AI turn after human draw");
-        setTimeout(playAITurn, 1000);
+        const aiDependencies = {
+          playCard,
+          drawSingleCard,
+          nextTurn,
+          updateGameDisplay
+        };
+        setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
       }
     } else {
       console.log("Drawn card can be played - waiting for player to play it");
@@ -678,68 +717,6 @@ function drawCard() {
   }
 }
 
-// AI makes a turn
-function playAITurn() {
-  console.log("playAITurn called. Current player:", gameState.currentPlayerIndex);
-  
-  // Safety check - this function should only be called for AI players
-  if (gameState.currentPlayerIndex === 0) {
-    console.error("ERROR: playAITurn called for human player (index 0)");
-    return;
-  }
-  
-  // If ANY player is currently drawing cards, pause the game until drawing is complete
-  // This ensures the proper game flow and turn order
-  if (gameState.isDrawingCards || gameState.requiredDraws > 0) {
-    console.log("Game paused - waiting for player to finish drawing cards...");
-    return;
-  }
-  
-  // Reset drawing flag if it was mistakenly left on for AI players
-  if (gameState.isDrawingCards && gameState.currentPlayerIndex !== 0) {
-    console.log("Resetting drawing flag for AI player");
-    gameState.isDrawingCards = false;
-  }
-  
-  // Add an extra safety check for game state
-  if (!gameState.isGameStarted) {
-    console.error("ERROR: Attempted to play AI turn when game is not started");
-    return;
-  }
-  
-  const player = gameState.players[gameState.currentPlayerIndex];
-  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-  
-  // Look for a card to play
-  for (let i = 0; i < player.hand.length; i++) {
-    const card = player.hand[i];
-    if (canPlayCard(card, topDiscard, gameState.currentColor, player.hand)) {
-      // Play the card
-      setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, i), 500);
-      return;
-    }
-  }
-  
-  // If no card can be played, draw a card
-  const drawnCard = drawSingleCard(gameState.currentPlayerIndex);
-  
-  // Check if drawn card can be played
-  if (canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand)) {
-    // Play the card
-    setTimeout(() => playCard(gameState, gameState.currentPlayerIndex, player.hand.length - 1), 500);
-  } else {
-    // Move to next player's turn
-    nextTurn();
-    
-    // Update the UI
-    updateGameDisplay(gameState);
-    
-    // If it's still AI's turn, continue (but only if no player is drawing cards)
-    if (gameState.currentPlayerIndex !== 0 && !gameState.isDrawingCards) {
-      setTimeout(playAITurn, 1000);
-    }
-  }
-}
 
 // Move to next player's turn
 function nextTurn() {
