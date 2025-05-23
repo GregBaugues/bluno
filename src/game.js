@@ -2,6 +2,8 @@ import { createDeck, shuffleDeck, dealCards } from './deck.js';
 import { createPlayers } from './players.js';
 import { renderGame, updateGameDisplay, showWelcomeScreen } from './ui.js';
 import { canPlayCard, playerHasLegalMoves, chooseAIColor } from './gameRules.js';
+import { handleSpecialCard } from './cardEffects.js';
+import { getNextPlayerIndex } from './utils.js';
 import soundSystem from './sounds.js';
 
 // Game state
@@ -203,7 +205,7 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
     // For Wild Draw 4, set up the pending draw action for the next player
     if (playedCard.value === 'Wild Draw 4') {
       // Store the next player index who will draw
-      gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
+      gameState.pendingDrawPlayerIndex = getNextPlayerIndexForGame();
       gameState.pendingDrawCount = 4;
     }
     
@@ -212,7 +214,14 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
     return;
   } else {
     // Handle all other types of cards
-    const cardSkipNextTurn = skipNextTurn || handleSpecialCard(playedCard);
+    const specialCardDependencies = {
+      getNextPlayerIndex: getNextPlayerIndexForGame,
+      handleDrawCards,
+      handleSkipNextPlayer,
+      updateGameDisplay,
+      playAITurn
+    };
+    const cardSkipNextTurn = skipNextTurn || handleSpecialCard(playedCard, gameState, specialCardDependencies);
     
     // Check for Uno - automatically call for everyone
     if (player.hand.length === 1 && !player.hasCalledUno) {
@@ -239,18 +248,14 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
 
 // Helper functions for special card handling
 
-// Get the next player index based on current player and direction
-function getNextPlayerIndex() {
-  let nextIndex = (gameState.currentPlayerIndex + gameState.direction) % gameState.players.length;
-  if (nextIndex < 0) {
-    nextIndex += gameState.players.length;
-  }
-  return nextIndex;
+// Helper function to get next player index using the utils function
+function getNextPlayerIndexForGame() {
+  return getNextPlayerIndex(gameState.currentPlayerIndex, gameState.direction, gameState.players.length);
 }
 
 // Handle drawing cards for the next player
 function handleDrawCards(numCards) {
-  const nextPlayerIndex = getNextPlayerIndex();
+  const nextPlayerIndex = getNextPlayerIndexForGame();
   const nextPlayer = gameState.players[nextPlayerIndex];
   
   console.log(`handleDrawCards: ${numCards} cards for player ${nextPlayerIndex} (${nextPlayer.name})`);
@@ -357,153 +362,6 @@ function handleWildCardColor() {
   // For human player, we'll show color choice UI (handled in playCard function)
 }
 
-// Handle special cards
-function handleSpecialCard(card) {
-  // Always update the current color to the card's color
-  // This fixes the color not updating when playing special cards
-  if (card.color !== 'wild') {
-    gameState.currentColor = card.color;
-  }
-  
-  // Flag to indicate if this card handles its own turn advancement
-  let skipNextTurn = false;
-  
-  switch (card.value) {
-    case 'Skip':
-      // Skip the next player
-      const skippedPlayerIndex = getNextPlayerIndex();
-      const skippedPlayerName = gameState.players[skippedPlayerIndex].name;
-      console.log(`${skippedPlayerName}'s turn is skipped`);
-      
-      gameState.currentPlayerIndex = skippedPlayerIndex;
-      skipNextTurn = false; // Let normal turn advancement happen
-      break;
-      
-    case 'Reverse':
-      // Reverse direction
-      gameState.direction *= -1;
-      console.log(`Direction reversed: now playing ${gameState.direction === 1 ? 'clockwise' : 'counter-clockwise'}`);
-      
-      // Make sure UI updates when direction changes
-      updateGameDisplay(gameState);
-      // In a 2-player game, reverse acts like skip
-      if (gameState.players.length === 2) {
-        gameState.currentPlayerIndex = getNextPlayerIndex();
-        console.log("2-player game: Reverse acts like Skip");
-      }
-      skipNextTurn = false; // Let normal turn advancement happen
-      break;
-      
-    case 'Draw 2':
-      // Next player draws 2 cards and skips their turn
-      const nextPlayerIndex = handleDrawCards(2);
-      
-      // Check for AI-to-AI drawing situation
-      const isCurrentPlayerAI = gameState.players[gameState.currentPlayerIndex].isAI;
-      const isNextPlayerAI = gameState.players[nextPlayerIndex].isAI;
-      const isAItoAIDrawing = isCurrentPlayerAI && isNextPlayerAI;
-      
-      // Handle AI and human players differently:
-      if (isNextPlayerAI) {
-        // For AI, skip their turn immediately since they've already drawn
-        handleSkipNextPlayer(nextPlayerIndex);
-        
-        // For AI-to-AI interactions, add a small delay to prevent freezing
-        if (isAItoAIDrawing) {
-          // Allow a small delay for UI updates
-          setTimeout(() => {
-            // Continue with the normal game flow after delay
-            updateGameDisplay(gameState);
-            
-            // Let the next AI player take their turn
-            if (gameState.currentPlayerIndex !== 0) {
-              setTimeout(playAITurn, 500);
-            }
-          }, 300);
-        }
-        
-        // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
-        // to avoid skipping two turns
-        skipNextTurn = true;
-      } else {
-        // For human players, we pause the game until they draw all required cards
-        // Don't advance the turn yet - it will happen after they finish drawing
-        skipNextTurn = true;
-      }
-      break;
-      
-    case 'Wild':
-      // Handle wild card color selection
-      handleWildCardColor();
-      skipNextTurn = false; // Let normal turn advancement happen
-      break;
-      
-    case 'Wild Draw 4':
-      // For Wild Draw 4, the player who played it MUST choose color first
-      // For human players, we already handle this in continueAfterCardPlay
-      // For AI players, we need to handle the color selection here
-      
-      if (gameState.players[gameState.currentPlayerIndex].isAI) {
-        // AI chooses color based on their hand
-        handleWildCardColor();
-        
-        // Store the next player index who will draw (important: do this BEFORE changing turns)
-        gameState.pendingDrawPlayerIndex = getNextPlayerIndex();
-        gameState.pendingDrawCount = 4;
-        
-        // Next player draws 4 cards and loses turn
-        const nextIdx = handleDrawCards(4);
-        
-        // Check for AI-to-AI drawing situation
-        const isCurrentPlayerAI_WD4 = gameState.players[gameState.currentPlayerIndex].isAI;
-        const isNextPlayerAI_WD4 = gameState.players[nextIdx].isAI;
-        const isAItoAIDrawing_WD4 = isCurrentPlayerAI_WD4 && isNextPlayerAI_WD4;
-        
-        // Handle AI and human players differently:
-        if (isNextPlayerAI_WD4) {
-          // For AI, skip their turn immediately since they've already drawn
-          handleSkipNextPlayer(nextIdx);
-          
-          // For AI-to-AI interactions, add a small delay to prevent freezing
-          if (isAItoAIDrawing_WD4) {
-            // Allow a small delay for UI updates
-            setTimeout(() => {
-              // Continue with the normal game flow after delay
-              updateGameDisplay(gameState);
-              
-              // Let the next AI player take their turn
-              if (gameState.currentPlayerIndex !== 0) {
-                setTimeout(playAITurn, 500);
-              }
-            }, 300);
-          }
-          
-          // Since we manually called handleSkipNextPlayer, we should skip the normal nextTurn()
-          // to avoid skipping two turns
-          skipNextTurn = true;
-        } else {
-          // For human players, we pause the game until they draw all required cards
-          // Don't advance the turn yet - it will happen after they finish drawing
-          skipNextTurn = true;
-        }
-      } else {
-        // Human player plays Wild Draw 4
-        // We don't handle any draw logic here
-        // It will be handled after the player chooses a color in chooseColor()
-        skipNextTurn = true; // Prevent automatic turn advancement
-      }
-      break;
-      
-    default:
-      // We already set the current color at the beginning of this function
-      // for all non-wild cards, so no additional action is needed here
-      skipNextTurn = false; // Let normal turn advancement happen
-      break;
-  }
-  
-  // Return a flag indicating if we should skip the normal nextTurn() call
-  return skipNextTurn;
-}
 
 
 // Show color choice UI for human player
@@ -535,12 +393,12 @@ function chooseColor(gameStateParam, color) {
   if (wasWildDraw4) {
     // Store the next player index who will draw (if not already stored)
     if (gs.pendingDrawPlayerIndex === null) {
-      gs.pendingDrawPlayerIndex = getNextPlayerIndex();
+      gs.pendingDrawPlayerIndex = getNextPlayerIndexForGame();
     }
     
     // Get the next player who will draw
     // For a Wild Draw 4 played on the human player, the next player should be the human (index 0)
-    const nextPlayerIndex = getNextPlayerIndex();
+    const nextPlayerIndex = getNextPlayerIndexForGame();
     console.log(`After Wild Draw 4 color choice, next player (${gs.players[nextPlayerIndex].name}) will draw 4 cards`);
     
     // Check if the next player is AI or human
@@ -661,7 +519,7 @@ function handleRequiredDraw() {
     
     // Now that we've restored the current player index, determine who's next
     // For Wild Draw 4, we need to skip the next player (which should be the human player)
-    const nextPlayerIndex = getNextPlayerIndex();
+    const nextPlayerIndex = getNextPlayerIndexForGame();
     // We need to calculate the player after the one being skipped
     const skipToPlayerIndex = (nextPlayerIndex + gameState.direction) % gameState.players.length;
     const skipToPlayerName = gameState.players[skipToPlayerIndex < 0 ? skipToPlayerIndex + gameState.players.length : skipToPlayerIndex].name;
