@@ -74,12 +74,12 @@ export function handleRegularWildCard(gameState, nextTurn, updateGameDisplay, pl
  * @returns {boolean} Whether the card can be played
  */
 export function checkDrawnCardPlayability(drawnCard, topDiscard, currentColor, playerHand, canPlayCard) {
-  const isPlayable = !canPlayCard(drawnCard, topDiscard, currentColor, playerHand);
+  const isPlayable = canPlayCard(drawnCard, topDiscard, currentColor, playerHand);
   
   if (isPlayable) {
-    gameLog("Drawn card can't be played - moving to next player");
-  } else {
     gameLog("Drawn card can be played - waiting for player to play it");
+  } else {
+    gameLog("Drawn card can't be played - moving to next player");
   }
   
   return isPlayable;

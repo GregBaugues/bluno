@@ -1,12 +1,17 @@
+// External/utility imports
+import { getNextPlayerIndex } from './utils.js';
+import soundSystem from './sounds.js';
+
+// Core game modules
 import { createDeck, shuffleDeck, dealCards } from './deck.js';
 import { createPlayers } from './players.js';
 import { renderGame, updateGameDisplay, showWelcomeScreen } from './ui.js';
+
+// New modular imports
 import { canPlayCard, playerHasLegalMoves, chooseAIColor } from './gameRules.js';
 import { handleSpecialCard } from './cardEffects.js';
 import { playAITurn } from './aiPlayer.js';
-import { getNextPlayerIndex } from './utils.js';
 import { createAIDependencies, handleWildDraw4ForAI, handleRegularWildCard, validateCardDraw, checkDrawnCardPlayability, handleEndOfTurnAI } from './gameHelpers.js';
-import soundSystem from './sounds.js';
 
 // Game state
 let gameState = {
@@ -481,119 +486,89 @@ function animateDeckDraw() {
 }
 
 
-// Handle required draws (Draw 2 or Draw 4)
-function handleRequiredDraw() {
-  // Decrement the required draws counter
-  gameState.requiredDraws--;
+/**
+ * Restores the player index after required draws and calculates skip target
+ * @returns {number} The index of the player who should take the next turn
+ */
+function restorePlayerIndexAndCalculateSkip() {
+  console.log(`Before index restoration - currentPlayerIndex: ${gameState.currentPlayerIndex}, pendingDrawPlayerIndex: ${gameState.pendingDrawPlayerIndex}`);
   
-  // Update UI to show the updated counter
-  updateGameDisplay(gameState);
+  // Restore the original player index if we temporarily changed it
+  if (gameState.pendingDrawPlayerIndex !== null && gameState.pendingDrawPlayerIndex !== undefined) {
+    console.log(`Restoring player index from ${gameState.currentPlayerIndex} to ${gameState.pendingDrawPlayerIndex}`);
+    gameState.currentPlayerIndex = gameState.pendingDrawPlayerIndex;
+    gameState.pendingDrawPlayerIndex = null;
+  } else {
+    console.log("No player index to restore (pendingDrawPlayerIndex was null)");
+  }
   
-  // If that was the last required draw, end turn
-  if (gameState.requiredDraws === 0) {
-    // Play a sound to indicate all required cards have been drawn
-    setTimeout(() => {
-      soundSystem.play('cardPlay');
-    }, 300);
-    
-    // Reset the drawing cards flag
-    gameState.isDrawingCards = false;
-    
-    // DEBUG: Before restoration
-    console.log(`Before index restoration - currentPlayerIndex: ${gameState.currentPlayerIndex}, pendingDrawPlayerIndex: ${gameState.pendingDrawPlayerIndex}`);
-    
-    // For Wild Draw 4, the player's turn should be skipped
-    // First, we need to restore the currentPlayerIndex to the AI player who played the Wild Draw 4
-    // Then we need to properly skip the human player's turn
-    
-    // Restore the original player index if we temporarily changed it
-    // This must happen BEFORE we determine the next player
-    if (gameState.pendingDrawPlayerIndex !== null && gameState.pendingDrawPlayerIndex !== undefined) {
-      console.log(`Restoring player index from ${gameState.currentPlayerIndex} to ${gameState.pendingDrawPlayerIndex}`);
-      gameState.currentPlayerIndex = gameState.pendingDrawPlayerIndex;
-      gameState.pendingDrawPlayerIndex = null;
-    } else {
-      console.log("No player index to restore (pendingDrawPlayerIndex was null)");
-    }
-    
-    // Now that we've restored the current player index, determine who's next
-    // For Wild Draw 4, we need to skip the next player (which should be the human player)
-    const nextPlayerIndex = getNextPlayerIndexForGame();
-    // We need to calculate the player after the one being skipped
-    const skipToPlayerIndex = (nextPlayerIndex + gameState.direction) % gameState.players.length;
-    const skipToPlayerName = gameState.players[skipToPlayerIndex < 0 ? skipToPlayerIndex + gameState.players.length : skipToPlayerIndex].name;
-    
-    // Show a message indicating all required cards have been drawn and turn is skipped
-    window.dispatchEvent(new CustomEvent('drawRequirementComplete', {
-      detail: { 
-        message: `Cards drawn! Your turn is skipped. ${skipToPlayerName}'s turn now.` 
-      }
-    }));
-    
-    // We need TWO turn advancements for Draw 2/Draw 4:
-    // 1. First advance from the player who played the card to you (already happened)
-    // 2. Second advance from you to the next player (needs to happen now)
-    
-    // SKIP: By default, after required draws, the person drawing should NOT play.
-    // For Wild Draw 4, after the player finishes drawing, their turn is skipped
-    console.log(`Turn will now be skipped for ${gameState.players[gameState.currentPlayerIndex].name}`);
-    
-    // For Draw 2/Draw 4, we need to ensure that:
-    // 1. We restore currentPlayerIndex to the person who played the Draw card
-    // 2. Then we skip over the human player (index 0) who just drew the cards
-    // 3. This should result in the next player after the human player getting a turn
-    
-    // We've already restored currentPlayerIndex to the person who played the card
-    // Now we need to advance the turn past the human player who drew cards
-    
-    // The human player (index 0) should be completely skipped after drawing
-    // Calculate the next player after human in the current direction
-    const humanPlayerIndex = 0;
-    let nextAfterHumanIndex = (humanPlayerIndex + gameState.direction) % gameState.players.length;
+  // Calculate the player after the human who should take the next turn
+  const humanPlayerIndex = 0;
+  let nextAfterHumanIndex = (humanPlayerIndex + gameState.direction) % gameState.players.length;
+  if (nextAfterHumanIndex < 0) {
+    nextAfterHumanIndex += gameState.players.length;
+  }
+  
+  // Ensure we never give the human player an immediate turn after drawing
+  if (nextAfterHumanIndex === 0) {
+    nextAfterHumanIndex = (nextAfterHumanIndex + gameState.direction) % gameState.players.length;
     if (nextAfterHumanIndex < 0) {
       nextAfterHumanIndex += gameState.players.length;
     }
+  }
+  
+  return nextAfterHumanIndex;
+}
+
+/**
+ * Completes the required draw sequence by setting up the next turn
+ * @param {number} nextPlayerIndex - Index of the player who should take the next turn
+ */
+function completeRequiredDrawSequence(nextPlayerIndex) {
+  // Play sound and reset drawing state
+  setTimeout(() => soundSystem.play('cardPlay'), 300);
+  gameState.isDrawingCards = false;
+  
+  // Set up turn skip notification
+  const nextPlayerIndex_forUI = getNextPlayerIndexForGame();
+  const skipToPlayerIndex = (nextPlayerIndex_forUI + gameState.direction) % gameState.players.length;
+  const skipToPlayerName = gameState.players[skipToPlayerIndex < 0 ? skipToPlayerIndex + gameState.players.length : skipToPlayerIndex].name;
+  
+  window.dispatchEvent(new CustomEvent('drawRequirementComplete', {
+    detail: { 
+      message: `Cards drawn! Your turn is skipped. ${skipToPlayerName}'s turn now.` 
+    }
+  }));
+  
+  // Set the next player
+  gameState.currentPlayerIndex = nextPlayerIndex;
+  console.log("After Draw 2/Draw 4 turn skip - Current player is now:", gameState.currentPlayerIndex, 
+              `(${gameState.players[gameState.currentPlayerIndex].name})`);
+  
+  // Start the next AI turn after a delay
+  setTimeout(() => {
+    updateGameDisplay(gameState);
     
-    // In a 2-player game, if we skip the human, we go back to the AI who played the draw card
-    // In games with 3+ players, we go to the next player in sequence after the human
-    // Either way, the result should NEVER be the human player getting another turn immediately
-    if (nextAfterHumanIndex === 0) {
-      // If calculation results in human player again, force it to the next AI player
-      nextAfterHumanIndex = (nextAfterHumanIndex + gameState.direction) % gameState.players.length;
-      if (nextAfterHumanIndex < 0) {
-        nextAfterHumanIndex += gameState.players.length;
-      }
+    // Safety check and start AI turn
+    if (gameState.currentPlayerIndex === 0) {
+      console.error("ERROR: Human player should not get turn immediately after drawing from Draw 2/Draw 4");
+      gameState.currentPlayerIndex = 1;
     }
     
-    // Skip directly to the player after the human player
-    gameState.currentPlayerIndex = nextAfterHumanIndex;
-    
-    console.log("After Draw 2/Draw 4 turn skip - Current player is now:", gameState.currentPlayerIndex, 
-                `(${gameState.players[gameState.currentPlayerIndex].name})`);
-    
-    // Show a short delay to let the player see their drawn cards
-    setTimeout(() => {
-      // Update the UI
-      updateGameDisplay(gameState);
-      
-      // After drawing from Draw 2/Draw 4, it should ALWAYS be an AI's turn (never human)
-      // If somehow the calculation resulted in human player turn, that's a bug
-      if (gameState.currentPlayerIndex === 0) {
-        console.error("ERROR: Human player should not get turn immediately after drawing from Draw 2/Draw 4");
-        // Force it to the next AI player as a fallback
-        gameState.currentPlayerIndex = 1; // In all game configurations, player 1 is always an AI
-      }
-      
-      console.log(`Starting AI turn for ${gameState.players[gameState.currentPlayerIndex].name} after human finished drawing`);
-      const aiDependencies = {
-        playCard,
-        drawSingleCard,
-        nextTurn,
-        updateGameDisplay
-      };
-      setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
-    }, 1000);
-    
+    console.log(`Starting AI turn for ${gameState.players[gameState.currentPlayerIndex].name} after human finished drawing`);
+    const aiDependencies = createAIDependencies(playCard, drawSingleCard, nextTurn, updateGameDisplay);
+    setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
+  }, 1000);
+}
+
+// Handle required draws (Draw 2 or Draw 4)
+function handleRequiredDraw() {
+  gameState.requiredDraws--;
+  updateGameDisplay(gameState);
+  
+  if (gameState.requiredDraws === 0) {
+    const nextPlayerIndex = restorePlayerIndexAndCalculateSkip();
+    completeRequiredDrawSequence(nextPlayerIndex);
     return true; // Handled the last required draw
   }
   

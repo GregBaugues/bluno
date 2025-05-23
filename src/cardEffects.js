@@ -1,5 +1,4 @@
 // Special card effects module for Bluey Uno
-import { CARD_VALUES } from './constants.js';
 import { getNextPlayerIndex, gameLog } from './utils.js';
 import { chooseAIColor } from './gameRules.js';
 import { playAITurn } from './aiPlayer.js';
