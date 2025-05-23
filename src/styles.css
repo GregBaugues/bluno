@@ -37,45 +37,59 @@ body {
   bottom: 0;
 }
 
+:root {
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --shadow-level-1: 0 2px 8px rgba(0,0,0,0.12);
+  --shadow-level-2: 0 4px 16px rgba(0,0,0,0.16);
+  --shadow-level-3: 0 8px 32px rgba(0,0,0,0.24);
+}
+
 /* iPad Mini in landscape orientation is roughly 1024x768 */
 #game-container {
   width: 100%;
   height: 100%;
   background-color: #ffc0dc; /* Back to simple background */
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  position: relative; /* For absolute positioning of side elements */
-  /* Explicitly define the three sections with flex */
+  padding: var(--spacing-md);
   display: grid;
-  grid-template-rows: 33.33% 33.33% 33.33%;
+  grid-template-areas: 
+    "opponents opponents opponents"
+    "sidebar game-center game-right"
+    "player-info player-hand player-controls";
+  grid-template-rows: 30% 35% 35%;
+  grid-template-columns: 200px 1fr 200px;
+  gap: var(--spacing-sm);
+  overflow: hidden;
+  position: relative;
 }
 
 /* Side indicators container */
 #side-indicators {
-  position: absolute;
-  right: 5px; /* Closer to the edge */
-  top: 50%;
-  transform: translateY(-50%);
+  grid-area: game-right;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px; /* Reduced gap between indicators */
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
   z-index: 100;
 }
 
 #opponents-area {
+  grid-area: opponents;
   display: flex;
   justify-content: space-evenly;
-  align-items: flex-start; /* Ensure all items start from the top */
+  align-items: flex-start;
   height: 100%;
-  padding: 5px 20px 0 20px; /* Reduced padding */
+  padding: var(--spacing-sm) var(--spacing-md) 0 var(--spacing-md);
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  /* Top section */
-  grid-row: 1;
 }
 
 .opponent-slot {
@@ -112,7 +126,7 @@ body {
   align-items: center;
   font-size: 32px;
   font-weight: bold;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-level-2);
   overflow: hidden;
   position: relative;
 }
@@ -248,30 +262,27 @@ body {
 }
 
 #game-area {
+  grid-area: game-center;
   display: flex;
-  justify-content: flex-start; /* Back to original */
+  justify-content: flex-start;
   align-items: center;
   position: relative;
-  padding: 10px 20px; /* Less padding */
-  /* Middle section */
-  grid-row: 2;
+  padding: var(--spacing-sm) var(--spacing-md);
   width: 100%;
   height: 100%;
-  margin-top: 5px;
-  margin-bottom: 5px;
 }
 
 #deck, #discard-pile {
   width: 112px; /* Back to original size */
   height: 168px; /* Back to original size */
-  border-radius: 15px;
+  border-radius: var(--border-radius-md);
   position: relative;
-  margin-top: 15px; 
-  margin-bottom: 15px;
+  margin-top: var(--spacing-md); 
+  margin-bottom: var(--spacing-md);
 }
 
 #deck {
-  margin-right: 30px;
+  margin-right: var(--spacing-lg);
   z-index: 10;
 }
 
@@ -283,13 +294,14 @@ body {
 
 #deck {
   background-color: white;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-level-2);
   display: flex;
   justify-content: center;
   align-items: center;
   transition: all 0.3s ease;
   overflow: hidden;
   border: 5px solid white;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   position: relative;
 }
@@ -416,7 +428,7 @@ body {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-level-2);
   border: 5px solid white;
   position: relative;
   background-color: #bdbdbd; /* Default gray color */
@@ -454,38 +466,34 @@ body {
 }
 
 #julia-display {
-  position: absolute;
-  top: 400px;
-  left: 40px;
+  grid-area: sidebar;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
   z-index: 100;
 }
 
 #player-hand {
+  grid-area: player-hand;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow-x: auto;
   position: relative;
-  padding: 15px 10px;
+  padding: var(--spacing-md) var(--spacing-sm);
   scrollbar-width: none;
   -ms-overflow-style: none;
   background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
-  margin: 0 15px;
-  box-shadow: inset 0 0 15px rgba(255, 105, 180, 0.2);
+  border-radius: var(--border-radius-lg);
+  margin: 0 var(--spacing-md);
+  box-shadow: var(--shadow-level-2), inset 0 0 15px rgba(255, 105, 180, 0.2);
   border: 2px dashed rgba(255, 105, 180, 0.3);
-  
-  /* Enhance scrollable area to use more space */
-  min-height: 200px; /* Reduced from 250px */
-  width: 98%; /* Increased from 95% */
+  min-height: 200px;
+  width: 98%;
   max-width: 1200px;
-  
-  /* Bottom section */
-  grid-row: 3;
 }
 
 #player-hand::-webkit-scrollbar {
@@ -501,7 +509,7 @@ body {
 .card {
   width: 105px; /* Slightly larger for better visibility */
   height: 158px; /* Slightly larger for better visibility */
-  border-radius: 15px; /* More rounded corners for kid-friendly look */
+  border-radius: var(--border-radius-md); /* More rounded corners for kid-friendly look */
   background-color: white;
   margin: 0 -10px 0 0; /* Overlapping cards */
   display: flex;
@@ -509,7 +517,7 @@ body {
   justify-content: center;
   align-items: center;
   font-size: 28px; /* Larger font for better readability */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Stronger shadow for 3D effect */
+  box-shadow: var(--shadow-level-1); /* Modern shadow system */
   cursor: pointer;
   position: relative;
   border: 5px solid white; /* Slightly thicker border */
@@ -522,13 +530,13 @@ body {
 /* Add simple hover effect for better interactivity */
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-level-3);
   z-index: 5; /* Bring hovered card to front */
 }
 
 .card:active {
   transform: scale(0.95);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-level-1);
 }
 
 .card.shake, #deck.shake {
@@ -830,7 +838,7 @@ body {
 }
 
 #controls button {
-  margin: 0 20px;
+  margin: 0 var(--spacing-md);
 }
 
 button {
@@ -839,10 +847,10 @@ button {
   background-color: #ff66a5; /* Pink buttons */
   color: white;
   border: none;
-  border-radius: 25px;
+  border-radius: var(--border-radius-lg);
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 6px 0 #e5407e; /* Darker pink shadow */
+  box-shadow: var(--shadow-level-2);
   outline: none;
   min-width: 100px;
   height: 100px;
@@ -885,19 +893,19 @@ button:disabled {
 
 #color-choice {
   border: 8px solid white;
-  border-radius: 25px;
+  border-radius: var(--border-radius-lg);
   background-color: white;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-level-3);
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 30px;
+  padding: var(--spacing-lg);
   z-index: 1000;
 }
 
 #color-choice h2 {
-  margin-bottom: 25px;
+  margin-bottom: var(--spacing-md);
   text-align: center;
   font-size: 32px;
 }
@@ -910,9 +918,9 @@ button:disabled {
 #color-choice button {
   width: 120px;
   height: 120px;
-  border-radius: 25px;
-  margin: 0 15px;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius-lg);
+  margin: 0 var(--spacing-md);
+  box-shadow: var(--shadow-level-2);
 }
 
 /* Special color styling for color buttons */
@@ -925,19 +933,34 @@ button:disabled {
 @media (orientation: landscape) {
   #game-container {
     grid-template-rows: 28% 36% 36%;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
   }
   
   #opponents-area {
     height: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm) 0 var(--spacing-sm);
   }
   
   #game-area {
     width: 100%;
     height: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
   
   #player-hand {
     height: 100%;
+    padding: var(--spacing-sm) var(--spacing-xs);
+    margin: 0 var(--spacing-sm);
+  }
+  
+  #julia-display {
+    padding: var(--spacing-sm);
+  }
+  
+  #side-indicators {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
   }
   
   #controls {
@@ -953,6 +976,30 @@ button:disabled {
 @media (orientation: portrait) {
   #game-container {
     grid-template-rows: 30% 35% 35%;
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
+  }
+  
+  #opponents-area {
+    padding: var(--spacing-xs) var(--spacing-sm) 0 var(--spacing-sm);
+  }
+  
+  #game-area {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  #player-hand {
+    padding: var(--spacing-sm) var(--spacing-xs);
+    margin: 0 var(--spacing-sm);
+  }
+  
+  #julia-display {
+    padding: var(--spacing-sm);
+  }
+  
+  #side-indicators {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-xs);
   }
   
   .character-image {
