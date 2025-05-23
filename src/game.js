@@ -5,6 +5,7 @@ import { canPlayCard, playerHasLegalMoves, chooseAIColor } from './gameRules.js'
 import { handleSpecialCard } from './cardEffects.js';
 import { playAITurn } from './aiPlayer.js';
 import { getNextPlayerIndex } from './utils.js';
+import { createAIDependencies, handleWildDraw4ForAI, handleRegularWildCard, validateCardDraw, checkDrawnCardPlayability, handleEndOfTurnAI } from './gameHelpers.js';
 import soundSystem from './sounds.js';
 
 // Game state
@@ -404,67 +405,38 @@ function chooseColor(gameStateParam, color) {
   const lastPlayedCard = gs.discardPile[gs.discardPile.length - 1];
   const wasWildDraw4 = lastPlayedCard.value === 'Wild Draw 4';
   
-  // If it was a Wild Draw 4, make the next player draw 4 cards
+  const aiDependencies = createAIDependencies(playCard, drawSingleCard, nextTurn, updateGameDisplay);
+  
   if (wasWildDraw4) {
-    // Store the next player index who will draw (if not already stored)
-    if (gs.pendingDrawPlayerIndex === null) {
-      gs.pendingDrawPlayerIndex = getNextPlayerIndexForGame();
-    }
-    
-    // Get the next player who will draw
-    // For a Wild Draw 4 played on the human player, the next player should be the human (index 0)
-    const nextPlayerIndex = getNextPlayerIndexForGame();
-    console.log(`After Wild Draw 4 color choice, next player (${gs.players[nextPlayerIndex].name}) will draw 4 cards`);
-    
-    // Check if the next player is AI or human
-    const isNextPlayerAI = gs.players[nextPlayerIndex].isAI;
-    
-    // Have the next player draw 4 cards
-    handleDrawCards(4);
-    
-    // Handle AI and human players differently:
-    if (isNextPlayerAI) {
-      console.log("Wild Draw 4 - AI player needs to draw and be skipped");
-      
-      // For AI players, skip their turn immediately
-      handleSkipNextPlayer(nextPlayerIndex);
-      
-      // Update the UI immediately
-      updateGameDisplay(gs);
-      
-      // If it's AI's turn, let them play after a delay
-      if (gs.currentPlayerIndex !== 0) {
-        console.log("Starting next AI turn after Wild Draw 4 color choice and skip");
-        const aiDependencies = {
-          playCard,
-          drawSingleCard,
-          nextTurn,
-          updateGameDisplay
-        };
-        setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
-      } 
-    } else {
-      console.log("Human player needs to draw 4 cards from Wild Draw 4");
-      // For human players, we've already set up the drawing state
-      // The turn will be handled automatically when they finish drawing
-    }
+    handleWildDraw4ColorChoice(gs, aiDependencies);
   } else {
-    // For regular Wild cards, just move to next player's turn
-    nextTurn();
-    
-    // Update the UI
-    updateGameDisplay(gs);
-    
-    // If it's AI's turn, let them play after a delay
-    if (gs.currentPlayerIndex !== 0) {
-      const aiDependencies = {
-        playCard,
-        drawSingleCard,
-        nextTurn,
-        updateGameDisplay
-      };
-      setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
-    }
+    handleRegularWildCard(gs, nextTurn, updateGameDisplay, playAITurn, aiDependencies);
+  }
+}
+
+// Helper function to handle Wild Draw 4 color choice logic
+function handleWildDraw4ColorChoice(gs, aiDependencies) {
+  // Store the next player index who will draw (if not already stored)
+  if (gs.pendingDrawPlayerIndex === null) {
+    gs.pendingDrawPlayerIndex = getNextPlayerIndexForGame();
+  }
+  
+  // Get the next player who will draw
+  const nextPlayerIndex = getNextPlayerIndexForGame();
+  console.log(`After Wild Draw 4 color choice, next player (${gs.players[nextPlayerIndex].name}) will draw 4 cards`);
+  
+  // Have the next player draw 4 cards
+  handleDrawCards(4);
+  
+  // Handle AI and human players differently
+  const isNextPlayerAI = gs.players[nextPlayerIndex].isAI;
+  
+  if (isNextPlayerAI) {
+    handleWildDraw4ForAI(gs, nextPlayerIndex, handleSkipNextPlayer, updateGameDisplay, playAITurn, aiDependencies);
+  } else {
+    console.log("Human player needs to draw 4 cards from Wild Draw 4");
+    // For human players, we've already set up the drawing state
+    // The turn will be handled automatically when they finish drawing
   }
 }
 
@@ -632,24 +604,28 @@ function handleRequiredDraw() {
 function drawCard() {
   console.log(`drawCard called - requiredDraws: ${gameState.requiredDraws}`);
   
-  // Always allow drawing if the player has required draws
-  if (gameState.requiredDraws > 0) {
-    // This is fine, we want to allow drawing when required
-    console.log(`Allowing draw due to requiredDraws: ${gameState.requiredDraws}`);
-  } else if (gameState.currentPlayerIndex !== 0) {
-    // Otherwise only human player can use this function when it's their turn
-    console.log(`Blocking draw - not human player's turn`);
-    return;
+  // Validate if draw is allowed
+  const validation = validateCardDraw(
+    gameState, 
+    gameState.requiredDraws, 
+    gameState.currentPlayerIndex, 
+    gameState.waitingForColorChoice
+  );
+  
+  if (!validation.isValid) {
+    if (validation.reason === 'not_human_turn' || validation.reason === 'waiting_for_color') {
+      return;
+    }
   }
   
-  if (gameState.waitingForColorChoice) return; // Don't draw if waiting for color choice
-  
   // Check if player has legal moves and there are no required draws
-  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-  if (gameState.requiredDraws === 0 && playerHasLegalMoves(gameState.players[0].hand, topDiscard, gameState.currentColor)) {
-    // Trigger shake animation on the deck to indicate player should play a card
-    window.dispatchEvent(new CustomEvent('invalidDraw'));
-    return; // Don't allow drawing if player has legal moves
+  if (gameState.requiredDraws === 0) {
+    const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+    if (playerHasLegalMoves(gameState.players[0].hand, topDiscard, gameState.currentColor)) {
+      // Trigger shake animation on the deck to indicate player should play a card
+      window.dispatchEvent(new CustomEvent('invalidDraw'));
+      return; // Don't allow drawing if player has legal moves
+    }
   }
   
   // Play a soft "draw" sound
@@ -666,53 +642,53 @@ function drawCard() {
   // Draw ONE CARD AT A TIME - always just one card per click
   const drawnCard = drawSingleCard(playerIndexForDraw);
   
-  // For required draws (Draw 2 or Draw 4 cases), handle properly
+  // Handle different draw scenarios
   if (gameState.requiredDraws > 0) {
-    // Calculate how many cards were originally required (before this draw)
-    const originalRequiredDraws = gameState.requiredDraws + 1;
-    // Calculate which card we're drawing in the sequence (for clear logging)
-    const currentDrawNumber = originalRequiredDraws - gameState.requiredDraws;
-    
-    console.log(`Drew card ${currentDrawNumber} of ${originalRequiredDraws} required draws for player ${playerIndexForDraw} (${gameState.players[playerIndexForDraw].name})`);
-    const turnComplete = handleRequiredDraw();
-    
-    if (!turnComplete) {
-      console.log(`Still need to draw ${gameState.requiredDraws} more cards`);
-      // Return after drawing a required card - player needs to click again for next card
-      return;
-    } else {
-      console.log("All required cards drawn - turn complete");
-    }
+    handleRequiredCardDraw(playerIndexForDraw, drawnCard);
   } else {
-    // Normal draw case - update display and never auto-play drawn card
-    console.log("Normal draw (not required) - drew one card");
+    handleNormalCardDraw(drawnCard);
+  }
+}
+
+// Handle drawing cards when required (Draw 2 or Draw 4)
+function handleRequiredCardDraw(playerIndexForDraw, drawnCard) {
+  // Calculate how many cards were originally required (before this draw)
+  const originalRequiredDraws = gameState.requiredDraws + 1;
+  // Calculate which card we're drawing in the sequence (for clear logging)
+  const currentDrawNumber = originalRequiredDraws - gameState.requiredDraws;
+  
+  console.log(`Drew card ${currentDrawNumber} of ${originalRequiredDraws} required draws for player ${playerIndexForDraw} (${gameState.players[playerIndexForDraw].name})`);
+  const turnComplete = handleRequiredDraw();
+  
+  if (!turnComplete) {
+    console.log(`Still need to draw ${gameState.requiredDraws} more cards`);
+    // Return after drawing a required card - player needs to click again for next card
+    return;
+  }
+  
+  console.log("All required cards drawn - turn complete");
+}
+
+// Handle normal card drawing (not required)
+function handleNormalCardDraw(drawnCard) {
+  console.log("Normal draw (not required) - drew one card");
+  updateGameDisplay(gameState);
+  
+  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+  const player = gameState.players[gameState.currentPlayerIndex];
+  const cardIsPlayable = canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand);
+  
+  if (!cardIsPlayable) {
+    console.log("Drawn card can't be played - moving to next player");
+    // Move to next player's turn
+    nextTurn();
     updateGameDisplay(gameState);
     
-    // Only move to next player's turn if the drawn card can't be played
-    const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-    const player = gameState.players[gameState.currentPlayerIndex];
-    if (!canPlayCard(drawnCard, topDiscard, gameState.currentColor, player.hand)) {
-      console.log("Drawn card can't be played - moving to next player");
-      // Move to next player's turn
-      nextTurn();
-      
-      // Update the UI
-      updateGameDisplay(gameState);
-      
-      // If it's AI's turn, let them play
-      if (gameState.currentPlayerIndex !== 0) {
-        console.log("Starting AI turn after human draw");
-        const aiDependencies = {
-          playCard,
-          drawSingleCard,
-          nextTurn,
-          updateGameDisplay
-        };
-        setTimeout(() => playAITurn(gameState, aiDependencies), 1000);
-      }
-    } else {
-      console.log("Drawn card can be played - waiting for player to play it");
-    }
+    // If it's AI's turn, let them play
+    const aiDependencies = createAIDependencies(playCard, drawSingleCard, nextTurn, updateGameDisplay);
+    handleEndOfTurnAI(gameState, playAITurn, aiDependencies, "after human draw");
+  } else {
+    console.log("Drawn card can be played - waiting for player to play it");
     // If card is playable, player must choose to play it manually
   }
 }
