@@ -1,6 +1,7 @@
 import { createDeck, shuffleDeck, dealCards } from './deck.js';
 import { createPlayers } from './players.js';
 import { renderGame, updateGameDisplay, showWelcomeScreen } from './ui.js';
+import { canPlayCard, playerHasLegalMoves, chooseAIColor } from './gameRules.js';
 import soundSystem from './sounds.js';
 
 // Game state
@@ -235,53 +236,6 @@ function continueAfterCardPlay(playedCard, skipNextTurn, player, playerIndex) {
   }
 }
 
-// Check if a card can be played
-function canPlayCard(card, topDiscard, currentColor, playerHand) {
-  // Regular Wild cards can always be played
-  if (card.value === 'Wild') {
-    return true;
-  }
-  
-  // Wild Draw 4 can only be played if the player has no cards matching the current color or value
-  if (card.value === 'Wild Draw 4') {
-    // If playerHand is provided (for validation), check if player has playable cards
-    if (playerHand && topDiscard) {
-      // Check if player has any cards matching the current color or the value of the top card
-      const hasPlayableCard = playerHand.some(handCard => 
-        handCard !== card && (
-          handCard.color === currentColor || // Matching color
-          (handCard.value === topDiscard.value && handCard.value !== 'Wild' && handCard.value !== 'Wild Draw 4') // Matching value (excluding wilds)
-        )
-      );
-      
-      // Wild Draw 4 can only be played if player has no playable cards
-      return !hasPlayableCard;
-    }
-    
-    // If no hand is provided or no top discard (backward compatibility), allow the play
-    return true;
-  }
-  
-  // If there's no discard pile yet, any card can be played
-  if (!topDiscard) {
-    return true;
-  }
-  
-  // If we're waiting for an implicit color choice, any colored card can be played
-  // Wild card color selection is now handled manually
-  
-  // Card can be played if it matches the current color
-  if (card.color === currentColor) {
-    return true;
-  }
-  
-  // Card can be played if it matches the value of the top card
-  if (card.value === topDiscard.value) {
-    return true;
-  }
-  
-  return false;
-}
 
 // Helper functions for special card handling
 
@@ -395,7 +349,10 @@ function handleWildCardColor() {
   // For AI player, choose color based on hand
   if (gameState.currentPlayerIndex !== 0) {
     // AI chooses most frequent color in hand
-    chooseAIColor();
+    const player = gameState.players[gameState.currentPlayerIndex];
+    const chosenColor = chooseAIColor(player.hand);
+    gameState.currentColor = chosenColor;
+    gameState.waitingForColorChoice = false;
   }
   // For human player, we'll show color choice UI (handled in playCard function)
 }
@@ -548,37 +505,6 @@ function handleSpecialCard(card) {
   return skipNextTurn;
 }
 
-// Choose color for AI
-function chooseAIColor() {
-  const player = gameState.players[gameState.currentPlayerIndex];
-  const colorCounts = {
-    red: 0,
-    blue: 0,
-    green: 0,
-    yellow: 0
-  };
-  
-  // Count colors in hand
-  player.hand.forEach(card => {
-    if (card.color !== 'wild') {
-      colorCounts[card.color]++;
-    }
-  });
-  
-  // Find most frequent color
-  let maxCount = 0;
-  let chosenColor = 'red'; // Default if no colored cards in hand
-  
-  for (const color in colorCounts) {
-    if (colorCounts[color] > maxCount) {
-      maxCount = colorCounts[color];
-      chosenColor = color;
-    }
-  }
-  
-  gameState.currentColor = chosenColor;
-  gameState.waitingForColorChoice = false;
-}
 
 // Show color choice UI for human player
 function showColorChoiceUI() {
@@ -697,20 +623,6 @@ function animateDeckDraw() {
   }
 }
 
-// Check if player has any legal moves
-function playerHasLegalMoves(playerIndex) {
-  const player = gameState.players[playerIndex];
-  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
-  
-  // Check each card in hand to see if any can be played
-  for (let i = 0; i < player.hand.length; i++) {
-    if (canPlayCard(player.hand[i], topDiscard, gameState.currentColor, player.hand)) {
-      return true;
-    }
-  }
-  
-  return false;
-}
 
 // Handle required draws (Draw 2 or Draw 4)
 function handleRequiredDraw() {
@@ -842,7 +754,8 @@ function drawCard() {
   if (gameState.waitingForColorChoice) return; // Don't draw if waiting for color choice
   
   // Check if player has legal moves and there are no required draws
-  if (gameState.requiredDraws === 0 && playerHasLegalMoves(0)) {
+  const topDiscard = gameState.discardPile[gameState.discardPile.length - 1];
+  if (gameState.requiredDraws === 0 && playerHasLegalMoves(gameState.players[0].hand, topDiscard, gameState.currentColor)) {
     // Trigger shake animation on the deck to indicate player should play a card
     window.dispatchEvent(new CustomEvent('invalidDraw'));
     return; // Don't allow drawing if player has legal moves
