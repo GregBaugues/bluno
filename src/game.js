@@ -156,14 +156,6 @@ function playCard(gameState, playerIndex, cardIndex) {
   // Log the card play to console
   console.log(`${player.name} plays ${playedCard.color} ${playedCard.value} ${playedCard.emoji}`);
   
-  // Dispatch an event for the card being played - for animations
-  window.dispatchEvent(new CustomEvent('cardPlayed', { 
-    detail: { 
-      card: playedCard, 
-      playerIndex, 
-      isAI: player.isAI 
-    } 
-  }));
   
   // Update UI to show the played card
   updateGameDisplay(gameState);
