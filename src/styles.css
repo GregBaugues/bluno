@@ -534,6 +534,19 @@ body {
   z-index: 5; /* Bring hovered card to front */
 }
 
+/* Enhanced touch interaction for mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  .card:hover {
+    transform: none; /* Disable hover effects on touch devices */
+  }
+  
+  .card:active {
+    transform: scale(0.98) translateY(-2px);
+    box-shadow: var(--shadow-level-2);
+    transition: transform 0.1s ease;
+  }
+}
+
 .card:active {
   transform: scale(0.95);
   box-shadow: var(--shadow-level-1);
@@ -860,6 +873,9 @@ button {
   justify-content: center;
   align-items: center;
   position: relative;
+  /* Ensure minimum touch target size for accessibility */
+  min-height: 44px;
+  min-width: 44px;
 }
 
 button::before {
@@ -1027,129 +1043,137 @@ button:disabled {
   }
 }
 
-/* iPhone landscape mode optimizations */
+/* iPhone and small mobile landscape mode optimizations */
 @media (orientation: landscape) and (max-height: 450px) {
-  /* iPhone-specific grid layout - tighter spacing for shorter screens */
+  /* iPhone-specific grid layout - better proportions for mobile */
   #game-container {
-    grid-template-rows: 25% 38% 37%;
-    padding: 5px;
+    grid-template-rows: 22% 42% 36%;
+    grid-template-columns: 150px 1fr 120px;
+    padding: 3px;
+    gap: 5px;
   }
   
   /* Smaller character images for iPhone */
   .character-image {
-    width: 60px !important;
-    height: 60px !important;
-    font-size: 24px !important;
+    width: 55px !important;
+    height: 55px !important;
+    font-size: 22px !important;
   }
   
   /* Smaller character names and card counts */
   .character-name {
-    font-size: 18px !important;
-    margin-bottom: 3px !important;
+    font-size: 16px !important;
+    margin-bottom: 2px !important;
   }
   
   .card-count {
-    font-size: 16px !important;
-    padding: 3px 8px !important;
+    font-size: 14px !important;
+    padding: 2px 6px !important;
   }
   
-  /* Smaller opponent areas */
+  /* More compact opponent areas */
   #opponents-area {
-    padding: 3px 15px 0 15px !important;
+    padding: 2px 10px 0 10px !important;
+    max-width: 100% !important;
+  }
+  
+  .opponent-slot {
+    min-width: 150px !important;
+    min-height: 120px !important;
   }
   
   .opponent {
     gap: 0 !important;
   }
   
-  /* Smaller cards for iPhone */
+  /* Better sized cards for iPhone that are still playable */
   .card {
-    width: 85px !important;
-    height: 128px !important;
-    font-size: 22px !important;
-    margin: 0 -8px 0 0 !important;
+    width: 75px !important;
+    height: 112px !important;
+    font-size: 20px !important;
+    margin: 0 -6px 0 0 !important;
+    border: 3px solid white !important;
   }
   
-  /* Smaller deck and discard pile */
+  /* Smaller but proportional deck and discard pile */
   #deck, #discard-pile {
-    width: 90px !important;
-    height: 135px !important;
-    margin-top: 8px !important;
-    margin-bottom: 8px !important;
+    width: 75px !important;
+    height: 112px !important;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
   }
   
   /* Adjust deck styling for smaller size */
   .uno-logo {
-    font-size: 28px !important;
-    padding: 3px 10px !important;
+    font-size: 22px !important;
+    padding: 2px 8px !important;
   }
   
   .deck-count {
-    font-size: 14px !important;
-    bottom: 6px !important;
-    right: 6px !important;
-    padding: 2px 6px !important;
+    font-size: 12px !important;
+    bottom: 4px !important;
+    right: 4px !important;
+    padding: 1px 4px !important;
   }
   
-  /* Smaller discard area */
+  /* Smaller discard area that fits properly */
   .discard-cards-container {
-    min-width: 280px !important;
-    height: 150px !important;
-    padding-right: 30px !important;
-    padding-bottom: 15px !important;
+    min-width: 220px !important;
+    height: 120px !important;
+    padding-right: 20px !important;
+    padding-bottom: 10px !important;
   }
   
-  /* Tighter game area */
+  /* More space-efficient game area */
   #game-area {
-    padding: 5px 15px !important;
-    margin-top: 3px !important;
-    margin-bottom: 3px !important;
+    padding: 3px 10px !important;
+    margin: 0 !important;
   }
   
   #deck {
-    margin-right: 20px !important;
+    margin-right: 15px !important;
   }
   
-  /* Smaller player hand area */
+  /* Better player hand area that doesn't crowd */
   #player-hand {
-    min-height: 140px !important;
-    padding: 8px 5px !important;
-    margin: 0 10px !important;
+    min-height: 120px !important;
+    padding: 5px 3px !important;
+    margin: 0 5px !important;
   }
   
-  /* Smaller side indicators */
+  /* Optimized side indicators */
   #side-indicators {
-    right: 3px !important;
-    gap: 6px !important;
+    gap: 4px !important;
+    padding: 10px !important;
   }
   
   #color-indicator {
-    width: 50px !important;
-    height: 50px !important;
-    border: 3px solid white !important;
+    width: 40px !important;
+    height: 40px !important;
+    border: 2px solid white !important;
   }
   
-  /* Smaller card emojis and styling */
+  /* Proportional card emojis */
   .card-emoji {
-    font-size: 45px !important;
+    font-size: 35px !important;
   }
   
   .card[data-value="Skip"] .card-emoji,
   .card[data-value="Reverse"] .card-emoji,
   .card[data-value="Draw 2"] .card-emoji,
   .card[data-value="Wild"] .card-emoji {
-    font-size: 55px !important;
+    font-size: 40px !important;
   }
   
   .card[data-value="Wild Draw 4"] .card-emoji {
-    font-size: 60px !important;
+    font-size: 45px !important;
   }
   
-  /* Smaller card corners */
+  /* Smaller but readable card corners */
   .card-corner {
-    font-size: 20px !important;
-    width: 30px !important;
-    height: 30px !important;
+    font-size: 16px !important;
+    width: 24px !important;
+    height: 24px !important;
   }
   
   .card[data-value="0"] .card-corner,
@@ -1162,81 +1186,160 @@ button:disabled {
   .card[data-value="7"] .card-corner,
   .card[data-value="8"] .card-corner,
   .card[data-value="9"] .card-corner {
-    font-size: 26px !important;
+    font-size: 20px !important;
   }
   
-  /* Smaller buttons */
+  /* Touch-friendly buttons */
   button {
-    min-width: 70px !important;
-    height: 70px !important;
-    width: 70px !important;
+    min-width: 60px !important;
+    height: 60px !important;
+    width: 60px !important;
   }
   
   button::before {
-    font-size: 35px !important;
+    font-size: 30px !important;
   }
   
   /* Smaller UNO indicator */
   .uno-indicator {
-    top: -15px !important;
-    right: -15px !important;
-    padding: 6px 10px !important;
-    font-size: 18px !important;
+    top: -10px !important;
+    right: -10px !important;
+    padding: 4px 8px !important;
+    font-size: 14px !important;
   }
   
   /* Smaller current player indicator */
   .opponent.current-player::before {
-    top: -20px !important;
-    font-size: 20px !important;
+    top: -15px !important;
+    font-size: 16px !important;
   }
   
   /* Compact color choice dialog */
   #color-choice {
-    padding: 20px !important;
+    padding: 15px !important;
   }
   
   #color-choice h2 {
-    font-size: 24px !important;
-    margin-bottom: 15px !important;
+    font-size: 20px !important;
+    margin-bottom: 10px !important;
   }
   
   #color-choice button {
-    width: 80px !important;
-    height: 80px !important;
-    margin: 0 8px !important;
+    width: 60px !important;
+    height: 60px !important;
+    margin: 0 5px !important;
   }
   
-  /* Smaller fallback character styling */
-  .character-fallback {
-    font-size: 40px !important;
-  }
-  
-  /* Adjust Julia and Bingo displays for iPhone */
+  /* Optimize Julia display positioning */
   #julia-display {
-    top: 280px !important;
-    left: 25px !important;
-  }
-  
-  #julia-display > div:first-child,
-  #bingo-display > div:first-child {
-    width: 80px !important;
-    height: 80px !important;
-  }
-  
-  #julia-display .character-fallback,
-  #bingo-display .character-fallback {
-    font-size: 40px !important;
-  }
-  
-  #julia-display > div:last-child,
-  #bingo-display > div:last-child {
-    font-size: 16px !important;
-    padding: 5px 10px !important;
-    margin-top: 5px !important;
+    padding: 10px !important;
   }
 }
 
-/* Small screens */
+/* iPhone portrait mode optimizations */
+@media (orientation: portrait) and (max-width: 430px) {
+  #game-container {
+    grid-template-rows: 35% 30% 35%;
+    grid-template-columns: 80px 1fr 80px;
+    padding: 5px;
+    gap: 8px;
+  }
+  
+  /* More compact character display for portrait */
+  .character-image {
+    width: 65px !important;
+    height: 65px !important;
+    font-size: 26px !important;
+  }
+  
+  .character-name {
+    font-size: 18px !important;
+    margin-bottom: 3px !important;
+  }
+  
+  .card-count {
+    font-size: 15px !important;
+    padding: 3px 8px !important;
+  }
+  
+  /* Adjust opponents area for portrait */
+  #opponents-area {
+    padding: 5px 8px 0 8px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+  
+  .opponent-slot {
+    min-width: 120px !important;
+    min-height: 140px !important;
+    flex: 0 1 calc(50% - 5px) !important;
+  }
+  
+  /* Cards sized for portrait touch interaction */
+  .card {
+    width: 90px !important;
+    height: 135px !important;
+    font-size: 24px !important;
+    margin: 0 -8px 0 0 !important;
+  }
+  
+  /* Deck and discard pile sizing for portrait */
+  #deck, #discard-pile {
+    width: 95px !important;
+    height: 142px !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .discard-cards-container {
+    min-width: 300px !important;
+    height: 160px !important;
+    padding-right: 25px !important;
+    padding-bottom: 15px !important;
+  }
+  
+  /* Game area adjustments for portrait */
+  #game-area {
+    padding: 8px 12px !important;
+    justify-content: center !important;
+  }
+  
+  #deck {
+    margin-right: 25px !important;
+  }
+  
+  /* Player hand optimized for portrait thumb reach */
+  #player-hand {
+    min-height: 150px !important;
+    padding: 10px 8px !important;
+    margin: 0 8px !important;
+  }
+  
+  /* Side indicators for portrait */
+  #side-indicators {
+    gap: 8px !important;
+    padding: 15px !important;
+  }
+  
+  #color-indicator {
+    width: 55px !important;
+    height: 55px !important;
+  }
+  
+  /* Touch-friendly buttons for portrait */
+  button {
+    min-width: 80px !important;
+    height: 80px !important;
+    width: 80px !important;
+  }
+  
+  button::before {
+    font-size: 40px !important;
+  }
+}
+
+/* Small screens - general mobile optimizations */
 @media (max-width: 600px) {
   .discard-cards-container {
     min-width: 300px;
